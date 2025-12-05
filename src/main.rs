@@ -24,7 +24,7 @@ impl App {
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
-        while self.should_quit {
+        while !self.should_quit {
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
             self.handle_events()?;
         }
