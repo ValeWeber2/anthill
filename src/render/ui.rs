@@ -5,10 +5,12 @@ use ratatui::{
 
 use crate::App;
 
+use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
+
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        const WORLD_WIDTH: u16 = 100;
-        const WORLD_HEIGHT: u16 = 20;
+        let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
+        let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
 
         let layout_top_bottom = Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
         let [area_game, area_character] = layout_top_bottom.areas(area);
@@ -20,9 +22,9 @@ impl Widget for &App {
         ]);
         let [area_world, _empty, area_menu] = layout_left_right.areas(area_game);
 
-        let area_world_inner = Layout::vertical([Constraint::Length(WORLD_HEIGHT)])
-            .horizontal_margin((area_world.width.saturating_sub(WORLD_WIDTH)) / 2)
-            .vertical_margin((area_world.height.saturating_sub(WORLD_HEIGHT)) / 2)
+        let area_world_inner = Layout::vertical([Constraint::Length(world_height_u16)])
+            .horizontal_margin((area_world.width.saturating_sub(world_width_u16)) / 2)
+            .vertical_margin((area_world.height.saturating_sub(world_height_u16)) / 2)
             .split(area_world)[0];
 
         let block_character = Block::default().title("Character Info").borders(Borders::ALL);

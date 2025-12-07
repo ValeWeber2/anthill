@@ -1,4 +1,6 @@
+mod core;
 mod render;
+mod world;
 
 use std::io;
 
