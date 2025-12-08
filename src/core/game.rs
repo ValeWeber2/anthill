@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use crate::core::player::*;
 use crate::world::worldspace::{Drawable, Point, World};
 use ratatui::style::Color;
 
@@ -16,11 +17,6 @@ pub struct GameState {
     pub player: Player,
     pub message_log: Vec<String>,
     pub round_nr: u64,
-}
-
-pub struct Player {
-    pub name: String,
-    pub character: PlayerCharacter,
 }
 
 // ----------------------------------------------
@@ -49,28 +45,6 @@ impl Drawable for EntityBase {
 pub struct BaseStats {
     hp_max: u32,
     hp_current: u32,
-}
-
-// Player Character
-pub struct PlayerCharacter {
-    pub base: EntityBase,
-    pub stats: PcStats,
-    pub inventory: Vec<GameItem>,
-}
-
-pub struct PcStats {
-    base: BaseStats,
-    strength: u8,
-    dexterity: u8,
-}
-
-impl Entity for PlayerCharacter {
-    fn id(&self) -> EntityId {
-        self.base.id
-    }
-    fn pos(&self) -> &Point {
-        &self.base.pos
-    }
 }
 
 // NPC
