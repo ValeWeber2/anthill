@@ -2,7 +2,7 @@
 
 use ratatui::style::Color;
 
-use crate::core::game::{ItemSprite, Npc};
+use crate::core::game::{EntityId, ItemSprite, Npc};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -75,8 +75,9 @@ impl Drawable for TileType {
 }
 
 // ----------------------------------------------
-//                World Struct
+//                Coordinates & Rooms
 // ----------------------------------------------
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub struct Point {
     pub x: usize,
@@ -89,12 +90,30 @@ impl Point {
     }
 }
 
+#[derive(Debug)]
+pub struct Room {
+    pub origin: Point,
+    pub width: usize,
+    pub height: usize,
+}
+
+impl Room {
+    pub fn new(origin: Point, width: usize, height: usize) -> Self {
+        Self { origin, width, height }
+    }
+}
+
+// ----------------------------------------------
+//                World Struct
+// ----------------------------------------------
+
 pub struct World {
     pub width: usize,
     pub height: usize,
     pub tiles: [Tile; WORLD_WIDTH * WORLD_HEIGHT], // Grid is 100 wide and 25 high.
     pub npcs: Vec<Npc>,
     pub items: Vec<ItemSprite>,
+    pub entities: Vec<EntityRecord>,
 }
 
 impl World {
@@ -105,6 +124,7 @@ impl World {
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
             npcs: Vec::new(),
             items: Vec::new(),
+            entities: Vec::new(),
         }
     }
 
@@ -117,7 +137,7 @@ impl World {
         &self.tiles[index]
     }
 
-    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> &Tile {
+    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> &mut Tile {
         let index = self.index(x, y);
         &mut self.tiles[index]
     }
@@ -128,4 +148,54 @@ impl World {
 
         in_lower_bounds && in_upper_bounds
     }
+
+    pub fn carve_room(&mut self, room: &Room) {
+        for y in room.origin.y..room.origin.y + room.height {
+            for x in room.origin.x..room.origin.x + room.width {
+                self.get_tile_mut(x, y).tile_type = TileType::Floor;
+            }
+        }
+    }
+
+    pub fn add_wall_border(&mut self) {
+        for x in 0..self.width {
+            self.get_tile_mut(x, 0).tile_type = TileType::Wall;
+            self.get_tile_mut(x, self.height - 1).tile_type = TileType::Wall;
+        }
+        for y in 0..self.height {
+            self.get_tile_mut(0, y).tile_type = TileType::Wall;
+            self.get_tile_mut(self.width - 1, y).tile_type = TileType::Wall;
+        }
+    }
+
+    pub fn add_npc(&mut self, npc: Npc) {
+        self.npcs.push(npc);
+    }
+
+    pub fn add_item(&mut self, item: ItemSprite) {
+        self.items.push(item);
+    }
+
+    pub fn can_move_to(&self, pos: Point) -> bool {
+        self.is_in_bounds(pos.x as isize, pos.y as isize) && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
+    }
 }
+
+// ----------------------------------------------
+//                Entity Records
+// ----------------------------------------------
+
+#[derive(Debug)]
+pub struct EntityRecord {
+    pub id: EntityId,
+    pub pos: Point,
+    pub kind: EntityKind,
+}
+
+#[derive(Debug)]
+pub enum EntityKind {
+    Player,
+    Npc,
+    Item,
+}
+
