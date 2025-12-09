@@ -2,13 +2,11 @@ mod core;
 mod render;
 mod world;
 
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use ratatui::DefaultTerminal;
 use std::io;
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-
-use ratatui::DefaultTerminal;
-
-use crate::core::player::Player;
+use crate::core::game::GameState;
 
 fn main() -> io::Result<()> {
     let terminal = ratatui::init();
@@ -19,15 +17,12 @@ fn main() -> io::Result<()> {
 
 struct App {
     should_quit: bool,
-    player: Player,
+    game: GameState,
 }
 
 impl App {
     fn new() -> Self {
-        Self { 
-            should_quit: false, 
-            player: Player::new(),
-        }
+        Self { should_quit: false, game: GameState::new() }
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
@@ -51,10 +46,10 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('w') => self.player.character.move_by(0, -1),
-            KeyCode::Char('s') => self.player.character.move_by(0, 1),
-            KeyCode::Char('a') => self.player.character.move_by(-1, 0),
-            KeyCode::Char('d') => self.player.character.move_by(1, 0),
+            KeyCode::Char('w') => self.game.player.character.move_by(0, -1),
+            KeyCode::Char('s') => self.game.player.character.move_by(0, 1),
+            KeyCode::Char('a') => self.game.player.character.move_by(-1, 0),
+            KeyCode::Char('d') => self.game.player.character.move_by(1, 0),
             _ => {}
         }
     }

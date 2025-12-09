@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::core::player::*;
+use crate::core::player::Player;
 use crate::world::worldspace::{Drawable, Point, World};
 use ratatui::style::Color;
 
@@ -17,6 +17,12 @@ pub struct GameState {
     pub player: Player,
     pub message_log: Vec<String>,
     pub round_nr: u64,
+}
+
+impl GameState {
+    pub fn new() -> Self {
+        Self { world: World::new(), player: Player::new(), message_log: Vec::new(), round_nr: 0 }
+    }
 }
 
 // ----------------------------------------------

@@ -11,10 +11,7 @@ pub struct Player {
 
 impl Player {
     pub fn new() -> Self {
-        Self {
-            name: "Hero".to_string(),
-            character: PlayerCharacter::new(),
-        }
+        Self { name: "Hero".to_string(), character: PlayerCharacter::new() }
     }
 }
 
@@ -35,7 +32,7 @@ impl PlayerCharacter {
                 color: Color::Yellow,
             },
             stats: PcStats {
-                base: BaseStats { hp_max: 100, hp_current: 100},
+                base: BaseStats { hp_max: 100, hp_current: 100 },
                 strength: 10,
                 dexterity: 10,
             },
