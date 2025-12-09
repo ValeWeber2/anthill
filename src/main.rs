@@ -36,7 +36,7 @@ impl App {
     fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-                self.handle_key_event(key_event)
+                self.handle_key_event(key_event);
             }
             _ => {}
         };
@@ -44,12 +44,15 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        let world = &self.game.world;
+        let player = &mut self.game.player.character;
+
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('w') => self.game.player.character.move_by(0, -1),
-            KeyCode::Char('s') => self.game.player.character.move_by(0, 1),
-            KeyCode::Char('a') => self.game.player.character.move_by(-1, 0),
-            KeyCode::Char('d') => self.game.player.character.move_by(1, 0),
+            KeyCode::Char('w') => player.move_by(0, -1, world),
+            KeyCode::Char('s') => player.move_by(0, 1, world),
+            KeyCode::Char('a') => player.move_by(-1, 0, world),
+            KeyCode::Char('d') => player.move_by(1, 0, world),
             KeyCode::Char('p') => self.game.log.messages.push(format!("Player at position x: {}, y: {}", self.game.player.character.base.pos.x, self.game.player.character.base.pos.y)),
             _ => {}
         }
