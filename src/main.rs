@@ -50,6 +50,7 @@ impl App {
             KeyCode::Char('s') => self.game.player.character.move_by(0, 1),
             KeyCode::Char('a') => self.game.player.character.move_by(-1, 0),
             KeyCode::Char('d') => self.game.player.character.move_by(1, 0),
+            KeyCode::Char('p') => self.game.log.messages.push(format!("Player at position x: {}, y: {}", self.game.player.character.base.pos.x, self.game.player.character.base.pos.y)),
             _ => {}
         }
     }

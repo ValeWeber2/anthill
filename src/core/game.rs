@@ -15,13 +15,31 @@ pub trait Entity {
 pub struct GameState {
     pub world: World,
     pub player: Player,
-    pub message_log: Vec<String>,
+    pub log: Log,
     pub round_nr: u64,
 }
 
 impl GameState {
     pub fn new() -> Self {
-        Self { world: World::new(), player: Player::new(), message_log: Vec::new(), round_nr: 0 }
+        Self { world: World::new(), player: Player::new(), log: Log::new(), round_nr: 0 }
+    }
+}
+
+
+// ----------------------------------------------
+//                  Game Text Log
+// ----------------------------------------------
+pub struct Log {
+    pub messages: Vec<String>,
+    pub scroll: u16,
+}
+
+impl Log {
+    pub fn new() -> Self {
+        Self {
+            messages: Vec::new(),
+            scroll: 0,
+        }
     }
 }
 
