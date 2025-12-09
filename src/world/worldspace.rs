@@ -2,7 +2,7 @@
 
 use ratatui::style::Color;
 
-use crate::core::game::{EntityId, ItemSprite, Npc};
+use crate::core::game::{ItemSprite, Npc};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -113,7 +113,6 @@ pub struct World {
     pub tiles: [Tile; WORLD_WIDTH * WORLD_HEIGHT], // Grid is 100 wide and 25 high.
     pub npcs: Vec<Npc>,
     pub items: Vec<ItemSprite>,
-    pub entities: Vec<EntityRecord>,
 }
 
 impl World {
@@ -124,7 +123,6 @@ impl World {
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
             npcs: Vec::new(),
             items: Vec::new(),
-            entities: Vec::new(),
         }
     }
 
@@ -180,22 +178,3 @@ impl World {
         self.is_in_bounds(pos.x as isize, pos.y as isize) && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
     }
 }
-
-// ----------------------------------------------
-//                Entity Records
-// ----------------------------------------------
-
-#[derive(Debug)]
-pub struct EntityRecord {
-    pub id: EntityId,
-    pub pos: Point,
-    pub kind: EntityKind,
-}
-
-#[derive(Debug)]
-pub enum EntityKind {
-    Player,
-    Npc,
-    Item,
-}
-
