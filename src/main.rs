@@ -8,6 +8,8 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 
 use ratatui::DefaultTerminal;
 
+use crate::core::player::Player;
+
 fn main() -> io::Result<()> {
     let terminal = ratatui::init();
     let app_result = App::new().run(terminal);
@@ -15,14 +17,17 @@ fn main() -> io::Result<()> {
     app_result
 }
 
-#[derive(Debug, Default)]
 struct App {
     should_quit: bool,
+    player: Player,
 }
 
 impl App {
     fn new() -> Self {
-        Self { should_quit: false }
+        Self { 
+            should_quit: false, 
+            player: Player::new(),
+        }
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
@@ -46,7 +51,10 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('c') => {}
+            KeyCode::Char('w') => self.player.character.move_by(0, -1),
+            KeyCode::Char('s') => self.player.character.move_by(0, 1),
+            KeyCode::Char('a') => self.player.character.move_by(-1, 0),
+            KeyCode::Char('d') => self.player.character.move_by(1, 0),
             _ => {}
         }
     }

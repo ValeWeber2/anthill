@@ -43,8 +43,8 @@ impl Drawable for EntityBase {
 }
 
 pub struct BaseStats {
-    hp_max: u32,
-    hp_current: u32,
+    pub hp_max: u32,
+    pub hp_current: u32,
 }
 
 // NPC
