@@ -2,7 +2,7 @@
 
 use ratatui::style::Color;
 
-use crate::core::game::{ItemSprite, Npc};
+use crate::core::game::{GameState, ItemSprite, Npc};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -116,7 +116,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new() -> Self {
+    pub fn new(_game: &mut GameState) -> Self {
         Self {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
@@ -124,6 +124,11 @@ impl World {
             npcs: Vec::new(),
             items: Vec::new(),
         }
+    }
+
+    // helper constructor to create a placeholder world
+    pub fn empty() -> Self {
+        Self { width: WORLD_WIDTH, height: WORLD_HEIGHT, tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT], npcs: Vec::new(), items: Vec::new() }
     }
 
     pub fn index(&self, x: usize, y: usize) -> usize {
@@ -147,34 +152,7 @@ impl World {
         in_lower_bounds && in_upper_bounds
     }
 
-    pub fn carve_room(&mut self, room: &Room) {
-        for y in room.origin.y..room.origin.y + room.height {
-            for x in room.origin.x..room.origin.x + room.width {
-                self.get_tile_mut(x, y).tile_type = TileType::Floor;
-            }
-        }
-    }
-
-    pub fn add_wall_border(&mut self) {
-        for x in 0..self.width {
-            self.get_tile_mut(x, 0).tile_type = TileType::Wall;
-            self.get_tile_mut(x, self.height - 1).tile_type = TileType::Wall;
-        }
-        for y in 0..self.height {
-            self.get_tile_mut(0, y).tile_type = TileType::Wall;
-            self.get_tile_mut(self.width - 1, y).tile_type = TileType::Wall;
-        }
-    }
-
-    pub fn add_npc(&mut self, npc: Npc) {
-        self.npcs.push(npc);
-    }
-
-    pub fn add_item(&mut self, item: ItemSprite) {
-        self.items.push(item);
-    }
-
-    pub fn can_move_to(&self, pos: Point) -> bool {
-        self.is_in_bounds(pos.x as isize, pos.y as isize) && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
+    pub fn is_taken(&self, pos: Point) -> bool {
+        self.npcs.iter().any(|npc| npc.base.pos == pos) || self.items.iter().any(|item| item.base.pos == pos)
     }
 }
