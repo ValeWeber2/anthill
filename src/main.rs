@@ -2,11 +2,14 @@ mod core;
 mod render;
 mod world;
 
-use std::io;
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal, style::Color};
+use std::io;
 
-use crate::{core::game::{BaseStats, GameItem, GameState, NpcStats}, world::worldspace::Point};
+use crate::{
+    core::game::{BaseStats, GameItem, GameState, NpcStats},
+    world::worldspace::Point,
+};
 
 fn main() -> io::Result<()> {
     let terminal = ratatui::init();
@@ -24,13 +27,27 @@ impl App {
     fn new() -> Self {
         let mut game = GameState::new();
 
+        game.world.add_wall_border();
+
         // Example: Spawn NPCs after game state is initialized
         for i in 1..10 {
-            let _ = game.spawn_npc(format!("Goblin {}", i), Point::new(i, 5), 'g', Color::Green, NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 });
+            let _ = game.spawn_npc(
+                format!("Goblin {}", i),
+                Point::new(i, 5),
+                'g',
+                Color::Green,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+            );
         }
 
         // Example item
-        let _ = game.spawn_item("Rusty Sword".into(), Point::new(9, 5), '/', Color::White, GameItem::Weapon { name: "Rusty Sword".into(), damage: 5 });
+        let _ = game.spawn_item(
+            "Rusty Sword".into(),
+            Point::new(9, 5),
+            '/',
+            Color::White,
+            GameItem::Weapon { name: "Rusty Sword".into(), damage: 5 },
+        );
 
         Self { should_quit: false, game }
     }
@@ -63,7 +80,12 @@ impl App {
             KeyCode::Char('s') => player.move_by(0, 1, world),
             KeyCode::Char('a') => player.move_by(-1, 0, world),
             KeyCode::Char('d') => player.move_by(1, 0, world),
-            KeyCode::Char('p') => self.game.log.messages.push(format!("Player with ID {} at position x: {}, y: {}", self.game.player.character.base.id, self.game.player.character.base.pos.x, self.game.player.character.base.pos.y)),
+            KeyCode::Char('p') => self.game.log.messages.push(format!(
+                "Player with ID {} at position x: {}, y: {}",
+                self.game.player.character.base.id,
+                self.game.player.character.base.pos.x,
+                self.game.player.character.base.pos.y
+            )),
             _ => {}
         }
     }

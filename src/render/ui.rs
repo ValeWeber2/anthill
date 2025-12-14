@@ -45,7 +45,8 @@ impl Widget for &App {
         let block_menu_inner = block_menu.inner(area_menu);
         block_menu.render(area_menu, buf);
 
-        let lines: Vec<Line> = self.game.log.messages.iter().map(|msg| Line::raw(msg.to_string())).collect();
+        let lines: Vec<Line> =
+            self.game.log.messages.iter().map(|msg| Line::raw(msg.to_string())).collect();
         let paragraph = Paragraph::new(Text::from(lines))
             .wrap(Wrap { trim: true })
             .scroll((self.game.log.scroll as u16, 0));

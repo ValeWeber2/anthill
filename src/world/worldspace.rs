@@ -127,8 +127,14 @@ impl World {
     }
 
     // helper constructor to create a placeholder world
-    pub fn empty() -> Self {
-        Self { width: WORLD_WIDTH, height: WORLD_HEIGHT, tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT], npcs: Vec::new(), items: Vec::new() }
+    pub fn default() -> Self {
+        Self {
+            width: WORLD_WIDTH,
+            height: WORLD_HEIGHT,
+            tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
+            npcs: Vec::new(),
+            items: Vec::new(),
+        }
     }
 
     pub fn index(&self, x: usize, y: usize) -> usize {
@@ -153,6 +159,26 @@ impl World {
     }
 
     pub fn is_taken(&self, pos: Point) -> bool {
-        self.npcs.iter().any(|npc| npc.base.pos == pos) || self.items.iter().any(|item| item.base.pos == pos)
+        self.npcs.iter().any(|npc| npc.base.pos == pos)
+            || self.items.iter().any(|item| item.base.pos == pos)
+    }
+
+    pub fn carve_room(&mut self, room: &Room) {
+        for y in room.origin.y..room.origin.y + room.height {
+            for x in room.origin.x..room.origin.x + room.width {
+                self.get_tile_mut(x, y).tile_type = TileType::Floor;
+            }
+        }
+    }
+
+    pub fn add_wall_border(&mut self) {
+        for x in 0..self.width {
+            self.get_tile_mut(x, 0).tile_type = TileType::Wall;
+            self.get_tile_mut(x, self.height - 1).tile_type = TileType::Wall;
+        }
+        for y in 0..self.height {
+            self.get_tile_mut(0, y).tile_type = TileType::Wall;
+            self.get_tile_mut(self.width - 1, y).tile_type = TileType::Wall;
+        }
     }
 }
