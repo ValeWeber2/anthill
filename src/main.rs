@@ -3,10 +3,8 @@ mod render;
 mod world;
 
 use std::io;
-
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use ratatui::{DefaultTerminal, style::Color};
-
 
 use crate::{core::game::{BaseStats, GameItem, GameState, NpcStats}, world::worldspace::Point};
 

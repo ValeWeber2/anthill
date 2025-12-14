@@ -2,6 +2,8 @@
 
 use crate::core::game::{BaseStats, Entity, EntityBase, EntityId, GameItem};
 use crate::world::worldspace::Point;
+use crate::world::worldspace::World;
+use ratatui::style::Color;
 
 pub struct Player {
     pub name: String,
@@ -51,9 +53,9 @@ impl PlayerCharacter {
 }
 
 pub struct PcStats {
-    base: BaseStats,
-    strength: u8,
-    dexterity: u8,
+    pub base: BaseStats,
+    pub strength: u8,
+    pub dexterity: u8,
 }
 
 impl Entity for PlayerCharacter {

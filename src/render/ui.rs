@@ -1,6 +1,6 @@
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Paragraph, Wrap},
 };
 
 use crate::App;
@@ -27,16 +27,28 @@ impl Widget for &App {
             .vertical_margin((area_world.height.saturating_sub(world_height_u16)) / 2)
             .split(area_world)[0];
 
+        // Character Info
         let block_character = Block::default().title("Character Info").borders(Borders::ALL);
         block_character.render(area_character, buf);
 
+        // World
         let block_world_outer = Block::default().title("World").borders(Borders::ALL);
         block_world_outer.render(area_world, buf);
 
+        // World Space
+        // (Space actually occupied by tiles)
         let block_world = Block::default().title("World Space").borders(Borders::ALL);
         block_world.render(area_world_inner, buf);
 
+        // Menu (Log, menus, tables)
         let block_menu = Block::default().title("Menu").borders(Borders::ALL);
+        let block_menu_inner = block_menu.inner(area_menu);
         block_menu.render(area_menu, buf);
+
+        let lines: Vec<Line> = self.game.log.messages.iter().map(|msg| Line::raw(msg.to_string())).collect();
+        let paragraph = Paragraph::new(Text::from(lines))
+            .wrap(Wrap { trim: true })
+            .scroll((self.game.log.scroll as u16, 0));
+        paragraph.render(block_menu_inner, buf);
     }
 }
