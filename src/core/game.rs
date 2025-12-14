@@ -25,7 +25,6 @@ impl GameState {
     }
 }
 
-
 // ----------------------------------------------
 //                  Game Text Log
 // ----------------------------------------------
@@ -36,10 +35,7 @@ pub struct Log {
 
 impl Log {
     pub fn new() -> Self {
-        Self {
-            messages: Vec::new(),
-            scroll: 0,
-        }
+        Self { messages: Vec::new(), scroll: 0 }
     }
 }
 
