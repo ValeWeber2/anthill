@@ -45,15 +45,12 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        let world = &self.game.world;
-        let player = &mut self.game.player.character;
-
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('w') => player.move_by(0, -1, world),
-            KeyCode::Char('s') => player.move_by(0, 1, world),
-            KeyCode::Char('a') => player.move_by(-1, 0, world),
-            KeyCode::Char('d') => player.move_by(1, 0, world),
+            KeyCode::Char('w') => self.game.world.move_entity(&mut self.game.player.character, 0, -1),
+            KeyCode::Char('s') => self.game.world.move_entity(&mut self.game.player.character, 0, 1),
+            KeyCode::Char('a') => self.game.world.move_entity(&mut self.game.player.character, -1, 0),
+            KeyCode::Char('d') => self.game.world.move_entity(&mut self.game.player.character, 1, -1),
             KeyCode::Char('p') => self.game.log.messages.push(format!("Player at position x: {}, y: {}", self.game.player.character.base.pos.x, self.game.player.character.base.pos.y)),
             _ => {}
         }

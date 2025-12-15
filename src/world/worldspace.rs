@@ -3,6 +3,7 @@
 use ratatui::style::Color;
 
 use crate::core::game::{ItemSprite, Npc};
+use crate::core::player::PlayerCharacter;
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -127,5 +128,15 @@ impl World {
         let in_upper_bounds: bool = (x as usize) < self.width && (y as usize) < self.height;
 
         in_lower_bounds && in_upper_bounds
+    }
+
+    pub fn move_entity(&mut self, entity: &mut PlayerCharacter, dx: i32, dy: i32) {
+        let new_x = entity.base.pos.x as isize + dx as isize;
+        let new_y = entity.base.pos.y as isize + dy as isize;
+
+        if self.is_in_bounds(new_x, new_y) {
+            entity.base.pos.x = new_x as usize;
+            entity.base.pos.y = new_y as usize;
+        }
     }
 }
