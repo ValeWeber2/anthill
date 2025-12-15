@@ -47,11 +47,22 @@ impl App {
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('w') => self.game.world.move_entity(&mut self.game.player.character, 0, -1),
-            KeyCode::Char('s') => self.game.world.move_entity(&mut self.game.player.character, 0, 1),
-            KeyCode::Char('a') => self.game.world.move_entity(&mut self.game.player.character, -1, 0),
-            KeyCode::Char('d') => self.game.world.move_entity(&mut self.game.player.character, 1, -1),
-            KeyCode::Char('p') => self.game.log.messages.push(format!("Player at position x: {}, y: {}", self.game.player.character.base.pos.x, self.game.player.character.base.pos.y)),
+            KeyCode::Char('w') => {
+                self.game.world.move_entity(&mut self.game.player.character, 0, -1)
+            }
+            KeyCode::Char('s') => {
+                self.game.world.move_entity(&mut self.game.player.character, 0, 1)
+            }
+            KeyCode::Char('a') => {
+                self.game.world.move_entity(&mut self.game.player.character, -1, 0)
+            }
+            KeyCode::Char('d') => {
+                self.game.world.move_entity(&mut self.game.player.character, 1, -1)
+            }
+            KeyCode::Char('p') => self.game.log.messages.push(format!(
+                "Player at position x: {}, y: {}",
+                self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
+            )),
             _ => {}
         }
     }

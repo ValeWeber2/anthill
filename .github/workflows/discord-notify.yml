@@ -1,4 +1,4 @@
-name: 'New Push Notification'
+name: New Push Notification
 
 on:
   push:
@@ -12,8 +12,12 @@ jobs:
         uses: stegzilla/discord-notify@v2
         with:
           webhook_url: https://discord.com/api/webhooks/1447575040098046104/Oc30HD8WXZ6lwmNUbckDXeI-iqEmOboypDXa5DM7XePS5A9NY28g-hxNroPishB6Ttp_
-          title: New Commit pushed on main
-          message: "**${{ github.event.head_commit.message }}**\n**Creator:** ${{ github.event.head_commit.author.name }}\n${{ github.event.head_commit.url }}"
+          title: New Commit pushed
+          message: |
+            **${{ github.event.commits[0].message }}**
+            **Author:** ${{ github.actor }}
+            **Branch:** ${{ github.ref_name }}
+            ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
           include_image: true
           avatar_url: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
           username: Git Bot
