@@ -8,6 +8,7 @@ use std::io;
 
 use crate::{
     core::game::{BaseStats, GameItem, GameState, NpcStats},
+    render::ui::UserInterface,
     world::worldspace::{Point, Room},
 };
 
@@ -21,6 +22,7 @@ fn main() -> io::Result<()> {
 struct App {
     should_quit: bool,
     game: GameState,
+    ui: UserInterface,
 }
 
 impl App {
@@ -31,13 +33,13 @@ impl App {
 
         // Example: Spawn NPC after game state is initialized
         let _ = game.spawn_npc(
-            format!("Goblin"),
+            "Goblin".into(),
             Point::new(50, 10),
             'g',
             Color::Green,
             NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
         );
-        
+
         // Example item
         let _ = game.spawn_item(
             "Rusty Sword".into(),
@@ -56,7 +58,7 @@ impl App {
             NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
 
-        Self { should_quit: false, game }
+        Self { should_quit: false, game, ui: UserInterface::new() }
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
@@ -78,20 +80,23 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        let world = &self.game.world;
-        let player = &mut self.game.player.character;
-
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
-            KeyCode::Char('w') => player.move_by(0, -1, world),
-            KeyCode::Char('s') => player.move_by(0, 1, world),
-            KeyCode::Char('a') => player.move_by(-1, 0, world),
-            KeyCode::Char('d') => player.move_by(1, 0, world),
+            KeyCode::Char('w') => {
+                self.game.world.move_entity(&mut self.game.player.character, 0, -1)
+            }
+            KeyCode::Char('s') => {
+                self.game.world.move_entity(&mut self.game.player.character, 0, 1)
+            }
+            KeyCode::Char('a') => {
+                self.game.world.move_entity(&mut self.game.player.character, -1, 0)
+            }
+            KeyCode::Char('d') => {
+                self.game.world.move_entity(&mut self.game.player.character, 1, 0)
+            }
             KeyCode::Char('p') => self.game.log.messages.push(format!(
-                "Player with ID: {} at position x: {}, y: {}",
-                self.game.player.character.base.id,
-                self.game.player.character.base.pos.x,
-                self.game.player.character.base.pos.y
+                "Player at position x: {}, y: {}",
+                self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
             _ => {}
         }

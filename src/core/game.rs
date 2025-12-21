@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
-use std::u32;
 
 use crate::core::player::Player;
 use crate::world::worldspace::{Drawable, Point, World};
@@ -128,7 +127,6 @@ impl GameState {
             }
 
             self.world.item_index.remove(&id);
-            return;
         }
     }
 
@@ -377,13 +375,15 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id = game.spawn_npc(
-                    format!("Goblin"),
-                    Point::new(50, 7),
-                    'g',
-                    Color::Green,
-                    NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 }
-        ).unwrap();
+        let id = game
+            .spawn_npc(
+                "Goblin".into(),
+                Point::new(50, 7),
+                'g',
+                Color::Green,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+            )
+            .unwrap();
 
         // Vec contains NPC
         assert_eq!(game.world.npcs.len(), 1);
@@ -398,13 +398,15 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let npc_id = game.spawn_npc(
-            "Orc".into(),
-            Point { x: 50, y: 7 },
-            'o',
-            Color::LightGreen,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-        ).unwrap();
+        let npc_id = game
+            .spawn_npc(
+                "Orc".into(),
+                Point { x: 50, y: 7 },
+                'o',
+                Color::LightGreen,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+            )
+            .unwrap();
 
         match game.get_entity_by_id(npc_id) {
             Some(EntityRef::Npc(npc)) => assert_eq!(npc.name(), "Orc"),
@@ -417,13 +419,15 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let item_id = game.spawn_item(
-            "Key".into(),
-            Point::new(50, 7),
-            '?',
-            Color::White,
-            GameItem::Key { name: "Key".into() }
-        ).unwrap();
+        let item_id = game
+            .spawn_item(
+                "Key".into(),
+                Point::new(50, 7),
+                '?',
+                Color::White,
+                GameItem::Key { name: "Key".into() },
+            )
+            .unwrap();
 
         match game.get_entity_by_id(item_id) {
             Some(EntityRef::Item(item)) => assert_eq!(item.name(), "Key"),
@@ -437,13 +441,15 @@ mod tests {
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
         let pos = Point { x: 50, y: 7 };
 
-        let id = game.spawn::<Npc>(
-            "Skeleton".into(),
-            pos,
-            's',
-            Color::White,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-        ).unwrap();
+        let id = game
+            .spawn::<Npc>(
+                "Skeleton".into(),
+                pos,
+                's',
+                Color::White,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+            )
+            .unwrap();
 
         assert_eq!(game.get_entity_at(pos), Some(id));
     }
@@ -453,21 +459,25 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game.spawn_npc(
-            "A".into(),
-            Point::new(50, 7),
-            'a',
-            Color::White,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-        ).unwrap();
+        let id1 = game
+            .spawn_npc(
+                "A".into(),
+                Point::new(50, 7),
+                'a',
+                Color::White,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+            )
+            .unwrap();
 
-        let id2 = game.spawn_npc(
-            "B".into(),
-            Point::new(51, 7),
-            'b',
-            Color::White,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-        ).unwrap();
+        let id2 = game
+            .spawn_npc(
+                "B".into(),
+                Point::new(51, 7),
+                'b',
+                Color::White,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+            )
+            .unwrap();
 
         // Remove the first NPC
         game.despawn(id1);
@@ -486,13 +496,15 @@ mod tests {
 
         let pos = Point::new(50, 7);
 
-        let id = game.spawn_npc(
-            "Ghost".into(),
-            pos,
-            'G',
-            Color::Cyan,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-        ).unwrap();
+        let id = game
+            .spawn_npc(
+                "Ghost".into(),
+                pos,
+                'G',
+                Color::Cyan,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+            )
+            .unwrap();
 
         assert_eq!(game.get_entity_at(pos), Some(id));
 
@@ -515,11 +527,25 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game.spawn_npc("A".into(), Point::new(50, 7), 'a', Color::White,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 }).unwrap();
+        let id1 = game
+            .spawn_npc(
+                "A".into(),
+                Point::new(50, 7),
+                'a',
+                Color::White,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+            )
+            .unwrap();
 
-        let id2 = game.spawn_npc("B".into(), Point::new(51, 7), 'b', Color::White,
-            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 }).unwrap();
+        let id2 = game
+            .spawn_npc(
+                "B".into(),
+                Point::new(51, 7),
+                'b',
+                Color::White,
+                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+            )
+            .unwrap();
 
         assert_eq!(game.world.npc_index.get(&id1), Some(&0));
         assert_eq!(game.world.npc_index.get(&id2), Some(&1));

@@ -4,7 +4,10 @@ use std::collections::HashMap;
 
 use ratatui::style::Color;
 
-use crate::core::game::{EntityId, GameState, ItemSprite, Npc};
+use crate::core::{
+    game::{EntityId, GameState, ItemSprite, Npc},
+    player::PlayerCharacter,
+};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -105,16 +108,21 @@ impl Room {
     }
 
     pub fn center(&self) -> Point {
-        Point {
-            x: self.origin.x + self.width / 2,
-            y: self.origin.y + self.height / 2,
-        }
+        Point { x: self.origin.x + self.width / 2, y: self.origin.y + self.height / 2 }
     }
 
-    pub fn left(&self) -> usize { self.origin.x }
-    pub fn right(&self) -> usize { self.origin.x + self.width - 1 }
-    pub fn top(&self) -> usize { self.origin.y }
-    pub fn bottom(&self) -> usize { self.origin.y + self.height - 1 }
+    pub fn left(&self) -> usize {
+        self.origin.x
+    }
+    pub fn right(&self) -> usize {
+        self.origin.x + self.width - 1
+    }
+    pub fn top(&self) -> usize {
+        self.origin.y
+    }
+    pub fn bottom(&self) -> usize {
+        self.origin.y + self.height - 1
+    }
 }
 
 // ----------------------------------------------
@@ -128,7 +136,7 @@ pub struct World {
     pub npcs: Vec<Npc>,
     pub npc_index: HashMap<EntityId, usize>,
     pub items: Vec<ItemSprite>,
-    pub item_index: HashMap<EntityId, usize>
+    pub item_index: HashMap<EntityId, usize>,
 }
 
 impl World {
@@ -211,20 +219,29 @@ impl World {
         let w = room.width;
         let h = room.height;
 
-        for y in oy + 1 .. oy + h - 1 {
-            for x in ox + 1 .. ox + w - 1 {
+        for y in oy + 1..oy + h - 1 {
+            for x in ox + 1..ox + w - 1 {
                 self.get_tile_mut(x, y).tile_type = TileType::Floor;
             }
         }
 
-        for y in oy .. oy + h {
+        for y in oy..oy + h {
             self.get_tile_mut(ox, y).tile_type = TileType::Wall;
             self.get_tile_mut(ox + w - 1, y).tile_type = TileType::Wall;
         }
 
-        for x in ox .. ox + w {
+        for x in ox..ox + w {
             self.get_tile_mut(x, oy).tile_type = TileType::Wall;
             self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
+        }
+    }
+    pub fn move_entity(&mut self, entity: &mut PlayerCharacter, dx: i32, dy: i32) {
+        let new_x = entity.base.pos.x as isize + dx as isize;
+        let new_y = entity.base.pos.y as isize + dy as isize;
+
+        if self.is_in_bounds(new_x, new_y) {
+            entity.base.pos.x = new_x as usize;
+            entity.base.pos.y = new_y as usize;
         }
     }
 }
