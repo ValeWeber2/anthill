@@ -211,84 +211,20 @@ impl World {
         let w = room.width;
         let h = room.height;
 
-        // fill interior with floor
-        for y in oy+1 .. oy + h - 1 {
-            for x in ox+1 .. ox + w - 1 {
+        for y in oy + 1 .. oy + h - 1 {
+            for x in ox + 1 .. ox + w - 1 {
                 self.get_tile_mut(x, y).tile_type = TileType::Floor;
             }
         }
 
-        // vertical walls
         for y in oy .. oy + h {
             self.get_tile_mut(ox, y).tile_type = TileType::Wall;
             self.get_tile_mut(ox + w - 1, y).tile_type = TileType::Wall;
         }
 
-        // horizontal walls
         for x in ox .. ox + w {
             self.get_tile_mut(x, oy).tile_type = TileType::Wall;
             self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
         }
     }
-
-    // create an L-shaped corridor between two rooms and add doors
-    pub fn connect_rooms(&mut self, room1: &Room, room2: &Room) {
-        self.carve_h_corridor(room1.center().x, room2.center().x, room1.center().y);
-        self.carve_v_corridor(room1.center().y, room2.center().y, room2.center().x);
-        
-        self.place_doors_between(room1, room2);
-    }
-
-    pub fn carve_h_corridor(&mut self, x1: usize, x2: usize, y: usize) {
-        let (start, end) = if x1 < x2 { (x1, x2) } else { (x2, x1) };
-        for x in start..=end {
-            self.get_tile_mut(x, y).tile_type = TileType::Floor;
-        }
-    }
-
-    pub fn carve_v_corridor(&mut self, y1: usize, y2: usize, x: usize) {
-        let (start, end) = if y1 < y2 { (y1, y2) } else { (y2, y1) };
-        for y in start..=end {
-            self.get_tile_mut(x, y).tile_type = TileType::Floor;
-        }
-    }
-
-    pub fn place_doors_between(&mut self, room1: &Room, room2: &Room) {
-        let c1 = room1.center();
-        let c2 = room2.center();
-
-        // horizontal corridor entry points
-        let hx1 = if c1.x < c2.x { room1.right() } else { room1.left() };
-        let hx2 = if c1.x < c2.x { room2.left() } else { room2.right() };
-
-        // vertical corridor entry points
-        let vy1 = if c1.y < c2.y { room1.bottom() } else { room1.top() };
-        let vy2 = if c1.y < c2.y { room2.top() } else { room2.bottom() };
-
-        // try placing doors
-        self.try_place_door(hx1, c1.y);
-        self.try_place_door(hx2, c1.y);
-        self.try_place_door(c2.x, vy1);
-        self.try_place_door(c2.x, vy2);
-    }
-
-    // places a door on a wall tile if it has two opposite walkable neighbours
-    pub fn try_place_door(&mut self, x: usize, y: usize) {
-        if self.get_tile(x, y).tile_type != TileType::Wall {
-            return;
-        }
-
-        let walkable_left  = self.get_tile(x - 1, y).tile_type.is_walkable();
-        let walkable_right = self.get_tile(x + 1, y).tile_type.is_walkable();
-        let walkable_up    = self.get_tile(x, y - 1).tile_type.is_walkable();
-        let walkable_down  = self.get_tile(x, y + 1).tile_type.is_walkable();
-
-        let horizontal = walkable_left && walkable_right;
-        let vertical   = walkable_up && walkable_down;
-
-        if horizontal || vertical {
-            self.get_tile_mut(x, y).tile_type = TileType::Door { open: false };
-        }
-    }
-
 }
