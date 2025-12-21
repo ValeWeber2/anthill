@@ -8,7 +8,7 @@ use std::io;
 
 use crate::{
     core::game::{BaseStats, GameItem, GameState, NpcStats},
-    world::worldspace::Point,
+    world::worldspace::{Point, Room},
 };
 
 fn main() -> io::Result<()> {
@@ -27,26 +27,33 @@ impl App {
     fn new() -> Self {
         let mut game = GameState::new();
 
-        game.world.add_wall_border();
+        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        // Example: Spawn NPCs after game state is initialized
-        for i in 1..10 {
-            let _ = game.spawn_npc(
-                format!("Goblin {}", i),
-                Point::new(i, 5),
-                'g',
-                Color::Green,
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-            );
-        }
-
+        // Example: Spawn NPC after game state is initialized
+        let _ = game.spawn_npc(
+            format!("Goblin"),
+            Point::new(50, 10),
+            'g',
+            Color::Green,
+            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+        );
+        
         // Example item
         let _ = game.spawn_item(
             "Rusty Sword".into(),
-            Point::new(9, 5),
+            Point::new(50, 11),
             '/',
             Color::White,
             GameItem::Weapon { name: "Rusty Sword".into(), damage: 5 },
+        );
+
+        // Example: Spawning on a Wall Tile
+        let _ = game.spawn_npc(
+            "Funny Frog".into(),
+            Point::new(35, 7),
+            'f',
+            Color::LightGreen,
+            NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
 
         Self { should_quit: false, game }
@@ -81,7 +88,7 @@ impl App {
             KeyCode::Char('a') => player.move_by(-1, 0, world),
             KeyCode::Char('d') => player.move_by(1, 0, world),
             KeyCode::Char('p') => self.game.log.messages.push(format!(
-                "Player with ID {} at position x: {}, y: {}",
+                "Player with ID: {} at position x: {}, y: {}",
                 self.game.player.character.base.id,
                 self.game.player.character.base.pos.x,
                 self.game.player.character.base.pos.y

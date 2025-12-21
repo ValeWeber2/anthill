@@ -14,6 +14,11 @@ impl Player {
     pub fn new(id: EntityId) -> Self {
         Self { name: "Hero".to_string(), character: PlayerCharacter::new(id) }
     }
+
+    // for testing, don't insert default player into the world!
+    pub fn default() -> Self {
+        Self { name: "Hero".to_string(), character: PlayerCharacter::default() }
+    }
 }
 
 pub struct PlayerCharacter {
@@ -52,6 +57,12 @@ impl PlayerCharacter {
     }
 }
 
+impl Default for PlayerCharacter {
+    fn default() -> Self {
+        Self::new(999999) // placeholder, never inserted inro world
+    }
+}
+
 pub struct PcStats {
     pub base: BaseStats,
     pub strength: u8,
@@ -59,6 +70,10 @@ pub struct PcStats {
 }
 
 impl Entity for PlayerCharacter {
+    fn name(&self) -> &str {
+        &self.base.name
+    }
+
     fn id(&self) -> EntityId {
         self.base.id
     }
