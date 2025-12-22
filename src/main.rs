@@ -36,7 +36,7 @@ impl App {
             "Goblin".into(),
             Point::new(50, 10),
             'g',
-            Color::Green,
+            Color::Green.into(),
             NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
         );
 
@@ -45,7 +45,7 @@ impl App {
             "Rusty Sword".into(),
             Point::new(50, 11),
             '/',
-            Color::White,
+            Color::White.into(),
             GameItem::Weapon { name: "Rusty Sword".into(), damage: 5 },
         );
 
@@ -54,7 +54,7 @@ impl App {
             "Funny Frog".into(),
             Point::new(35, 7),
             'f',
-            Color::LightGreen,
+            Color::LightGreen.into(),
             NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
 

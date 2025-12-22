@@ -3,9 +3,10 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
+use ratatui::style::Style;
+
 use crate::core::player::Player;
 use crate::world::worldspace::{Drawable, Point, World};
-use ratatui::style::Color;
 
 // ----------------------------------------------
 //                Game State Struct
@@ -51,7 +52,7 @@ impl GameState {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         extra: T::Extra,
     ) -> Result<EntityId, SpawningError> {
         if !self.world.is_available(pos) {
@@ -61,7 +62,7 @@ impl GameState {
         }
 
         let id = self.next_id();
-        let entity = T::new(id, name, pos, glyph, color, extra);
+        let entity = T::new(id, name, pos, glyph, style, extra);
 
         self.log.messages.push(format!(
             "Spawned {} (ID: {}) at position ({}, {})",
@@ -83,10 +84,10 @@ impl GameState {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         stats: NpcStats,
     ) -> Result<EntityId, SpawningError> {
-        self.spawn::<Npc>(name, pos, glyph, color, stats)
+        self.spawn::<Npc>(name, pos, glyph, style, stats)
     }
 
     pub fn spawn_item(
@@ -94,10 +95,10 @@ impl GameState {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         item_type: GameItem,
     ) -> Result<EntityId, SpawningError> {
-        self.spawn::<ItemSprite>(name, pos, glyph, color, item_type)
+        self.spawn::<ItemSprite>(name, pos, glyph, style, item_type)
     }
 
     pub fn next_id(&mut self) -> EntityId {
@@ -191,7 +192,7 @@ pub trait Spawnable {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         extra: Self::Extra,
     ) -> Self;
 
@@ -213,15 +214,15 @@ pub struct EntityBase {
     pub name: String,
     pub pos: Point,
     pub glyph: char,
-    pub color: Color, // from ratatui
+    pub style: Style, // from ratatui
 }
 
 impl Drawable for EntityBase {
     fn glyph(&self) -> char {
         self.glyph
     }
-    fn color(&self) -> Color {
-        self.color
+    fn style(&self) -> Style {
+        self.style
     }
 }
 
@@ -261,10 +262,10 @@ impl Spawnable for Npc {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         stats: NpcStats,
     ) -> Self {
-        Npc::new(id, name, pos, glyph, color, stats)
+        Npc::new(id, name, pos, glyph, style, stats)
     }
 
     fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
@@ -282,10 +283,10 @@ impl Npc {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         stats: NpcStats,
     ) -> Self {
-        Self { base: EntityBase { id, name, pos, glyph, color }, stats }
+        Self { base: EntityBase { id, name, pos, glyph, style }, stats }
     }
 }
 
@@ -321,10 +322,10 @@ impl Spawnable for ItemSprite {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         item: GameItem,
     ) -> Self {
-        ItemSprite::new(id, name, pos, glyph, color, item)
+        ItemSprite::new(id, name, pos, glyph, style, item)
     }
 
     fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
@@ -342,10 +343,10 @@ impl ItemSprite {
         name: String,
         pos: Point,
         glyph: char,
-        color: Color,
+        style: Style,
         item_type: GameItem,
     ) -> Self {
-        Self { base: EntityBase { id, name, pos, glyph, color }, item_type }
+        Self { base: EntityBase { id, name, pos, glyph, style }, item_type }
     }
 }
 
@@ -366,6 +367,8 @@ impl Display for SpawningError {
 
 #[cfg(test)]
 mod tests {
+    use ratatui::style::Color;
+
     use crate::world::worldspace::Room;
 
     use super::*;
@@ -380,7 +383,7 @@ mod tests {
                 "Goblin".into(),
                 Point::new(50, 7),
                 'g',
-                Color::Green,
+                Color::Green.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
             )
             .unwrap();
@@ -403,7 +406,7 @@ mod tests {
                 "Orc".into(),
                 Point { x: 50, y: 7 },
                 'o',
-                Color::LightGreen,
+                Color::LightGreen.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
             )
             .unwrap();
@@ -424,7 +427,7 @@ mod tests {
                 "Key".into(),
                 Point::new(50, 7),
                 '?',
-                Color::White,
+                Color::White.into(),
                 GameItem::Key { name: "Key".into() },
             )
             .unwrap();
@@ -446,7 +449,7 @@ mod tests {
                 "Skeleton".into(),
                 pos,
                 's',
-                Color::White,
+                Color::White.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
             )
             .unwrap();
@@ -464,7 +467,7 @@ mod tests {
                 "A".into(),
                 Point::new(50, 7),
                 'a',
-                Color::White,
+                Color::White.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
             )
             .unwrap();
@@ -474,7 +477,7 @@ mod tests {
                 "B".into(),
                 Point::new(51, 7),
                 'b',
-                Color::White,
+                Color::White.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
             )
             .unwrap();
@@ -501,7 +504,7 @@ mod tests {
                 "Ghost".into(),
                 pos,
                 'G',
-                Color::Cyan,
+                Color::Cyan.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
             )
             .unwrap();
@@ -532,7 +535,7 @@ mod tests {
                 "A".into(),
                 Point::new(50, 7),
                 'a',
-                Color::White,
+                Color::White.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
             )
             .unwrap();
@@ -542,7 +545,7 @@ mod tests {
                 "B".into(),
                 Point::new(51, 7),
                 'b',
-                Color::White,
+                Color::White.into(),
                 NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
             )
             .unwrap();

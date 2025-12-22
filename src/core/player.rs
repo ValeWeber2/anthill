@@ -34,7 +34,7 @@ impl PlayerCharacter {
                 name: "Hero".to_string(),
                 pos: Point::new(0, 0),
                 glyph: '@',
-                color: Color::Yellow,
+                style: Color::Yellow.into(),
             },
             stats: PcStats {
                 base: BaseStats { hp_max: 100, hp_current: 100 },
