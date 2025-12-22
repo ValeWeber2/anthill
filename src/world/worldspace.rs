@@ -6,7 +6,9 @@ use ratatui::style::Style;
 
 use crate::{
     core::{
-        game::{EntityId, GameState, ItemSprite, Npc},
+        entity_logic::{EntityId, Npc},
+        game::GameState,
+        game_items::GameItemSprite,
         player::PlayerCharacter,
     },
     world::tiles::{Tile, TileType},
@@ -80,7 +82,7 @@ pub struct World {
     pub tiles: [Tile; WORLD_WIDTH * WORLD_HEIGHT], // Grid is 100 wide and 25 high.
     pub npcs: Vec<Npc>,
     pub npc_index: HashMap<EntityId, usize>,
-    pub items: Vec<ItemSprite>,
+    pub item_sprites: Vec<GameItemSprite>,
     pub item_index: HashMap<EntityId, usize>,
 }
 
@@ -92,7 +94,7 @@ impl World {
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
             npcs: Vec::new(),
             npc_index: HashMap::new(),
-            items: Vec::new(),
+            item_sprites: Vec::new(),
             item_index: HashMap::new(),
         }
     }
@@ -105,7 +107,7 @@ impl World {
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
             npcs: Vec::new(),
             npc_index: HashMap::new(),
-            items: Vec::new(),
+            item_sprites: Vec::new(),
             item_index: HashMap::new(),
         }
     }
@@ -134,7 +136,7 @@ impl World {
     pub fn is_available(&self, pos: Point) -> bool {
         self.is_in_bounds(pos.x as isize, pos.y as isize)
             && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.items.iter().all(|item| item.base.pos != pos)
+            && self.item_sprites.iter().all(|item| item.base.pos != pos)
             && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
     }
 

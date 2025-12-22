@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
-use crate::core::game::{BaseStats, Entity, EntityBase, EntityId, GameItem};
+use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId};
+use crate::core::game_items::GameItemId;
 use crate::world::worldspace::Point;
 use ratatui::style::Color;
 
@@ -23,7 +24,7 @@ impl Player {
 pub struct PlayerCharacter {
     pub base: EntityBase,
     pub stats: PcStats,
-    pub inventory: Vec<GameItem>,
+    pub inventory: Vec<GameItemId>,
 }
 
 impl PlayerCharacter {

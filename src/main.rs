@@ -1,4 +1,5 @@
 mod core;
+mod data;
 mod render;
 mod world;
 
@@ -7,7 +8,10 @@ use ratatui::{DefaultTerminal, style::Color};
 use std::io;
 
 use crate::{
-    core::game::{BaseStats, GameItem, GameState, NpcStats},
+    core::{
+        entity_logic::{BaseStats, NpcStats},
+        game::GameState,
+    },
     render::ui::UserInterface,
     world::worldspace::{Point, Room},
 };
@@ -40,14 +44,15 @@ impl App {
             NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
         );
 
-        // Example item
-        let _ = game.spawn_item(
-            "Rusty Sword".into(),
-            Point::new(50, 11),
-            '/',
-            Color::White.into(),
-            GameItem::Weapon { name: "Rusty Sword".into(), damage: 5 },
-        );
+        // Example: item in world
+        let example_sword_def_id: &'static str = "weapon_sword_rusty";
+        let example_sword_id = game.register_item(example_sword_def_id);
+        let _ = game.spawn_item(example_sword_id, Point::new(50, 11));
+
+        // Example: item in inventory
+        let example_food_dev_id: &'static str = "food_cake";
+        let example_food_id = game.register_item(example_food_dev_id);
+        let _ = game.add_item_to_inv(example_food_id);
 
         // Example: Spawning on a Wall Tile
         let _ = game.spawn_npc(
@@ -98,6 +103,19 @@ impl App {
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
+            KeyCode::Char('o') => {
+                for (item_id, item) in self.game.items.iter() {
+                    self.game
+                        .log
+                        .messages
+                        .push(format!("Item ID: {} DEF: {}", item_id, item.def_id,))
+                }
+            }
+            KeyCode::Char('i') => {
+                for item in self.game.player.character.inventory.iter() {
+                    self.game.log.messages.push(format!("INV: Item: {}", item,))
+                }
+            }
             _ => {}
         }
     }
