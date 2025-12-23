@@ -12,7 +12,7 @@ use crate::{
         entity_logic::{BaseStats, NpcStats},
         game::GameState,
     },
-    render::ui::UserInterface,
+    render::{menu_display::MenuMode, ui::UserInterface},
     world::worldspace::{Point, Room},
 };
 
@@ -54,6 +54,10 @@ impl App {
         let example_food_dev_id: &'static str = "food_cake";
         let example_food_id = game.register_item(example_food_dev_id);
         let _ = game.add_item_to_inv(example_food_id);
+
+        let example_armor_dev_id: &'static str = "armor_leather";
+        let example_armor_id = game.register_item(example_armor_dev_id);
+        let _ = game.add_item_to_inv(example_armor_id);
 
         // Example: Spawning on a Wall Tile
         let _ = game.spawn_npc(
@@ -127,9 +131,13 @@ impl App {
                 }
             }
             KeyCode::Char('i') => {
-                for item in self.game.player.character.inventory.iter() {
-                    self.game.log.messages.push(format!("INV: Item: {}", item,))
+                match self.ui.menu.mode {
+                    MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
+                    MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
                 }
+                // for item in self.game.player.character.inventory.iter() {
+                //     self.game.log.messages.push(format!("INV: Item: {}", item,))
+                // }
             }
             _ => {}
         }

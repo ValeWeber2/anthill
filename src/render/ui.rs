@@ -7,10 +7,7 @@ use ratatui::{
 
 use crate::{
     App, KeyboardFocus,
-    render::{
-        menu_display::{Menu, MenuData},
-        world_display::WorldDisplay,
-    },
+    render::{menu_display::Menu, world_display::WorldDisplay},
 };
 
 use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
@@ -79,14 +76,7 @@ impl Widget for &App {
         let block_menu_inner = block_menu.inner(area_menu);
         block_menu.render(area_menu, buf);
 
-        self.ui.menu.render(
-            MenuData {
-                log: &self.game.log.messages,
-                inventory: &[], // TODO Inventory
-            },
-            block_menu_inner,
-            buf,
-        );
+        self.ui.menu.render(&self.game, block_menu_inner, buf);
     }
 }
 

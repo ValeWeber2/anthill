@@ -5,14 +5,11 @@ use ratatui::{
     widgets::{Paragraph, Wrap},
 };
 
+use crate::core::game::GameState;
+
 pub enum MenuMode {
     Log,
     Inventory,
-}
-
-pub struct MenuData<'a> {
-    pub log: &'a [String],
-    pub inventory: &'a [String],
 }
 
 pub struct Menu {
@@ -23,10 +20,10 @@ impl Menu {
     pub fn new() -> Self {
         Self { mode: MenuMode::Log }
     }
-    pub fn render(&self, data: MenuData<'_>, rect: Rect, buf: &mut Buffer) {
+    pub fn render(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         match self.mode {
-            MenuMode::Log => self.render_log(data.log, rect, buf),
-            MenuMode::Inventory => self.render_inventory(data.inventory, rect, buf),
+            MenuMode::Log => self.render_log(&game_state.log.messages, rect, buf),
+            MenuMode::Inventory => self.render_inventory(game_state, rect, buf),
         }
     }
 
@@ -41,13 +38,42 @@ impl Menu {
         paragraph.render(rect, buf);
     }
 
-    pub fn render_inventory(&self, _inventory: &[String], rect: Rect, buf: &mut Buffer) {
-        let height = rect.height as usize;
-        let inventory_mock = ["Apple", "Sword"];
-        let start = inventory_mock.len().saturating_sub(height);
+    pub fn render_inventory(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
+        let inventory = &game_state.player.character.inventory;
 
-        let lines: Vec<Line> =
-            inventory_mock[start..].iter().map(|item| Line::raw(item.to_string())).collect();
+        let height = rect.height as usize;
+        let start = inventory.len().saturating_sub(height);
+
+        let item_list_def_ids: Vec<&'static str> = inventory
+            .iter()
+            .map(|item_id| {
+                if let Some(game_item) = game_state.get_item_by_id(*item_id) {
+                    game_item.def_id
+                } else {
+                    "Unregistered Item"
+                }
+            })
+            .collect();
+
+        let item_list_names: Vec<&'static str> = item_list_def_ids
+            .iter()
+            .map(|item_id| {
+                if let Some(item_def) = game_state.get_item_def_by_id(item_id) {
+                    item_def.name
+                } else {
+                    "Unknown Item"
+                }
+            })
+            .collect();
+
+        let lines: Vec<Line> = item_list_names[start..]
+            .iter()
+            .enumerate()
+            .map(|(i, item)| {
+                let list_letter = (b'a' + i as u8) as char;
+                Line::raw(format!("{list_letter} - {}", item))
+            })
+            .collect();
 
         let paragraph = Paragraph::new(Text::from(lines)).wrap(Wrap { trim: true });
         paragraph.render(rect, buf);
