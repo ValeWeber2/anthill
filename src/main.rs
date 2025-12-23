@@ -25,6 +25,7 @@ fn main() -> io::Result<()> {
 
 struct App {
     should_quit: bool,
+    keyboard_focus: KeyboardFocus,
     game: GameState,
     ui: UserInterface,
 }
@@ -63,7 +64,12 @@ impl App {
             NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
 
-        Self { should_quit: false, game, ui: UserInterface::new() }
+        Self {
+            should_quit: false,
+            keyboard_focus: KeyboardFocus::FocusWorld,
+            game,
+            ui: UserInterface::new(),
+        }
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
@@ -85,8 +91,17 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        match self.keyboard_focus {
+            KeyboardFocus::FocusWorld => self.handle_world_key_event(key_event),
+            KeyboardFocus::FocusMenu => self.handle_menu_key_event(key_event),
+        }
+    }
+
+    fn handle_world_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char('q') => self.should_quit = true,
+            // It is currently allowed to manually switch focus. This will later be handled by the game directly.
+            KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
             KeyCode::Char('w') => {
                 self.game.world.move_entity(&mut self.game.player.character, 0, -1)
             }
@@ -117,6 +132,31 @@ impl App {
                 }
             }
             _ => {}
+        }
+    }
+
+    fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
+        match key_event.code {
+            KeyCode::Char('q') => self.should_quit = true,
+            // It is currently allowed to manually switch focus. This will later be handled by the game directly.
+            KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
+            _ => {}
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, Default)]
+pub enum KeyboardFocus {
+    #[default]
+    FocusWorld,
+    FocusMenu,
+}
+
+impl KeyboardFocus {
+    pub fn cycle(self) -> Self {
+        match self {
+            Self::FocusWorld => Self::FocusMenu,
+            Self::FocusMenu => Self::FocusWorld,
         }
     }
 }

@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 use crate::{
-    App,
+    App, KeyboardFocus,
     render::{
         menu_display::{Menu, MenuData},
         world_display::WorldDisplay,
@@ -42,7 +42,14 @@ impl Widget for &App {
         block_character.render(area_character, buf);
 
         // World
-        let block_world = Block::default().title("World").borders(Borders::ALL);
+        let block_world = Block::default()
+            .title("World")
+            .border_style(if self.keyboard_focus == KeyboardFocus::FocusWorld {
+                Style::default().fg(Color::LightBlue)
+            } else {
+                Style::default()
+            })
+            .borders(Borders::ALL);
         block_world.render(area_world, buf);
 
         // World Space
@@ -61,7 +68,14 @@ impl Widget for &App {
         self.ui.world_display.render_player(&self.game.player.character, block_world_inner, buf);
 
         // Menu (Log, menus, tables)
-        let block_menu = Block::default().title("Menu").borders(Borders::ALL);
+        let block_menu = Block::default()
+            .title("Menu")
+            .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
+                Style::default().fg(Color::LightBlue)
+            } else {
+                Style::default()
+            })
+            .borders(Borders::ALL);
         let block_menu_inner = block_menu.inner(area_menu);
         block_menu.render(area_menu, buf);
 
