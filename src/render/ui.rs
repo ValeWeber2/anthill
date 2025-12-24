@@ -5,12 +5,11 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
+use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
 use crate::{
     App, KeyboardFocus,
-    render::{menu_display::Menu, world_display::WorldDisplay},
+    render::{menu_display::Menu, modal_display::ModalInterface, world_display::WorldDisplay},
 };
-
-use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -77,16 +76,22 @@ impl Widget for &App {
         block_menu.render(area_menu, buf);
 
         self.ui.menu.render(&self.game, block_menu_inner, buf);
+
+        // Modal
+        if let Some(modal) = &self.ui.modal {
+            modal.render(area, buf);
+        }
     }
 }
 
 pub struct UserInterface {
     pub menu: Menu,
     pub world_display: WorldDisplay,
+    pub modal: Option<ModalInterface>,
 }
 
 impl UserInterface {
     pub fn new() -> Self {
-        Self { menu: Menu::new(), world_display: WorldDisplay {} }
+        Self { menu: Menu::new(), world_display: WorldDisplay {}, modal: None }
     }
 }

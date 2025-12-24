@@ -12,7 +12,7 @@ use crate::{
         entity_logic::{BaseStats, NpcStats},
         game::GameState,
     },
-    render::{menu_display::MenuMode, ui::UserInterface},
+    render::{menu_display::MenuMode, modal_display::ModalInterface, ui::UserInterface},
     world::worldspace::{Point, Room},
 };
 
@@ -95,6 +95,10 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        if self.ui.modal.is_some() {
+            self.handle_modal_key_event(key_event);
+            return;
+        }
         match self.keyboard_focus {
             KeyboardFocus::FocusWorld => self.handle_world_key_event(key_event),
             KeyboardFocus::FocusMenu => self.handle_menu_key_event(key_event),
@@ -103,7 +107,7 @@ impl App {
 
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Char('q') => self.should_quit = true,
+            KeyCode::Char('q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
             // It is currently allowed to manually switch focus. This will later be handled by the game directly.
             KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
             KeyCode::Char('w') => {
@@ -117,6 +121,9 @@ impl App {
             }
             KeyCode::Char('d') => {
                 self.game.world.move_entity(&mut self.game.player.character, 1, 0)
+            }
+            KeyCode::Char(':') => {
+                self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })
             }
             KeyCode::Char('p') => self.game.log.messages.push(format!(
                 "Player at position x: {}, y: {}",
@@ -149,6 +156,29 @@ impl App {
             // It is currently allowed to manually switch focus. This will later be handled by the game directly.
             KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
             _ => {}
+        }
+    }
+
+    fn handle_modal_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(modal) = &mut self.ui.modal {
+            match modal {
+                ModalInterface::ConfirmQuit => match key_event.code {
+                    KeyCode::Char('q') => self.should_quit = true,
+                    _ => self.ui.modal = None,
+                },
+                ModalInterface::CommandInput { buffer } => match key_event.code {
+                    KeyCode::Char(c) => buffer.push(c),
+                    KeyCode::Backspace => {
+                        buffer.pop();
+                    }
+                    KeyCode::Esc => self.ui.modal = None,
+                    KeyCode::Enter => {
+                        self.ui.modal = None;
+                        todo!("Implement a command parser (e.g. quit)");
+                    }
+                    _ => {}
+                },
+            }
         }
     }
 }
