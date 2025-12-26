@@ -99,19 +99,6 @@ impl World {
         }
     }
 
-    // helper constructor to create a placeholder world
-    pub fn default() -> Self {
-        Self {
-            width: WORLD_WIDTH,
-            height: WORLD_HEIGHT,
-            tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_index: HashMap::new(),
-        }
-    }
-
     pub fn index(&self, x: usize, y: usize) -> usize {
         y * self.width + x
     }
@@ -189,6 +176,21 @@ impl World {
         if self.is_in_bounds(new_x, new_y) {
             entity.base.pos.x = new_x as usize;
             entity.base.pos.y = new_y as usize;
+        }
+    }
+}
+
+impl Default for World {
+    /// helper constructor to create a placeholder world
+    fn default() -> Self {
+        Self {
+            width: WORLD_WIDTH,
+            height: WORLD_HEIGHT,
+            tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
+            npcs: Vec::new(),
+            npc_index: HashMap::new(),
+            item_sprites: Vec::new(),
+            item_index: HashMap::new(),
         }
     }
 }

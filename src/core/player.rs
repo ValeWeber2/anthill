@@ -14,9 +14,11 @@ impl Player {
     pub fn new(id: EntityId) -> Self {
         Self { name: "Hero".to_string(), character: PlayerCharacter::new(id) }
     }
+}
 
+impl Default for Player {
     // for testing, don't insert default player into the world!
-    pub fn default() -> Self {
+    fn default() -> Self {
         Self { name: "Hero".to_string(), character: PlayerCharacter::default() }
     }
 }

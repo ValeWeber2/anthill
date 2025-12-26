@@ -37,9 +37,11 @@ impl GameState {
 
         state
     }
+}
 
+impl Default for GameState {
     // placeholder, only for tests
-    pub fn default() -> Self {
+    fn default() -> Self {
         Self {
             world: World::default(),
             player: Player::default(),
@@ -57,11 +59,10 @@ impl GameState {
 // ----------------------------------------------
 pub struct Log {
     pub messages: Vec<String>,
-    pub scroll: u16,
 }
 
 impl Log {
     pub fn new() -> Self {
-        Self { messages: Vec::new(), scroll: 0 }
+        Self { messages: Vec::new() }
     }
 }
