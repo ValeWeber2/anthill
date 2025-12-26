@@ -1,6 +1,7 @@
 mod core;
 mod data;
 mod render;
+mod util;
 mod world;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
@@ -160,24 +161,39 @@ impl App {
     }
 
     fn handle_modal_key_event(&mut self, key_event: KeyEvent) {
-        if let Some(modal) = &mut self.ui.modal {
+        let modal_action = if let Some(modal) = &mut self.ui.modal {
             match modal {
                 ModalInterface::ConfirmQuit => match key_event.code {
-                    KeyCode::Char('q') => self.should_quit = true,
-                    _ => self.ui.modal = None,
+                    KeyCode::Char('q') => {
+                        self.should_quit = true;
+                        ModalAction::Idle
+                    }
+                    _ => ModalAction::CloseModal,
                 },
                 ModalInterface::CommandInput { buffer } => match key_event.code {
-                    KeyCode::Char(c) => buffer.push(c),
+                    KeyCode::Char(c) => {
+                        buffer.push(c);
+                        ModalAction::Idle
+                    }
                     KeyCode::Backspace => {
                         buffer.pop();
+                        ModalAction::Idle
                     }
-                    KeyCode::Esc => self.ui.modal = None,
-                    KeyCode::Enter => {
-                        self.ui.modal = None;
-                        todo!("Implement a command parser (e.g. quit)");
-                    }
-                    _ => {}
+                    KeyCode::Esc => ModalAction::CloseModal,
+                    KeyCode::Enter => ModalAction::RunCommand(buffer.to_string()),
+                    _ => ModalAction::Idle,
                 },
+            }
+        } else {
+            return;
+        };
+
+        match modal_action {
+            ModalAction::Idle => {}
+            ModalAction::CloseModal => self.ui.modal = None,
+            ModalAction::RunCommand(command) => {
+                self.run_command(command);
+                self.ui.modal = None;
             }
         }
     }
@@ -197,4 +213,10 @@ impl KeyboardFocus {
             Self::FocusMenu => Self::FocusWorld,
         }
     }
+}
+
+pub enum ModalAction {
+    Idle,
+    CloseModal,
+    RunCommand(String),
 }
