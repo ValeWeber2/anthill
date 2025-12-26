@@ -65,4 +65,12 @@ impl Log {
     pub fn new() -> Self {
         Self { messages: Vec::new() }
     }
+
+    pub fn print(&mut self, message: String) {
+        let lines: Vec<&str> = message.split("\n").collect();
+
+        for line in lines {
+            self.messages.push(line.to_string());
+        }
+    }
 }

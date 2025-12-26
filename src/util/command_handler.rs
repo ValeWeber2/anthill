@@ -75,7 +75,7 @@ impl App {
             }
             Command::Help => {
                 for command in Command::iter() {
-                    self.game.log.messages.push(format!(
+                    self.game.log.print(format!(
                         "{:<12} - {}",
                         command.name(),
                         command.description(),
@@ -93,18 +93,13 @@ impl App {
             Command::MaxEquip => todo!("Implement once items are finished"),
 
             Command::PlayerInfo => {
-                self.game
-                    .log
-                    .messages
-                    .push(format!("Character \"{}\"", self.game.player.character.base.name,));
-                self.game.log.messages.push(format!(
-                    "-  HP: {}/{}",
+                self.game.log.print(format!(
+                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}",
+                    self.game.player.character.base.name,
                     self.game.player.character.stats.base.hp_current,
                     self.game.player.character.stats.base.hp_max,
-                ));
-                self.game.log.messages.push(format!(
-                    "-  Position: x: {}, y: {}",
-                    self.game.player.character.base.pos.x, self.game.player.character.base.pos.y,
+                    self.game.player.character.base.pos.x,
+                    self.game.player.character.base.pos.y,
                 ));
             }
         }
@@ -113,7 +108,7 @@ impl App {
     pub fn run_command(&mut self, input: String) {
         match parse_command(&input) {
             Ok(command) => self.execute_command(command),
-            Err(error) => self.game.log.messages.push(error),
+            Err(error) => self.game.log.print(error),
         }
     }
 }

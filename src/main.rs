@@ -126,7 +126,7 @@ impl App {
             KeyCode::Char(':') => {
                 self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })
             }
-            KeyCode::Char('p') => self.game.log.messages.push(format!(
+            KeyCode::Char('p') => self.game.log.print(format!(
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
@@ -138,15 +138,10 @@ impl App {
                         .push(format!("Item ID: {} DEF: {}", item_id, item.def_id,))
                 }
             }
-            KeyCode::Char('i') => {
-                match self.ui.menu.mode {
-                    MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
-                    MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
-                }
-                // for item in self.game.player.character.inventory.iter() {
-                //     self.game.log.messages.push(format!("INV: Item: {}", item,))
-                // }
-            }
+            KeyCode::Char('i') => match self.ui.menu.mode {
+                MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
+                MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
+            },
             _ => {}
         }
     }
