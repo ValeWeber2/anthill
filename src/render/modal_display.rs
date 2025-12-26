@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use ratatui::{
     prelude::*,
     symbols::border,
@@ -7,6 +9,7 @@ use ratatui::{
 pub enum ModalInterface {
     ConfirmQuit,
     CommandInput { buffer: String },
+    TextDisplay { title: String, paragraphs: Vec<String> },
 }
 
 impl ModalInterface {
@@ -14,8 +17,23 @@ impl ModalInterface {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
+            ModalInterface::TextDisplay { title, paragraphs } => {
+                render_text_display(title, paragraphs, rect, buf)
+            }
         }
     }
+}
+
+fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
+    // Making the Window
+    let modal_area = render_modal_window(150, 30, title.to_string(), rect, buf);
+
+    let page_text = Text::from(
+        paragraphs.iter().map(|paragraph| Line::from(paragraph.as_str())).collect::<Vec<Line>>(),
+    );
+
+    let paragraph = Paragraph::new(page_text);
+    paragraph.render(modal_area, buf);
 }
 
 fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {

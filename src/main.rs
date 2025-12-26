@@ -142,6 +142,15 @@ impl App {
                 MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
                 MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
             },
+            KeyCode::Char('9') => {
+                self.ui.modal = Some(ModalInterface::TextDisplay {
+                    title: "Test Display".to_string(),
+                    paragraphs: vec![
+                        "Das ist ein Test".to_string(),
+                        "Hier ein weiterer Paragraph".to_string(),
+                    ],
+                })
+            }
             _ => {}
         }
     }
@@ -176,6 +185,11 @@ impl App {
                     }
                     KeyCode::Esc => ModalAction::CloseModal,
                     KeyCode::Enter => ModalAction::RunCommand(buffer.to_string()),
+                    _ => ModalAction::Idle,
+                },
+                ModalInterface::TextDisplay { .. } => match key_event.code {
+                    KeyCode::Esc => ModalAction::CloseModal,
+                    KeyCode::Enter => ModalAction::CloseModal,
                     _ => ModalAction::Idle,
                 },
             }
