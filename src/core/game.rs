@@ -40,6 +40,11 @@ impl GameState {
 
         state
     }
+
+    // This is the routine of operations that need to be called every round.
+    pub fn next_round(&mut self) {
+        self.round_nr += 1;
+    }
 }
 
 impl Default for GameState {

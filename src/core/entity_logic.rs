@@ -89,7 +89,7 @@ impl GameState {
         }
 
         if let Some(&i) = self.world.item_sprites_index.get(&id) {
-            return Some(EntityRef::Item(&self.world.item_sprites[i]));
+            return Some(EntityRef::ItemSprite(&self.world.item_sprites[i]));
         }
 
         None
@@ -114,7 +114,7 @@ impl GameState {
 
 pub enum EntityRef<'a> {
     Npc(&'a Npc),
-    Item(&'a GameItemSprite),
+    ItemSprite(&'a GameItemSprite),
 }
 
 pub trait Spawnable {
@@ -138,6 +138,10 @@ pub trait Entity {
     fn name(&self) -> &str;
     fn id(&self) -> EntityId;
     fn pos(&self) -> &Point;
+}
+
+pub trait Movable {
+    fn move_to(&mut self, point: Point);
 }
 
 pub type EntityId = u32;
@@ -308,7 +312,7 @@ mod tests {
         let item_sprite_id = game.spawn_item(item_id, Point::new(50, 7)).unwrap();
 
         match game.get_entity_by_id(item_sprite_id) {
-            Some(EntityRef::Item(item)) => assert_eq!(item.name(), "Leather Armor"),
+            Some(EntityRef::ItemSprite(item)) => assert_eq!(item.name(), "Leather Armor"),
             _ => panic!("Expected Item"),
         }
     }

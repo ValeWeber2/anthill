@@ -1,15 +1,14 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Add};
 
 use ratatui::style::Style;
 
 use crate::{
     core::{
-        entity_logic::{EntityId, Npc},
+        entity_logic::{Entity, EntityId, Movable, Npc},
         game::GameState,
         game_items::GameItemSprite,
-        player::PlayerCharacter,
     },
     world::tiles::{Tile, TileType},
 };
@@ -40,6 +39,31 @@ impl Point {
     pub fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
+
+    pub fn get_neighbour(self, direction: Direction) -> Point {
+        match direction {
+            Direction::Up => Point { x: self.x, y: self.y.saturating_sub(1) },
+            Direction::Right => Point { x: self.x + 1, y: self.y },
+            Direction::Down => Point { x: self.x, y: self.y + 1 },
+            Direction::Left => Point { x: self.x.saturating_sub(1), y: self.y },
+        }
+    }
+}
+
+impl Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self { x: self.x + other.x, y: self.y + other.y }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
 }
 
 #[derive(Debug)]
@@ -169,20 +193,25 @@ impl World {
             self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
         }
     }
-    pub fn move_entity(&mut self, entity: &mut PlayerCharacter, dx: i32, dy: i32) {
-        let new_x = entity.base.pos.x as isize + dx as isize;
-        let new_y = entity.base.pos.y as isize + dy as isize;
+    pub fn move_entity<E: Entity + Movable>(
+        &mut self,
+        entity: &mut E,
+        dx: i32,
+        dy: i32,
+    ) -> Result<(), &'static str> {
+        let new_x = entity.pos().x as isize + dx as isize;
+        let new_y = entity.pos().y as isize + dy as isize;
 
         if !self.is_in_bounds(new_x, new_y) {
-            return;
+            return Err("Target Point out of bounds.");
         }
 
         if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-            return;
+            return Err("Target Point is not walkable.");
         }
 
-        entity.base.pos.x = new_x as usize;
-        entity.base.pos.y = new_y as usize;
+        entity.move_to(Point { x: new_x as usize, y: new_y as usize });
+        Ok(())
     }
 }
 

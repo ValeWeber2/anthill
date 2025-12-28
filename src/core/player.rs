@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId};
+use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
 use crate::core::game_items::GameItemId;
 use crate::world::worldspace::Point;
 use ratatui::style::Color;
@@ -71,5 +71,12 @@ impl Entity for PlayerCharacter {
     }
     fn pos(&self) -> &Point {
         &self.base.pos
+    }
+}
+
+impl Movable for PlayerCharacter {
+    fn move_to(&mut self, point: Point) {
+        self.base.pos.x = point.x;
+        self.base.pos.y = point.y;
     }
 }

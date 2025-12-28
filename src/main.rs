@@ -12,9 +12,10 @@ use crate::{
     core::{
         entity_logic::{BaseStats, NpcStats},
         game::GameState,
+        player_actions::PlayerInput,
     },
     render::{menu_display::MenuMode, modal_display::ModalInterface, ui::UserInterface},
-    world::worldspace::{Point, Room},
+    world::worldspace::{Direction, Point, Room},
 };
 
 fn main() -> io::Result<()> {
@@ -112,16 +113,20 @@ impl App {
             // It is currently allowed to manually switch focus. This will later be handled by the game directly.
             KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
             KeyCode::Char('w') => {
-                self.game.world.move_entity(&mut self.game.player.character, 0, -1)
+                self.game.resolve_player_action(PlayerInput::Direction(Direction::Up));
+                // self.game.world.move_entity(&mut self.game.player.character, 0, -1)
             }
             KeyCode::Char('s') => {
-                self.game.world.move_entity(&mut self.game.player.character, 0, 1)
+                self.game.resolve_player_action(PlayerInput::Direction(Direction::Down));
             }
             KeyCode::Char('a') => {
-                self.game.world.move_entity(&mut self.game.player.character, -1, 0)
+                self.game.resolve_player_action(PlayerInput::Direction(Direction::Left));
             }
             KeyCode::Char('d') => {
-                self.game.world.move_entity(&mut self.game.player.character, 1, 0)
+                self.game.resolve_player_action(PlayerInput::Direction(Direction::Right));
+            }
+            KeyCode::Char('.') => {
+                self.game.resolve_player_action(PlayerInput::Wait);
             }
             KeyCode::Char(':') => {
                 self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })

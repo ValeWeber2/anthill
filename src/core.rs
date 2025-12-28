@@ -3,3 +3,4 @@ pub mod game;
 pub mod game_items;
 pub mod inventory;
 pub mod player;
+pub mod player_actions;
