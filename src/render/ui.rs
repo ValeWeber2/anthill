@@ -5,10 +5,13 @@ use ratatui::{
     widgets::{Block, Borders},
 };
 
-use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
 use crate::{
     App, KeyboardFocus,
     render::{menu_display::Menu, modal_display::ModalInterface, world_display::WorldDisplay},
+};
+use crate::{
+    render::info_display::InfoDisplay,
+    world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH},
 };
 
 impl Widget for &App {
@@ -17,7 +20,7 @@ impl Widget for &App {
         let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
 
         let layout_top_bottom = Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
-        let [area_game, area_character] = layout_top_bottom.areas(area);
+        let [area_game, area_info] = layout_top_bottom.areas(area);
 
         let layout_left_right = Layout::horizontal([
             Constraint::Percentage(70),
@@ -34,8 +37,11 @@ impl Widget for &App {
             .split(area_world)[0];
 
         // Character Info
-        let block_character = Block::default().title("Character Info").borders(Borders::ALL);
-        block_character.render(area_character, buf);
+        let block_info = Block::default().title("Character Info").borders(Borders::ALL);
+        let block_info_inner = block_info.inner(area_info);
+        block_info.render(area_info, buf);
+
+        self.ui.info.render(&self.game, block_info_inner, buf);
 
         // World
         let block_world = Block::default()
@@ -88,10 +94,16 @@ pub struct UserInterface {
     pub menu: Menu,
     pub world_display: WorldDisplay,
     pub modal: Option<ModalInterface>,
+    pub info: InfoDisplay,
 }
 
 impl UserInterface {
     pub fn new() -> Self {
-        Self { menu: Menu::new(), world_display: WorldDisplay {}, modal: None }
+        Self {
+            menu: Menu::new(),
+            world_display: WorldDisplay {},
+            modal: None,
+            info: InfoDisplay::new(),
+        }
     }
 }
