@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
 use crate::core::game_items::{GameItem, GameItemId};
@@ -17,6 +18,7 @@ pub struct GameState {
     pub entity_id_counter: u32,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
+    pub rng: StdRng,
 }
 
 impl GameState {
@@ -29,6 +31,7 @@ impl GameState {
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,
+            rng: StdRng::seed_from_u64(73),
         };
 
         let player_id = state.next_entity_id();
@@ -50,6 +53,7 @@ impl Default for GameState {
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,
+            rng: StdRng::seed_from_u64(73),
         }
     }
 }

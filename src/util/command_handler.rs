@@ -1,7 +1,10 @@
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
-use crate::App;
+use crate::{
+    App,
+    util::rng::{Check, DieSize, Roll},
+};
 
 #[derive(Debug, EnumIter)]
 pub enum Command {
@@ -11,6 +14,7 @@ pub enum Command {
     MaxStats,
     MaxEquip,
     PlayerInfo,
+    RngTest,
 }
 
 impl Command {
@@ -24,6 +28,7 @@ impl Command {
             Command::MaxStats => "Grants max stats to player.",
             Command::MaxEquip => "Grants the best equipment to the player.",
             Command::PlayerInfo => "Prints player info to log.",
+            Command::RngTest => "Makes a roll and a check to test the RNG Engine",
         }
     }
 
@@ -32,9 +37,10 @@ impl Command {
             Command::Quit => "quit",
             Command::Give { .. } => "give",
             Command::Help => "help",
-            Command::MaxStats => "max_stats",
-            Command::MaxEquip => "max_equip",
+            Command::MaxStats => "maxstats",
+            Command::MaxEquip => "maxequip",
             Command::PlayerInfo => "playerinfo",
+            Command::RngTest => "rngtest",
         }
     }
 }
@@ -58,11 +64,12 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
             Ok(Command::Give { item_def, amount })
         }
 
-        "max_stats" => Ok(Command::MaxStats),
-        "max_equip" => Ok(Command::MaxEquip),
+        "maxstats" => Ok(Command::MaxStats),
+        "maxequip" => Ok(Command::MaxEquip),
 
-        "player_info" => Ok(Command::PlayerInfo),
+        "playerinfo" => Ok(Command::PlayerInfo),
         "pi" => Ok(Command::PlayerInfo),
+        "rngtest" => Ok(Command::RngTest),
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
@@ -101,6 +108,15 @@ impl App {
                     self.game.player.character.base.pos.x,
                     self.game.player.character.base.pos.y,
                 ));
+            }
+
+            Command::RngTest => {
+                let roll: i16 = self.game.roll(&Roll::new(1, DieSize::D6));
+                let check: bool = self.game.check(&Check::default().set_difficulty(10));
+                self.game.log.print(format!(
+                    "Rolling 1d6: {:?}\nChecking 1d20 against difficulty 10: {:?}",
+                    roll, check,
+                ))
             }
         }
     }
