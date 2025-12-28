@@ -6,6 +6,8 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
+use crate::render::ui::get_centered_rect;
+
 pub enum ModalInterface {
     ConfirmQuit,
     CommandInput { buffer: String },
@@ -72,29 +74,6 @@ fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {
 
     let paragraph = Paragraph::new(text);
     paragraph.render(input_block_inner, buf);
-}
-
-/// Creates a new, centered Rect of a given width and height in the given area.
-pub fn get_centered_rect(width: u16, height: u16, area: Rect) -> Rect {
-    let vertical = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(area.height.saturating_sub(height) / 2),
-            Constraint::Length(height),
-            Constraint::Length(area.height.saturating_sub(height) / 2),
-        ])
-        .split(area);
-
-    let horizontal = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Length((area.width.saturating_sub(width)) / 2),
-            Constraint::Length(width),
-            Constraint::Length((area.width.saturating_sub(width)) / 2),
-        ])
-        .split(vertical[1]);
-
-    horizontal[1]
 }
 
 fn render_modal_window(

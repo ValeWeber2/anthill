@@ -2,7 +2,7 @@
 
 use ratatui::{
     prelude::*,
-    widgets::{Block, Borders},
+    widgets::{Block, Borders, Paragraph, Wrap},
 };
 
 use crate::{
@@ -14,8 +14,25 @@ use crate::{
     world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH},
 };
 
+const MIN_WIDTH: u16 = 150;
+const MIN_HEIGHT: u16 = 33;
+
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
+        // Size Check
+        if area.width < MIN_WIDTH || area.height < MIN_HEIGHT {
+            render_warning(
+                format!(
+                    "Your Terminal window is too small.\nIn order to play the game, your Terminal must at least have the dimensions of {}x{} characters.\n(Current {}x{})",
+                    MIN_WIDTH, MIN_HEIGHT, area.width, area.height,
+                ),
+                area,
+                buf,
+            );
+            return;
+        }
+
+        // Normal
         let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
         let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
 
@@ -90,6 +107,21 @@ impl Widget for &App {
     }
 }
 
+fn render_warning(text: String, rect: Rect, buf: &mut Buffer) {
+    let center_rect = get_centered_rect(50, 8, rect);
+    let paragraph = Paragraph::new(Text::from(text))
+        .wrap(Wrap { trim: true })
+        .alignment(Alignment::Center)
+        .block(
+            Block::default()
+                .title("Warning")
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::Yellow)),
+        );
+
+    paragraph.render(center_rect, buf);
+}
+
 pub struct UserInterface {
     pub menu: Menu,
     pub world_display: WorldDisplay,
@@ -106,4 +138,27 @@ impl UserInterface {
             info: InfoDisplay::new(),
         }
     }
+}
+
+/// Creates a new, centered Rect of a given width and height in the given area.
+pub fn get_centered_rect(width: u16, height: u16, area: Rect) -> Rect {
+    let vertical = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(area.height.saturating_sub(height) / 2),
+            Constraint::Length(height),
+            Constraint::Length(area.height.saturating_sub(height) / 2),
+        ])
+        .split(area);
+
+    let horizontal = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Length((area.width.saturating_sub(width)) / 2),
+            Constraint::Length(width),
+            Constraint::Length((area.width.saturating_sub(width)) / 2),
+        ])
+        .split(vertical[1]);
+
+    horizontal[1]
 }
