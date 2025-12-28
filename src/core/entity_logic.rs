@@ -72,14 +72,14 @@ impl GameState {
             return;
         }
 
-        if let Some(&index) = self.world.item_index.get(&id) {
+        if let Some(&index) = self.world.item_sprites_index.get(&id) {
             self.world.item_sprites.swap_remove(index);
 
             if let Some(moved) = self.world.item_sprites.get(index) {
-                self.world.item_index.insert(moved.id(), index);
+                self.world.item_sprites_index.insert(moved.id(), index);
             }
 
-            self.world.item_index.remove(&id);
+            self.world.item_sprites_index.remove(&id);
         }
     }
 
@@ -88,7 +88,7 @@ impl GameState {
             return Some(EntityRef::Npc(&self.world.npcs[i]));
         }
 
-        if let Some(&i) = self.world.item_index.get(&id) {
+        if let Some(&i) = self.world.item_sprites_index.get(&id) {
             return Some(EntityRef::Item(&self.world.item_sprites[i]));
         }
 

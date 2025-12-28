@@ -4,6 +4,7 @@ use strum_macros::EnumIter;
 use crate::{
     App,
     util::rng::{Check, DieSize, Roll},
+    world::worldspace::Collision,
 };
 
 #[derive(Debug, EnumIter)]
@@ -15,6 +16,7 @@ pub enum Command {
     MaxEquip,
     PlayerInfo,
     RngTest,
+    Teleport { x: usize, y: usize },
 }
 
 impl Command {
@@ -29,6 +31,7 @@ impl Command {
             Command::MaxEquip => "Grants the best equipment to the player.",
             Command::PlayerInfo => "Prints player info to log.",
             Command::RngTest => "Makes a roll and a check to test the RNG Engine",
+            Command::Teleport { .. } => "Teleports the player to the given absolute position",
         }
     }
 
@@ -41,6 +44,7 @@ impl Command {
             Command::MaxEquip => "maxequip",
             Command::PlayerInfo => "playerinfo",
             Command::RngTest => "rngtest",
+            Command::Teleport { .. } => "teleport",
         }
     }
 }
@@ -70,6 +74,20 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
         "playerinfo" => Ok(Command::PlayerInfo),
         "pi" => Ok(Command::PlayerInfo),
         "rngtest" => Ok(Command::RngTest),
+        "teleport" => {
+            let arg_x = tokens
+                .next()
+                .ok_or("Missing coordinates")?
+                .parse::<usize>()
+                .map_err(|_| "Invalid format for coordinates.")?;
+            let arg_y = tokens
+                .next()
+                .ok_or("Missing y-coordinate")?
+                .parse::<usize>()
+                .map_err(|_| "Invalid format for y-coordinate.")?;
+
+            Ok(Command::Teleport { x: arg_x, y: arg_y })
+        }
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
@@ -117,6 +135,23 @@ impl App {
                     "Rolling 1d6: {:?}\nChecking 1d20 against difficulty 10: {:?}",
                     roll, check,
                 ))
+            }
+
+            Command::Teleport { x, y } => {
+                if !self.game.world.get_tile(x, y).tile_type.is_walkable() {
+                    self.game
+                        .log
+                        .print(format!("Position {} {} cannot be occupied by player", x, y));
+                    return;
+                }
+
+                if !self.game.world.is_in_bounds(x as isize, y as isize) {
+                    self.game.log.print(format!("Position {} {} is out of bounds", x, y));
+                    return;
+                }
+
+                self.game.player.character.base.pos.x = x;
+                self.game.player.character.base.pos.y = y;
             }
         }
     }

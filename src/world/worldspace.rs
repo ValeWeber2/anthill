@@ -83,7 +83,7 @@ pub struct World {
     pub npcs: Vec<Npc>,
     pub npc_index: HashMap<EntityId, usize>,
     pub item_sprites: Vec<GameItemSprite>,
-    pub item_index: HashMap<EntityId, usize>,
+    pub item_sprites_index: HashMap<EntityId, usize>,
 }
 
 impl World {
@@ -95,7 +95,7 @@ impl World {
             npcs: Vec::new(),
             npc_index: HashMap::new(),
             item_sprites: Vec::new(),
-            item_index: HashMap::new(),
+            item_sprites_index: HashMap::new(),
         }
     }
 
@@ -173,10 +173,16 @@ impl World {
         let new_x = entity.base.pos.x as isize + dx as isize;
         let new_y = entity.base.pos.y as isize + dy as isize;
 
-        if self.is_in_bounds(new_x, new_y) {
-            entity.base.pos.x = new_x as usize;
-            entity.base.pos.y = new_y as usize;
+        if !self.is_in_bounds(new_x, new_y) {
+            return;
         }
+
+        if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
+            return;
+        }
+
+        entity.base.pos.x = new_x as usize;
+        entity.base.pos.y = new_y as usize;
     }
 }
 
@@ -190,7 +196,7 @@ impl Default for World {
             npcs: Vec::new(),
             npc_index: HashMap::new(),
             item_sprites: Vec::new(),
-            item_index: HashMap::new(),
+            item_sprites_index: HashMap::new(),
         }
     }
 }

@@ -125,7 +125,7 @@ impl Spawnable for GameItemSprite {
     }
 
     fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize> {
-        &mut state.world.item_index
+        &mut state.world.item_sprites_index
     }
 }
 
