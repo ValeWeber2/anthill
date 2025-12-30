@@ -137,10 +137,7 @@ impl App {
             )),
             KeyCode::Char('o') => {
                 for (item_id, item) in self.game.items.iter() {
-                    self.game
-                        .log
-                        .messages
-                        .push(format!("Item ID: {} DEF: {}", item_id, item.def_id,))
+                    self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
             KeyCode::Char('i') => match self.ui.menu.mode {

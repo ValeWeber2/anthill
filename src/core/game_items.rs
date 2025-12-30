@@ -51,7 +51,7 @@ impl GameState {
         let id: GameItemId = self.next_item_id();
         self.items.insert(id, GameItem { def_id });
 
-        self.log.print(format!("Registered item {} (ID: {})", def_id, id,));
+        self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
 
         id
     }

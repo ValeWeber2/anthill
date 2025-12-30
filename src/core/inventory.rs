@@ -8,7 +8,7 @@ impl GameState {
     pub fn add_item_to_inv(&mut self, item_id: u32) -> Result<(), InventoryError> {
         if self.player.character.inventory.len() >= 24 {
             let error = InventoryError::InventoryFull;
-            self.log.print(format!("Couldn't add item {}: {}", item_id, error));
+            self.log.debug_print(format!("Couldn't add item {}: {}", item_id, error));
             return Err(error);
         }
 
@@ -23,7 +23,7 @@ impl GameState {
             self.player.character.inventory.swap_remove(found_item);
         } else {
             let error = InventoryError::ItemNotInInventory;
-            self.log.print(format!("Couldn't remove item {}: {}", item_id, error));
+            self.log.debug_print(format!("Couldn't remove item {}: {}", item_id, error));
             return Err(error);
         }
 

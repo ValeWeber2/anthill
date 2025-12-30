@@ -108,10 +108,7 @@ impl App {
                 }
             }
             Command::Give { item_def, amount } => {
-                self.game
-                    .log
-                    .messages
-                    .push(format!("Added {} {} to player's inventory", item_def, amount));
+                self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
                 todo!("Implement a cheat to give player character an item.");
             }
             Command::MaxStats => todo!("Implement once player logic is finished"),

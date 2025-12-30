@@ -20,14 +20,14 @@ impl GameState {
     ) -> Result<EntityId, SpawningError> {
         if !self.world.is_available(pos) {
             let err = SpawningError::PositionUnavailable { x: pos.x, y: pos.y };
-            self.log.print(format!("Not able to spawn {}: {}", name, err));
+            self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
             return Err(err);
         }
 
         let id = self.next_entity_id();
         let entity = T::new(id, name, pos, glyph, style, extra);
 
-        self.log.print(format!(
+        self.log.debug_print(format!(
             "Spawned {} (ID: {}) at position ({}, {})",
             entity.name(),
             entity.id(),
