@@ -14,6 +14,8 @@ impl InfoDisplay {
         let player_agi = 18; // Mock
         let player_hp_current = game.player.character.stats.base.hp_current;
         let player_hp_max = game.player.character.stats.base.hp_max;
+        let player_armor = game.format_armor();
+        let player_weapon = game.format_weapon();
 
         let dungeon_level = 1; // Mock
         let experience_points = 0; // Mock
@@ -21,8 +23,8 @@ impl InfoDisplay {
 
         let lines: Vec<Line> = vec![
             Line::raw(format!(
-                "STR:{} AGI:{} HP:{}({})",
-                player_str, player_agi, player_hp_current, player_hp_max,
+                "STR:{} AGI:{} HP:{}({}) Armor:{} Weapon:{}",
+                player_str, player_agi, player_hp_current, player_hp_max, player_armor, player_weapon
             )),
             Line::raw(format!(
                 "Dungeon Floor:{} Exp:{} Round:{}",

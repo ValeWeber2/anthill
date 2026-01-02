@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
-use crate::core::game_items::GameItemId;
+use crate::core::game_items::{ArmorItem, GameItemId, WeaponItem};
 use crate::world::worldspace::Point;
 use ratatui::style::Color;
 
@@ -27,6 +27,8 @@ pub struct PlayerCharacter {
     pub base: EntityBase,
     pub stats: PcStats,
     pub inventory: Vec<GameItemId>,
+    pub armor: Option<ArmorItem>,
+    pub weapon: Option<WeaponItem>,
 }
 
 impl PlayerCharacter {
@@ -41,6 +43,8 @@ impl PlayerCharacter {
             },
             stats: PcStats::new(),
             inventory: Vec::new(),
+            armor: None,
+            weapon: None,
         }
     }
     pub fn attack_damage(&self) -> u32 {
@@ -86,7 +90,7 @@ impl PlayerCharacter {
 
 impl Default for PlayerCharacter {
     fn default() -> Self {
-        Self::new(999999) // placeholder, never inserted inro world
+        Self::new(999999) // placeholder, never inserted into world
     }
 }
 

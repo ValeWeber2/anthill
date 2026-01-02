@@ -83,7 +83,7 @@ impl GameState {
         }
     }
 
-    pub fn get_entity_by_id(&self, id: EntityId) -> Option<EntityRef> {
+    pub fn get_entity_by_id(&'_ self, id: EntityId) -> Option<EntityRef<'_>> {
         if let Some(&i) = self.world.npc_index.get(&id) {
             return Some(EntityRef::Npc(&self.world.npcs[i]));
         }

@@ -198,16 +198,16 @@ impl World {
         entity: &mut E,
         dx: i32,
         dy: i32,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         let new_x = entity.pos().x as isize + dx as isize;
         let new_y = entity.pos().y as isize + dy as isize;
 
         if !self.is_in_bounds(new_x, new_y) {
-            return Err("Target Point out of bounds.");
+            return Err("Target Point out of bounds.".to_string());
         }
 
         if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-            return Err("Target Point is not walkable.");
+            return Err("Target Point is not walkable.".to_string());
         }
 
         entity.move_to(Point { x: new_x as usize, y: new_y as usize });
