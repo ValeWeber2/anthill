@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use std::fmt::{self, Display, Formatter};
 use std::{collections::HashMap, ops::Add};
 
 use ratatui::style::Style;
@@ -193,21 +194,22 @@ impl World {
             self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
         }
     }
+
     pub fn move_entity<E: Entity + Movable>(
         &mut self,
         entity: &mut E,
         dx: i32,
         dy: i32,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), MovementError> {
         let new_x = entity.pos().x as isize + dx as isize;
         let new_y = entity.pos().y as isize + dy as isize;
 
         if !self.is_in_bounds(new_x, new_y) {
-            return Err("Target Point out of bounds.");
+            return Err(MovementError::OutOfBounds { x: new_x, y: new_y });
         }
 
         if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-            return Err("Target Point is not walkable.");
+            return Err(MovementError::NotWalkable { x: new_x, y: new_y });
         }
 
         entity.move_to(Point { x: new_x as usize, y: new_y as usize });
@@ -226,6 +228,25 @@ impl Default for World {
             npc_index: HashMap::new(),
             item_sprites: Vec::new(),
             item_sprites_index: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum MovementError {
+    OutOfBounds { x: isize, y: isize },
+    NotWalkable { x: isize, y: isize },
+}
+
+impl Display for MovementError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            MovementError::OutOfBounds { x, y } => {
+                write!(f, "Position x: {} y: {} out of bounds", x, y)
+            }
+            MovementError::NotWalkable { x, y } => {
+                write!(f, "Position x: {} y: {} not walkable", x, y)
+            }
         }
     }
 }

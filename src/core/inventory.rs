@@ -31,6 +31,7 @@ impl GameState {
     }
 }
 
+#[derive(Debug)]
 pub enum InventoryError {
     InventoryFull,
     ItemNotInInventory,

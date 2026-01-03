@@ -140,6 +140,9 @@ impl App {
                     self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
+            KeyCode::Char('l') => {
+                self.game.resolve_player_action(PlayerInput::DropItem(1));
+            }
             KeyCode::Char('i') => match self.ui.menu.mode {
                 MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
                 MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
