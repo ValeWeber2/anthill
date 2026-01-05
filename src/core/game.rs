@@ -26,7 +26,7 @@ impl GameState {
         let mut state = Self {
             world: World::default(),
             player: Player::new(0),
-            log: Log::new(),
+            log: Log::new(true),
             round_nr: 0,
             entity_id_counter: 0,
             items: HashMap::new(),
@@ -53,7 +53,7 @@ impl Default for GameState {
         Self {
             world: World::default(),
             player: Player::default(),
-            log: Log::new(),
+            log: Log::new(true),
             round_nr: 0,
             entity_id_counter: 0,
             items: HashMap::new(),
@@ -67,19 +67,27 @@ impl Default for GameState {
 //                  Game Text Log
 // ----------------------------------------------
 pub struct Log {
+    pub print_debug_info: bool,
     pub messages: Vec<String>,
 }
 
 impl Log {
-    pub fn new() -> Self {
-        Self { messages: Vec::new() }
+    pub fn new(print_debug_info: bool) -> Self {
+        Self { print_debug_info, messages: Vec::new() }
     }
 
     pub fn print(&mut self, message: String) {
         let lines: Vec<&str> = message.split("\n").collect();
-
         for line in lines {
             self.messages.push(line.to_string());
         }
+    }
+
+    pub fn debug_print(&mut self, message: String) {
+        if !self.print_debug_info {
+            return;
+        }
+
+        self.print(message);
     }
 }
