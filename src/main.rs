@@ -156,15 +156,42 @@ impl App {
                     ],
                 })
             }
+            KeyCode::Char('W') => {
+                if let Err(e) = self.game.unequip_weapon() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+            KeyCode::Char('A') => {
+                if let Err(e) = self.game.unequip_armor() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
             _ => {}
         }
     }
 
     fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
+        match self.ui.menu.mode {
+            MenuMode::Inventory => self.handle_inventory_key_event(key_event),
+            MenuMode::Log => self.handle_log_key_event(key_event),
+        }
+
         match key_event.code {
-            KeyCode::Char('q') => self.should_quit = true,
-            // It is currently allowed to manually switch focus. This will later be handled by the game directly.
-            KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
+            KeyCode::Char('q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
+            KeyCode::Char('i') => match self.ui.menu.mode {
+                MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
+                MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
+            },
+            KeyCode::Char('W') => {
+                if let Err(e) = self.game.unequip_weapon() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+            KeyCode::Char('A') => {
+                if let Err(e) = self.game.unequip_armor() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
             _ => {}
         }
     }
@@ -178,6 +205,22 @@ impl App {
                         ModalAction::Idle
                     }
                     _ => ModalAction::CloseModal,
+                },
+                ModalInterface::ConfirmUseItem { item_id } => match key_event.code {
+                    KeyCode::Char('y') => {
+                        let result = self.game.use_item(*item_id);
+                        if let Err(e) = result {
+                            self.game.log.print(format!("Cannot use item: {}", e));
+                        }
+
+                        // close inventory after using
+                        self.ui.menu.mode = MenuMode::Log;
+                        self.keyboard_focus = KeyboardFocus::FocusWorld;
+
+                        ModalAction::CloseModal
+                    }
+                    KeyCode::Char('n') | KeyCode::Esc => ModalAction::CloseModal,
+                    _ => ModalAction::Idle,
                 },
                 ModalInterface::CommandInput { buffer } => match key_event.code {
                     KeyCode::Char(c) => {
@@ -211,6 +254,60 @@ impl App {
             }
         }
     }
+
+    fn handle_inventory_key_event(&mut self, key_event: KeyEvent) {
+        match key_event.code {
+            KeyCode::Tab => {
+                self.keyboard_focus = KeyboardFocus::FocusWorld;
+                self.ui.menu.mode = MenuMode::Log;
+            }
+            KeyCode::Esc => {
+                self.ui.menu.mode = MenuMode::Log;
+                self.keyboard_focus = KeyboardFocus::FocusWorld;
+            }
+            KeyCode::Char('W') => {
+                if let Err(e) = self.game.unequip_weapon() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+            KeyCode::Char('A') => {
+                if let Err(e) = self.game.unequip_armor() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+            KeyCode::Char(c) => {
+                if let Some(index) = App::letter_to_index(c) {
+                    if let Some(item_id) = self.game.player.character.inventory.get(index) {
+                        self.ui.modal = Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                    }
+                }
+            }
+
+            _ => {}
+        }
+    }
+
+    fn letter_to_index(c: char) -> Option<usize> {
+        if c >= 'a' && c <= 'z' {
+            Some((c as u8 - b'a') as usize)
+        } else {
+            None
+        }
+    }
+
+    fn handle_log_key_event(&mut self, key_event: KeyEvent) {
+    match key_event.code {
+        KeyCode::Tab => {
+            self.keyboard_focus = KeyboardFocus::FocusWorld;
+        }
+
+        KeyCode::Esc => {
+            self.keyboard_focus = KeyboardFocus::FocusWorld;
+        }
+        _ => {}
+    }
+}
+
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Default)]

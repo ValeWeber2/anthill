@@ -15,7 +15,7 @@ use crate::{
 pub enum PlayerInput {
     Wait,
     Direction(Direction),
-    // UseItem,
+    UseItem(u32),
     DropItem(GameItemId),
 }
 
@@ -24,6 +24,7 @@ pub enum ActionKind {
     Move(Direction),
     Attack(EntityId),
     PickUpItem(EntityId),
+    UseItem(u32),
     DropItem(GameItemId),
 }
 
@@ -52,6 +53,7 @@ impl GameState {
             ActionKind::Attack(_) => todo!(),
             ActionKind::PickUpItem(entity_id) => self.pick_up_item(entity_id),
             ActionKind::DropItem(item_id) => self.drop_item(item_id),
+            ActionKind::UseItem(item_id) => self.use_item(item_id).map_err(GameActionError::InventoryError),
         };
 
         match action_result {
@@ -82,6 +84,7 @@ impl GameState {
             }
             PlayerInput::DropItem(item_id) => ActionKind::DropItem(item_id),
             PlayerInput::Wait => ActionKind::Wait,
+            PlayerInput::UseItem(item_id) => ActionKind::UseItem(item_id),
         }
     }
 

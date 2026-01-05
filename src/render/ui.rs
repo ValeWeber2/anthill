@@ -102,7 +102,7 @@ impl Widget for &App {
 
         // Modal
         if let Some(modal) = &self.ui.modal {
-            modal.render(area, buf);
+            modal.render(area, buf, &self.game);
         }
     }
 }

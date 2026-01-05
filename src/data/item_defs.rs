@@ -33,7 +33,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Cake",
                 glyph: '%',
                 style: Style::default().fg(Color::Red),
-                kind: GameItemKindDef::Food,
+                kind: GameItemKindDef::Food { nutrition: 1 },
             },
         );
         m
