@@ -2,7 +2,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::io;
 
 use crate::{
-    App, ModalAction,
+    App,
     core::player_actions::PlayerInput,
     render::{menu_display::MenuMode, modal_display::ModalInterface},
     world::worldspace::Direction,
@@ -15,16 +15,25 @@ pub enum KeyboardFocus {
     FocusMenu,
 }
 
-impl KeyboardFocus {
-    pub fn cycle(self) -> Self {
-        match self {
-            Self::FocusWorld => Self::FocusMenu,
-            Self::FocusMenu => Self::FocusWorld,
-        }
-    }
+pub enum ModalAction {
+    Idle,
+    CloseModal,
+    RunCommand(String),
 }
 
 impl App {
+    /// Sets the Application Focus to the given menu type (e.g. Inventory)
+    fn focus_menu(&mut self, mode: MenuMode) {
+        self.ui.menu.mode = mode;
+        self.keyboard_focus = KeyboardFocus::FocusMenu;
+    }
+
+    /// Resets the Application Focus to the default (World) and resets the menu to display the Log.
+    fn focus_reset(&mut self) {
+        self.keyboard_focus = KeyboardFocus::FocusWorld;
+        self.ui.menu.mode = MenuMode::Log;
+    }
+
     pub fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
@@ -36,56 +45,85 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
+        // Prioritises Model
         if self.ui.modal.is_some() {
             self.handle_modal_key_event(key_event);
             return;
         }
-        match self.keyboard_focus {
-            KeyboardFocus::FocusWorld => self.handle_world_key_event(key_event),
-            KeyboardFocus::FocusMenu => self.handle_menu_key_event(key_event),
+
+        // Universal key_events (regardless of focus)
+        match key_event.code {
+            // Control: Open game closing modal (SHIFT+q)
+            KeyCode::Char('Q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
+            // Control: Open command input modal
+            KeyCode::Char(':') => {
+                self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })
+            }
+            // Other key events depending on keyboard focus
+            _ => match self.keyboard_focus {
+                KeyboardFocus::FocusWorld => self.handle_world_key_event(key_event),
+                KeyboardFocus::FocusMenu => self.handle_menu_key_event(key_event),
+            },
         }
     }
 
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Char('q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
-            // It is currently allowed to manually switch focus. This will later be handled by the game directly.
-            KeyCode::Tab => self.keyboard_focus = self.keyboard_focus.cycle(),
+            // Action: Move up
             KeyCode::Char('w') => {
                 self.game.resolve_player_action(PlayerInput::Direction(Direction::Up));
-                // self.game.world.move_entity(&mut self.game.player.character, 0, -1)
             }
+            // Action: Move down
             KeyCode::Char('s') => {
                 self.game.resolve_player_action(PlayerInput::Direction(Direction::Down));
             }
+            // Action: Move left
             KeyCode::Char('a') => {
                 self.game.resolve_player_action(PlayerInput::Direction(Direction::Left));
             }
+            // Action: Move right
             KeyCode::Char('d') => {
                 self.game.resolve_player_action(PlayerInput::Direction(Direction::Right));
             }
+            // Action: Wait
             KeyCode::Char('.') => {
                 self.game.resolve_player_action(PlayerInput::Wait);
             }
-            KeyCode::Char(':') => {
-                self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })
+            // Action: Leave item
+            KeyCode::Char('l') => {
+                self.game.resolve_player_action(PlayerInput::DropItem(1));
             }
+            // Action: Unequip Weapon
+            KeyCode::Char('W') => {
+                if let Err(e) = self.game.unequip_weapon() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+            // Action: Unequip Armor
+            KeyCode::Char('A') => {
+                if let Err(e) = self.game.unequip_armor() {
+                    self.game.log.print(format!("{}", e));
+                }
+            }
+
+            // Control: Open Inventory (shifts focus to menu)
+            KeyCode::Char('i') => {
+                self.focus_menu(MenuMode::Inventory);
+            }
+
+            // Debug: Print player pos
             KeyCode::Char('p') => self.game.log.print(format!(
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
+
+            // Debug: Print game iten register
             KeyCode::Char('o') => {
                 for (item_id, item) in self.game.items.iter() {
                     self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
-            KeyCode::Char('l') => {
-                self.game.resolve_player_action(PlayerInput::DropItem(1));
-            }
-            KeyCode::Char('i') => match self.ui.menu.mode {
-                MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
-                MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
-            },
+            // Debug: Open Test Modal
             KeyCode::Char('9') => {
                 self.ui.modal = Some(ModalInterface::TextDisplay {
                     title: "Test Display".to_string(),
@@ -95,16 +133,6 @@ impl App {
                     ],
                 })
             }
-            KeyCode::Char('W') => {
-                if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
-                }
-            }
-            KeyCode::Char('A') => {
-                if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
-                }
-            }
             _ => {}
         }
     }
@@ -112,15 +140,10 @@ impl App {
     fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
         match self.ui.menu.mode {
             MenuMode::Inventory => self.handle_inventory_key_event(key_event),
-            MenuMode::Log => self.handle_log_key_event(key_event),
+            MenuMode::Log => {}
         }
 
         match key_event.code {
-            KeyCode::Char('q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
-            KeyCode::Char('i') => match self.ui.menu.mode {
-                MenuMode::Log => self.ui.menu.mode = MenuMode::Inventory,
-                MenuMode::Inventory => self.ui.menu.mode = MenuMode::Log,
-            },
             KeyCode::Char('W') => {
                 if let Err(e) = self.game.unequip_weapon() {
                     self.game.log.print(format!("{}", e));
@@ -153,8 +176,7 @@ impl App {
                         }
 
                         // close inventory after using
-                        self.ui.menu.mode = MenuMode::Log;
-                        self.keyboard_focus = KeyboardFocus::FocusWorld;
+                        self.focus_reset();
 
                         ModalAction::CloseModal
                     }
@@ -196,13 +218,8 @@ impl App {
 
     fn handle_inventory_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
-            KeyCode::Tab => {
-                self.keyboard_focus = KeyboardFocus::FocusWorld;
-                self.ui.menu.mode = MenuMode::Log;
-            }
             KeyCode::Esc => {
-                self.ui.menu.mode = MenuMode::Log;
-                self.keyboard_focus = KeyboardFocus::FocusWorld;
+                self.focus_reset();
             }
             KeyCode::Char('W') => {
                 if let Err(e) = self.game.unequip_weapon() {
@@ -228,18 +245,5 @@ impl App {
 
     fn letter_to_index(c: char) -> Option<usize> {
         if c.is_ascii_lowercase() { Some((c as u8 - b'a') as usize) } else { None }
-    }
-
-    fn handle_log_key_event(&mut self, key_event: KeyEvent) {
-        match key_event.code {
-            KeyCode::Tab => {
-                self.keyboard_focus = KeyboardFocus::FocusWorld;
-            }
-
-            KeyCode::Esc => {
-                self.keyboard_focus = KeyboardFocus::FocusWorld;
-            }
-            _ => {}
-        }
     }
 }

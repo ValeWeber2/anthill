@@ -85,9 +85,3 @@ impl App {
         Ok(())
     }
 }
-
-pub enum ModalAction {
-    Idle,
-    CloseModal,
-    RunCommand(String),
-}

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::fmt;
+
 use ratatui::{
     prelude::*,
     widgets::{Paragraph, Wrap},
@@ -10,6 +12,15 @@ use crate::core::game::GameState;
 pub enum MenuMode {
     Log,
     Inventory,
+}
+
+impl fmt::Display for MenuMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MenuMode::Log => write!(f, "Log"),
+            MenuMode::Inventory => write!(f, "Inventory"),
+        }
+    }
 }
 
 pub struct Menu {
