@@ -40,19 +40,19 @@ impl GameState {
             ActionKind::Wait => Ok(()),
             ActionKind::Move(Direction::Up) => self
                 .world
-                .move_entity(&mut self.player.character, 0, -1)
+                .move_player_character(&mut self.player.character, 0, -1)
                 .map_err(GameActionError::MovementError),
             ActionKind::Move(Direction::Right) => self
                 .world
-                .move_entity(&mut self.player.character, 1, 0)
+                .move_player_character(&mut self.player.character, 1, 0)
                 .map_err(GameActionError::MovementError),
             ActionKind::Move(Direction::Down) => self
                 .world
-                .move_entity(&mut self.player.character, 0, 1)
+                .move_player_character(&mut self.player.character, 0, 1)
                 .map_err(GameActionError::MovementError),
             ActionKind::Move(Direction::Left) => self
                 .world
-                .move_entity(&mut self.player.character, -1, 0)
+                .move_player_character(&mut self.player.character, -1, 0)
                 .map_err(GameActionError::MovementError),
             ActionKind::Attack(_) => todo!(),
             ActionKind::PickUpItem(entity_id) => self.pick_up_item(entity_id),
@@ -85,7 +85,7 @@ impl GameState {
     pub fn interpret_player_input(&mut self, input: PlayerInput) -> ActionKind {
         match input {
             PlayerInput::Direction(direction) => {
-                let target_point: Point = self.player.character.pos().get_neighbour(direction);
+                let target_point: Point = self.player.character.pos().get_adjacent(direction);
                 // let target_tile = self.world.get_tile(target_point.x, target_point.y);
 
                 if let Some(entity_id) = self.get_entity_at(target_point) {

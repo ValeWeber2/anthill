@@ -1,3 +1,4 @@
+mod ai;
 mod core;
 mod data;
 mod render;

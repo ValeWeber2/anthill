@@ -5,6 +5,7 @@ use std::fmt::{self, Display, Formatter};
 
 use ratatui::style::Style;
 
+use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
 use crate::core::game_items::{GameItemDefId, GameItemId, GameItemSprite};
 use crate::world::worldspace::{Drawable, Point};
@@ -172,6 +173,7 @@ pub struct BaseStats {
 pub struct Npc {
     pub base: EntityBase,
     pub stats: NpcStats,
+    pub ai_state: NpcAiState,
 }
 
 pub struct NpcStats {
@@ -214,6 +216,13 @@ impl Spawnable for Npc {
     }
 }
 
+impl Movable for Npc {
+    fn move_to(&mut self, point: Point) {
+        self.base.pos.x = point.x;
+        self.base.pos.y = point.y;
+    }
+}
+
 impl Npc {
     pub fn new(
         id: EntityId,
@@ -223,7 +232,11 @@ impl Npc {
         style: Style,
         stats: NpcStats,
     ) -> Self {
-        Self { base: EntityBase { id, name, pos, glyph, style }, stats }
+        Self {
+            base: EntityBase { id, name, pos, glyph, style },
+            stats,
+            ai_state: NpcAiState::Wandering,
+        }
     }
 }
 

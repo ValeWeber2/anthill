@@ -3,6 +3,7 @@
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
+use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
 use crate::world::worldspace::World;
@@ -43,6 +44,12 @@ impl GameState {
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
+        let npc_ids: Vec<EntityId> = self.world.npc_index.keys().copied().collect();
+
+        for npc_id in npc_ids {
+            let _ = self.npc_take_turn(npc_id);
+        }
+
         self.round_nr += 1;
     }
 }
