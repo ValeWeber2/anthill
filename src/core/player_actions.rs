@@ -17,6 +17,8 @@ pub enum PlayerInput {
     Direction(Direction),
     UseItem(u32),
     DropItem(GameItemId),
+    UnequipWeapon,
+    UnequipArmor,
 }
 
 pub enum ActionKind {
@@ -26,6 +28,8 @@ pub enum ActionKind {
     PickUpItem(EntityId),
     UseItem(u32),
     DropItem(GameItemId),
+    UnequipWeapon,
+    UnequipArmor,
 }
 
 impl GameState {
@@ -56,11 +60,25 @@ impl GameState {
             ActionKind::UseItem(item_id) => {
                 self.use_item(item_id).map_err(GameActionError::InventoryError)
             }
+            ActionKind::UnequipWeapon => {
+                self.unequip_weapon().map_err(GameActionError::InventoryError)
+            }
+            ActionKind::UnequipArmor => {
+                self.unequip_armor().map_err(GameActionError::InventoryError)
+            }
         };
 
         match action_result {
             Ok(()) => self.next_round(),
-            Err(error) => self.log.debug_print(error.to_string()),
+            Err(error) => {
+                // Log for Debugging
+                self.log.debug_print(error.to_string());
+
+                // Log for user only if defined for user.
+                if let Some(message) = error.notify_user() {
+                    self.log.print(message.to_string());
+                }
+            }
         }
     }
 
@@ -87,6 +105,8 @@ impl GameState {
             PlayerInput::DropItem(item_id) => ActionKind::DropItem(item_id),
             PlayerInput::Wait => ActionKind::Wait,
             PlayerInput::UseItem(item_id) => ActionKind::UseItem(item_id),
+            PlayerInput::UnequipWeapon => ActionKind::UnequipWeapon,
+            PlayerInput::UnequipArmor => ActionKind::UnequipArmor,
         }
     }
 
@@ -122,6 +142,20 @@ pub enum GameActionError {
     NotAnItem(EntityId),
     InventoryError(InventoryError),
     SpawningError(SpawningError),
+}
+
+impl GameActionError {
+    fn notify_user(&self) -> Option<&'static str> {
+        match self {
+            GameActionError::InventoryError(InventoryError::NoArmorEquipped) => {
+                Some("You do not have a weapon equipped.")
+            }
+            GameActionError::InventoryError(InventoryError::NoWeaponEquipped) => {
+                Some("You are not wearing any armor.")
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for GameActionError {

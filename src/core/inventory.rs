@@ -162,10 +162,10 @@ impl Display for InventoryError {
                 write!(f, "Item not found in inventory.")
             }
             InventoryError::NoArmorEquipped => {
-                write!(f, "No armor is equpped.")
+                write!(f, "No armor is equipped.")
             }
             InventoryError::NoWeaponEquipped => {
-                write!(f, "No weapon is equpped.")
+                write!(f, "No weapon is equipped.")
             }
         }
     }

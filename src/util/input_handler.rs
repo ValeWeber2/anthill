@@ -95,15 +95,11 @@ impl App {
             }
             // Action: Unequip Weapon
             KeyCode::Char('W') => {
-                if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
-                }
+                self.game.resolve_player_action(PlayerInput::UnequipWeapon);
             }
             // Action: Unequip Armor
             KeyCode::Char('A') => {
-                if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
-                }
+                self.game.resolve_player_action(PlayerInput::UnequipArmor);
             }
 
             // Control: Open Inventory (shifts focus to menu)
@@ -141,20 +137,6 @@ impl App {
         match self.ui.menu.mode {
             MenuMode::Inventory => self.handle_inventory_key_event(key_event),
             MenuMode::Log => {}
-        }
-
-        match key_event.code {
-            KeyCode::Char('W') => {
-                if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
-                }
-            }
-            KeyCode::Char('A') => {
-                if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
-                }
-            }
-            _ => {}
         }
     }
 
