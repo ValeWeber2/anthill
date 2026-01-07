@@ -53,7 +53,9 @@ impl GameState {
             ActionKind::Attack(_) => todo!(),
             ActionKind::PickUpItem(entity_id) => self.pick_up_item(entity_id),
             ActionKind::DropItem(item_id) => self.drop_item(item_id),
-            ActionKind::UseItem(item_id) => self.use_item(item_id).map_err(GameActionError::InventoryError),
+            ActionKind::UseItem(item_id) => {
+                self.use_item(item_id).map_err(GameActionError::InventoryError)
+            }
         };
 
         match action_result {

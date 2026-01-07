@@ -6,7 +6,10 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
-use crate::{core::{game::GameState, game_items::GameItemId}, render::ui::get_centered_rect};
+use crate::{
+    core::{game::GameState, game_items::GameItemId},
+    render::ui::get_centered_rect,
+};
 
 pub enum ModalInterface {
     ConfirmQuit,
@@ -20,7 +23,9 @@ impl ModalInterface {
     pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
-            ModalInterface::ConfirmUseItem { item_id } => render_confirm_use_item(rect, buf, game, *item_id),
+            ModalInterface::ConfirmUseItem { item_id } => {
+                render_confirm_use_item(rect, buf, game, *item_id)
+            }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
             ModalInterface::TextDisplay { title, paragraphs } => {
                 render_text_display(title, paragraphs, rect, buf)
@@ -58,12 +63,7 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
     paragraph.render(center_of_rect, buf);
 }
 
-fn render_confirm_use_item(
-    rect: Rect,
-    buf: &mut Buffer,
-    game: &GameState,
-    item_id: GameItemId,
-) {
+fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
     let modal_area = render_modal_window(50, 5, "Confirm Action".to_string(), rect, buf);
 
     // look up item name
@@ -79,9 +79,7 @@ fn render_confirm_use_item(
 
     let center_of_rect = get_centered_rect(50, 3, modal_area);
 
-    Paragraph::new(text)
-        .alignment(Alignment::Center)
-        .render(center_of_rect, buf);
+    Paragraph::new(text).alignment(Alignment::Center).render(center_of_rect, buf);
 }
 
 fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {

@@ -24,7 +24,12 @@ impl InfoDisplay {
         let lines: Vec<Line> = vec![
             Line::raw(format!(
                 "STR:{} AGI:{} HP:{}({}) Armor:{} Weapon:{}",
-                player_str, player_agi, player_hp_current, player_hp_max, player_armor, player_weapon
+                player_str,
+                player_agi,
+                player_hp_current,
+                player_hp_max,
+                player_armor,
+                player_weapon
             )),
             Line::raw(format!(
                 "Dungeon Floor:{} Exp:{} Round:{}",

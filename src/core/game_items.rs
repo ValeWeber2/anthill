@@ -18,7 +18,7 @@ use crate::{
 // Layer 1. This is where items and their kinds and details are defined.
 pub type GameItemDefId = &'static str;
 
-#[derive (Clone)]
+#[derive(Clone)]
 pub struct GameItemDef {
     pub name: &'static str,
     pub glyph: char,
@@ -26,7 +26,7 @@ pub struct GameItemDef {
     pub kind: GameItemKindDef,
 }
 
-#[derive (Clone)]
+#[derive(Clone)]
 pub enum GameItemKindDef {
     Weapon { damage: u32 },
     Armor { mitigation: u32 },
@@ -70,7 +70,7 @@ impl fmt::Display for WeaponItem {
 // Item instances as registered in the GameState.items.
 pub type GameItemId = u32;
 
-#[derive (Clone)]
+#[derive(Clone)]
 pub struct GameItem {
     pub def_id: GameItemDefId,
 }
@@ -171,8 +171,6 @@ impl GameState {
             None => "None".to_string(),
         }
     }
-
-
 }
 
 // Item Sprite
