@@ -5,8 +5,9 @@ mod render;
 mod util;
 mod world;
 
-use ratatui::{DefaultTerminal, style::Color};
 use std::io;
+
+use ratatui::{DefaultTerminal, style::Color};
 
 use crate::{
     core::{
@@ -15,7 +16,7 @@ use crate::{
     },
     render::ui::UserInterface,
     util::input_handler::KeyboardFocus,
-    world::worldspace::{Point, Room},
+    world::{coordinate_system::Point, worldspace::Room},
 };
 
 fn main() -> io::Result<()> {

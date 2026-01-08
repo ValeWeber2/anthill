@@ -1,11 +1,12 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
-use std::{collections::HashMap, ops::Add};
 
 use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiError;
+use crate::world::coordinate_system::Point;
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable, Npc},
@@ -28,68 +29,8 @@ pub trait Collision {
 }
 
 // ----------------------------------------------
-//                Coordinates & Rooms
+//                     Rooms
 // ----------------------------------------------
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl Point {
-    pub fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-
-    pub fn get_adjacent(self, direction: Direction) -> Point {
-        self + PointDelta::from(direction)
-    }
-}
-
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-impl Add<PointDelta> for Point {
-    type Output = Point;
-
-    fn add(self, delta: PointDelta) -> Point {
-        let new_x = self.x as isize + delta.x;
-        let new_y = self.y as isize + delta.y;
-
-        Point { x: new_x.max(0) as usize, y: new_y.max(0) as usize }
-    }
-}
-
-pub struct PointDelta {
-    pub x: isize,
-    pub y: isize,
-}
-
-impl From<Direction> for PointDelta {
-    fn from(direction: Direction) -> Self {
-        match direction {
-            Direction::Up => PointDelta { x: 0, y: -1 },
-            Direction::Right => PointDelta { x: 1, y: 0 },
-            Direction::Down => PointDelta { x: 0, y: 1 },
-            Direction::Left => PointDelta { x: -1, y: 0 },
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
 #[derive(Debug)]
 pub struct Room {
     pub origin: Point,

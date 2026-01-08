@@ -2,7 +2,7 @@
 
 use rand::Rng;
 
-use crate::{core::game::GameState, world::worldspace::Direction};
+use crate::{core::game::GameState, world::coordinate_system::Direction};
 
 /// DieSize represents the size of a die, meaning how many sides the die has.
 #[derive(Clone, Copy, Debug)]

@@ -9,7 +9,8 @@ use crate::{
         game_items::GameItemId,
         inventory::InventoryError,
     },
-    world::worldspace::{Direction, MovementError, Point},
+    world::coordinate_system::{Direction, Point},
+    world::worldspace::MovementError,
 };
 
 pub enum PlayerInput {

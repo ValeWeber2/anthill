@@ -5,7 +5,8 @@ use crate::{
         entity_logic::{Entity, EntityId, Npc},
         game::GameState,
     },
-    world::worldspace::{Direction, MovementError, Point, PointDelta},
+    world::coordinate_system::{Direction, Point, PointDelta},
+    world::worldspace::MovementError,
 };
 
 #[derive(Default)]
@@ -37,7 +38,10 @@ impl GameState {
                 let delta = PointDelta::from(direction);
                 let _ = self.world.move_npc(npc_id, delta.x, delta.y);
             }
-            NpcActionKind::Attack => todo!(),
+            NpcActionKind::Attack => {
+                self.log.print("The NPC attacks".to_string());
+                todo!("Implement NPC Attack");
+            }
         }
 
         Ok(())
@@ -47,21 +51,28 @@ impl GameState {
         let npc = self.world.get_npc(npc_id).ok_or("npc not found")?;
         let melee_area = self.world.get_points_in_radius(npc.pos(), 1);
 
-        let npc_action = match npc.ai_state {
+        let action = match npc.ai_state {
             NpcAiState::Inactive => NpcActionKind::Wait,
+
             NpcAiState::Wandering => {
                 let random_direction = Direction::random(&mut self.rng);
                 NpcActionKind::Move(random_direction)
             }
+
             NpcAiState::Aggressive => {
                 if melee_area.contains(self.player.character.pos()) {
                     NpcActionKind::Attack
+                } else if let Some(next_step) =
+                    self.world.next_step_toward(npc.pos(), self.player.character.pos())
+                {
+                    NpcActionKind::Move(next_step)
                 } else {
-                    todo!("Pathfinding algorithm");
+                    let random_direction = Direction::random(&mut self.rng);
+                    NpcActionKind::Move(random_direction)
                 }
             }
         };
-        Ok(npc_action)
+        Ok(action)
     }
 
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), &'static str> {

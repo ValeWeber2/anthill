@@ -8,7 +8,8 @@ use ratatui::style::Style;
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
 use crate::core::game_items::{GameItemDefId, GameItemId, GameItemSprite};
-use crate::world::worldspace::{Drawable, Point};
+use crate::world::coordinate_system::Point;
+use crate::world::worldspace::Drawable;
 
 impl GameState {
     pub fn spawn<T: Spawnable + Entity>(

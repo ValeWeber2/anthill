@@ -7,8 +7,9 @@ use crate::{
         player::PlayerCharacter,
     },
     world::{
+        coordinate_system::Point,
         tiles::{Tile, TileType},
-        worldspace::{Drawable, Point, World},
+        worldspace::{Drawable, World},
     },
 };
 

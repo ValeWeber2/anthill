@@ -11,7 +11,7 @@ use crate::{
         game::GameState,
     },
     data::item_defs::item_defs,
-    world::worldspace::Point,
+    world::coordinate_system::Point,
 };
 
 // Static Item Definitions
