@@ -5,17 +5,13 @@ mod util;
 mod world;
 
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
-use ratatui::{DefaultTerminal, style::Color};
+use ratatui::DefaultTerminal;
 use std::io;
 
 use crate::{
-    core::{
-        entity_logic::{BaseStats, NpcStats},
-        game::GameState,
-        player_actions::PlayerInput,
-    },
+    core::{game::GameState, player_actions::PlayerInput},
     render::{menu_display::MenuMode, modal_display::ModalInterface, ui::UserInterface},
-    world::worldspace::{Direction, Point, Room},
+    world::worldspace::Direction,
 };
 
 fn main() -> io::Result<()> {
@@ -34,9 +30,10 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let mut game = GameState::new();
+        let game = GameState::new();
+        // game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        /*
 
         // Example: Spawn NPC after game state is initialized
         let _ = game.spawn_npc(
@@ -69,6 +66,7 @@ impl App {
             Color::LightGreen.into(),
             NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
+        */
 
         Self {
             should_quit: false,

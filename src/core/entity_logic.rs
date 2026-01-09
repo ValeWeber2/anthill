@@ -307,7 +307,7 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let item_def_id: &'static str = "armor_leather";
+        let item_def_id: String = "armor_leather".to_string();
         let item_id = game.register_item(item_def_id);
         let item_sprite_id = game.spawn_item(item_id, Point::new(50, 7)).unwrap();
 

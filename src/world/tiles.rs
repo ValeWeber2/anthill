@@ -58,7 +58,7 @@ impl Drawable for TileType {
             TileType::Void => ' ',
             TileType::Floor => '.',
             TileType::Wall => '#',
-            TileType::Hallway => ' ',
+            TileType::Hallway => '.',
             TileType::Door(DoorType::Open) => '_',
             TileType::Door(DoorType::Closed) => '+',
             TileType::Door(DoorType::Archway) => '.',
@@ -69,7 +69,7 @@ impl Drawable for TileType {
             TileType::Void => Style::new().white(),
             TileType::Floor => Style::new().dark_gray(),
             TileType::Wall => Style::new().white(),
-            TileType::Hallway => Style::new().on_dark_gray(),
+            TileType::Hallway => Style::new().dark_gray(),
             TileType::Door(DoorType::Archway) => Style::new().white(),
             TileType::Door(_) => Style::new().yellow(),
         }

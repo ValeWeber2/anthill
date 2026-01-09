@@ -10,27 +10,27 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
     ITEM_DEFS.get_or_init(|| {
         let mut m = HashMap::new();
         m.insert(
-            "weapon_sword_rusty",
+            "weapon_sword_rusty".to_string(),
             GameItemDef {
-                name: "Rusty Sword",
+                name: "Rusty Sword".to_string(),
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
                 kind: GameItemKindDef::Weapon { damage: 5 },
             },
         );
         m.insert(
-            "armor_leather",
+            "armor_leather".to_string(),
             GameItemDef {
-                name: "Leather Armor",
+                name: "Leather Armor".to_string(),
                 glyph: 'A',
                 style: Style::default().fg(Color::Yellow),
                 kind: GameItemKindDef::Armor { mitigation: 2 },
             },
         );
         m.insert(
-            "food_cake",
+            "food_cake".to_string(),
             GameItemDef {
-                name: "Cake",
+                name: "Cake".to_string(),
                 glyph: '%',
                 style: Style::default().fg(Color::Red),
                 kind: GameItemKindDef::Food,
