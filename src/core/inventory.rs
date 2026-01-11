@@ -40,7 +40,7 @@ impl GameState {
             let item = self.get_item_by_id(item_id).ok_or(InventoryError::ItemNotFound)?;
 
             let item_def =
-                { self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)? };
+                { self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)? };
 
             match item_def.kind {
                 GameItemKindDef::Armor { mitigation } => self.use_armor(&item_id, mitigation),
@@ -98,7 +98,7 @@ impl GameState {
         let item_name = {
             let (_, item) =
                 self.items.get_key_value(item_id).ok_or(InventoryError::ItemNotFound)?;
-            let def = self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
+            let def = self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
             def.name
         };
 
@@ -113,7 +113,7 @@ impl GameState {
 
             let item = self.get_item_by_id(armor_item.0).ok_or(InventoryError::ItemNotFound)?;
             let item_def =
-                self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
+                self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
 
             // remove stat effects
             if let GameItemKindDef::Armor { mitigation } = item_def.kind {
@@ -133,7 +133,7 @@ impl GameState {
 
             let item = self.get_item_by_id(weapon_item.0).ok_or(InventoryError::ItemNotFound)?;
             let item_def =
-                self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
+                self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
 
             if let GameItemKindDef::Weapon { damage } = item_def.kind {
                 self.player.character.stats.strength -= damage as u8; // will later be replaced by a better logic

@@ -55,24 +55,24 @@ impl Menu {
         let height = rect.height as usize;
         let start = inventory.len().saturating_sub(height);
 
-        let item_list_def_ids: Vec<&'static str> = inventory
+        let item_list_def_ids: Vec<String> = inventory
             .iter()
             .map(|item_id| {
                 if let Some(game_item) = game_state.get_item_by_id(*item_id) {
-                    game_item.def_id
+                    game_item.def_id.clone()
                 } else {
-                    "Unregistered Item"
+                    "Unregistered Item".to_string()
                 }
             })
             .collect();
 
-        let item_list_names: Vec<&'static str> = item_list_def_ids
+        let item_list_names: Vec<String> = item_list_def_ids
             .iter()
             .map(|item_id| {
                 if let Some(item_def) = game_state.get_item_def_by_id(item_id) {
-                    item_def.name
+                    item_def.name.clone()
                 } else {
-                    "Unknown Item"
+                    "Unknown Item".to_string()
                 }
             })
             .collect();

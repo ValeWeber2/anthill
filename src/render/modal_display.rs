@@ -68,8 +68,10 @@ fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_
 
     // look up item name
     let instance = &game.items[&item_id];
-    let item_name =
-        game.get_item_def_by_id(instance.def_id).map(|def| def.name).unwrap_or("<unknown item>");
+    let item_name = game
+        .get_item_def_by_id(&instance.def_id)
+        .map(|def| def.name)
+        .unwrap_or("<unknown item>".to_string());
 
     let text = Text::from(vec![
         Line::from(format!("Use {}?", item_name)),
