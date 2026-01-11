@@ -7,7 +7,8 @@ use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
-use crate::core::game_items::{GameItemDefId, GameItemId, GameItemSprite};
+use crate::core::game_items::{GameItemId, GameItemSprite};
+use crate::data::item_defs::GameItemDefId;
 use crate::world::coordinate_system::Point;
 use crate::world::worldspace::Drawable;
 
@@ -321,7 +322,7 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let item_def_id: &'static str = "armor_leather";
+        let item_def_id: String = "armor_leather".to_string();
         let item_id = game.register_item(item_def_id);
         let item_sprite_id = game.spawn_item(item_id, Point::new(50, 7)).unwrap();
 

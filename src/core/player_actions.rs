@@ -149,10 +149,10 @@ impl GameActionError {
     fn notify_user(&self) -> Option<&'static str> {
         match self {
             GameActionError::InventoryError(InventoryError::NoArmorEquipped) => {
-                Some("You do not have a weapon equipped.")
+                Some("You are not wearing any armor.")
             }
             GameActionError::InventoryError(InventoryError::NoWeaponEquipped) => {
-                Some("You are not wearing any armor.")
+                Some("You do not have a weapon equipped.")
             }
             _ => None,
         }

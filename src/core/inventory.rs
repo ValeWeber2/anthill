@@ -37,9 +37,10 @@ impl GameState {
         let search_item = self.player.character.inventory.iter().position(|item| *item == item_id);
 
         if search_item.is_some() {
-            let item = self.get_item_by_id(item_id).unwrap();
+            let item = self.get_item_by_id(item_id).ok_or(InventoryError::ItemNotFound)?;
 
-            let item_def = { self.get_item_def_by_id(item.def_id).unwrap() };
+            let item_def =
+                { self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)? };
 
             match item_def.kind {
                 GameItemKindDef::Armor { mitigation } => self.use_armor(&item_id, mitigation),
@@ -95,8 +96,9 @@ impl GameState {
             .min(self.player.character.stats.base.hp_max); // multiply by some factor?
         self.remove_item_from_inv(*item_id)?;
         let item_name = {
-            let (_, item) = self.items.get_key_value(item_id).unwrap();
-            let def = self.get_item_def_by_id(item.def_id).unwrap();
+            let (_, item) =
+                self.items.get_key_value(item_id).ok_or(InventoryError::ItemNotFound)?;
+            let def = self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
             def.name
         };
 
@@ -109,10 +111,11 @@ impl GameState {
             // return armor to inventory
             self.add_item_to_inv(armor_item.0)?;
 
-            // remove stat effects
+            let item = self.get_item_by_id(armor_item.0).ok_or(InventoryError::ItemNotFound)?;
             let item_def =
-                self.get_item_def_by_id(self.get_item_by_id(armor_item.0).unwrap().def_id).unwrap();
+                self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
 
+            // remove stat effects
             if let GameItemKindDef::Armor { mitigation } = item_def.kind {
                 self.player.character.stats.vitality -= mitigation as u8; // will later be replaced by a better logic
                 self.player.character.stats.dexterity += mitigation as u8; // same as above
@@ -128,9 +131,9 @@ impl GameState {
         if let Some(weapon_item) = self.player.character.weapon.take() {
             self.add_item_to_inv(weapon_item.0)?;
 
-            let item_def = self
-                .get_item_def_by_id(self.get_item_by_id(weapon_item.0).unwrap().def_id)
-                .unwrap();
+            let item = self.get_item_by_id(weapon_item.0).ok_or(InventoryError::ItemNotFound)?;
+            let item_def =
+                self.get_item_def_by_id(&item.def_id).ok_or(InventoryError::ItemNotFound)?;
 
             if let GameItemKindDef::Weapon { damage } = item_def.kind {
                 self.player.character.stats.strength -= damage as u8; // will later be replaced by a better logic
@@ -150,6 +153,7 @@ pub enum InventoryError {
     ItemNotInInventory,
     NoArmorEquipped,
     NoWeaponEquipped,
+    ItemNotFound,
 }
 
 impl Display for InventoryError {
@@ -166,6 +170,9 @@ impl Display for InventoryError {
             }
             InventoryError::NoWeaponEquipped => {
                 write!(f, "No weapon is equipped.")
+            }
+            InventoryError::ItemNotFound => {
+                write!(f, "Item not found.")
             }
         }
     }
