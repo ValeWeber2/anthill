@@ -113,17 +113,28 @@ impl App {
 
                 self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
             }
-            Command::MaxStats => todo!("Implement once player logic is finished"),
+            Command::MaxStats => {
+                self.game.player.character.stats.dexterity = 100;
+                self.game.player.character.stats.perception = 100;
+                self.game.player.character.stats.strength = 100;
+                self.game.player.character.stats.vitality = 100;
+                self.game.player.character.stats.base.hp_max = 500;
+                self.game.player.character.stats.base.hp_current = 500;
+            }
             Command::MaxEquip => todo!("Implement once items are finished"),
 
             Command::PlayerInfo => {
                 self.game.log.print(format!(
-                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}",
+                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}\n-  S:{}, D:{}, V:{}, P:{}",
                     self.game.player.character.base.name,
                     self.game.player.character.stats.base.hp_current,
                     self.game.player.character.stats.base.hp_max,
                     self.game.player.character.base.pos.x,
                     self.game.player.character.base.pos.y,
+                    self.game.player.character.stats.dexterity,
+                    self.game.player.character.stats.perception,
+                    self.game.player.character.stats.strength,
+                    self.game.player.character.stats.vitality,
                 ));
             }
 

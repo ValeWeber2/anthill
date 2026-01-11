@@ -22,6 +22,7 @@ pub struct GameState {
     pub player: Player,
     pub log: Log,
     pub round_nr: u64,
+    pub level_nr: u8,
     pub entity_id_counter: u32,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
@@ -35,6 +36,7 @@ impl GameState {
             player: Player::new(0),
             log: Log::new(true),
             round_nr: 0,
+            level_nr: 1,
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,
@@ -115,6 +117,7 @@ impl Default for GameState {
             player: Player::default(),
             log: Log::new(true),
             round_nr: 0,
+            level_nr: 1,
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,

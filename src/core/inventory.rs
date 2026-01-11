@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::core::{
     game::GameState,
-    game_items::{ArmorItem, GameItemId, GameItemKindDef},
+    game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
 };
 
 impl GameState {
@@ -43,7 +43,7 @@ impl GameState {
                 { self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)? };
 
             match item_def.kind {
-                GameItemKindDef::Armor { mitigation } => self.use_armor(&item_id, mitigation),
+                GameItemKindDef::Armor { .. } => self.use_armor(&item_id),
                 GameItemKindDef::Weapon { .. } => self.use_weapon(&item_id),
                 GameItemKindDef::Food { nutrition } => self.use_food(&item_id, nutrition),
             }
@@ -54,11 +54,7 @@ impl GameState {
         }
     }
 
-    pub fn use_armor(
-        &mut self,
-        item_id: &GameItemId,
-        mitigation: u32,
-    ) -> Result<(), InventoryError> {
+    pub fn use_armor(&mut self, item_id: &GameItemId) -> Result<(), InventoryError> {
         self.remove_item_from_inv(*item_id)?;
 
         // if old armor exists, return it to inventory
@@ -68,8 +64,6 @@ impl GameState {
 
         // equip the new armor
         self.player.character.armor = Some(ArmorItem(*item_id));
-        self.player.character.stats.vitality += mitigation as u8; // multiply by some factor?
-        self.player.character.stats.dexterity -= mitigation as u8; // multiply by some factor?
 
         Ok(())
     }
@@ -81,6 +75,9 @@ impl GameState {
         if let Some(old_weapon) = self.player.character.weapon.take() {
             self.add_item_to_inv(old_weapon.0)?;
         }
+
+        self.player.character.weapon = Some(WeaponItem(*item_id));
+
         Ok(())
     }
 
