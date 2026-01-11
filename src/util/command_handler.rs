@@ -108,8 +108,10 @@ impl App {
                 }
             }
             Command::Give { item_def, amount } => {
+                let item_id = self.game.register_item(item_def.clone());
+                let _ = self.game.add_item_to_inv(item_id);
+
                 self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
-                todo!("Implement a cheat to give player character an item.");
             }
             Command::MaxStats => todo!("Implement once player logic is finished"),
             Command::MaxEquip => todo!("Implement once items are finished"),
