@@ -1,11 +1,13 @@
+mod ai;
 mod core;
 mod data;
 mod render;
 mod util;
 mod world;
 
-use ratatui::DefaultTerminal;
 use std::io;
+
+use ratatui::DefaultTerminal;
 
 use crate::{core::game::GameState, render::ui::UserInterface, util::input_handler::KeyboardFocus};
 

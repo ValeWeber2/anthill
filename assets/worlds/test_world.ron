@@ -16,13 +16,13 @@ WorldData(
     SpawnData(
       x: 50,
       y: 10,
-      kind: Npc(id: "goblin"),
+      kind: Npc(def_id: "goblin"),
     ),
 
     SpawnData(
       x: 35,
       y: 7,
-      kind: Npc(id: "frog"),
+      kind: Npc(def_id: "frog"),
     ),
 
     //Items on ground
@@ -30,19 +30,19 @@ WorldData(
     SpawnData(
       x: 50,
       y: 11,
-      kind: Item(id: "weapon_sword_rusty"),
+      kind: Item(def_id: "weapon_sword_rusty"),
     ),
 
     SpawnData(
       x: 36,
       y: 8,
-      kind: Item(id: "armor_leather"),
+      kind: Item(def_id: "armor_leather"),
     ),
 
     SpawnData(
       x: 37,
       y: 8,
-      kind: Item(id: "food_cake"),
+      kind: Item(def_id: "food_cake"),
     ),
   ],
 )

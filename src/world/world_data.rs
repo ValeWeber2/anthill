@@ -46,6 +46,6 @@ pub struct SpawnData {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SpawnKind {
-    Npc { id: String },
-    Item { id: String },
+    Npc { def_id: String },
+    Item { def_id: String },
 }

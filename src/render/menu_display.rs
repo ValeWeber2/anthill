@@ -66,13 +66,13 @@ impl Menu {
             })
             .collect();
 
-        let item_list_names: Vec<String> = item_list_def_ids
+        let item_list_names: Vec<&'static str> = item_list_def_ids
             .iter()
             .map(|item_id| {
                 if let Some(item_def) = game_state.get_item_def_by_id(item_id) {
-                    item_def.name.clone()
+                    item_def.name
                 } else {
-                    "Unknown Item".to_string()
+                    "Unknown Item"
                 }
             })
             .collect();

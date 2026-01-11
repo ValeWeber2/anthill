@@ -2,7 +2,7 @@
 
 use rand::Rng;
 
-use crate::core::game::GameState;
+use crate::{core::game::GameState, world::coordinate_system::Direction};
 
 /// DieSize represents the size of a die, meaning how many sides the die has.
 #[derive(Clone, Copy, Debug)]
@@ -157,6 +157,17 @@ impl GameState {
     /// ```
     pub fn check(&mut self, check: &Check) -> bool {
         check.resolve(&mut self.rng)
+    }
+}
+
+impl Direction {
+    pub fn random<R: Rng + ?Sized>(rng: &mut R) -> Self {
+        match rng.random_range(0..4) {
+            0 => Direction::Up,
+            1 => Direction::Right,
+            2 => Direction::Down,
+            _ => Direction::Left,
+        }
     }
 }
 

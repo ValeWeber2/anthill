@@ -2,7 +2,7 @@
 
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
 use crate::core::game_items::{ArmorItem, GameItemId, WeaponItem};
-use crate::world::worldspace::Point;
+use crate::world::coordinate_system::Point;
 use ratatui::style::Color;
 
 pub struct Player {

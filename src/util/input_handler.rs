@@ -5,7 +5,7 @@ use crate::{
     App,
     core::player_actions::PlayerInput,
     render::{menu_display::MenuMode, modal_display::ModalInterface},
-    world::worldspace::Direction,
+    world::coordinate_system::Direction,
 };
 
 #[derive(Copy, Clone, PartialEq, Eq, Default)]

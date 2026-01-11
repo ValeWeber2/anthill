@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
-use std::{collections::HashMap, ops::Add};
 
 use ratatui::style::Style;
 
+use crate::ai::npc_ai::NpcAiError;
+use crate::world::coordinate_system::Point;
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable, Npc},
@@ -29,46 +31,8 @@ pub trait Collision {
 }
 
 // ----------------------------------------------
-//                Coordinates & Rooms
+//                     Rooms
 // ----------------------------------------------
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl Point {
-    pub fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-
-    pub fn get_neighbour(self, direction: Direction) -> Point {
-        match direction {
-            Direction::Up => Point { x: self.x, y: self.y.saturating_sub(1) },
-            Direction::Right => Point { x: self.x + 1, y: self.y },
-            Direction::Down => Point { x: self.x, y: self.y + 1 },
-            Direction::Left => Point { x: self.x.saturating_sub(1), y: self.y },
-        }
-    }
-}
-
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
 #[derive(Debug)]
 pub struct Room {
     pub origin: Point,
@@ -154,19 +118,37 @@ impl World {
             && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
     }
 
-    // could be used in combat system or graphics
-    pub fn get_points_in_radius(&self, pos: Point, radius: usize) -> Vec<Point> {
-        let mut points = Vec::new();
-        let x = pos.x;
-        let y = pos.y;
-        const TOLERANCE: f32 = 0.5;
+    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
+        self.npc_index.get(&id).map(|&index| &self.npcs[index])
+    }
 
-        for i in x - radius..=x + radius {
-            for j in y - radius..=y + radius {
-                if self.is_in_bounds(i as isize, j as isize)
-                    && ((x - i).pow(2) + (y - j).pow(2) - radius.pow(2)) as f32 <= TOLERANCE
-                {
-                    points.push(Point::new(i, j));
+    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
+        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
+    }
+
+    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
+    }
+
+    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
+    }
+
+    // could be used in combat system or graphics
+    pub fn get_points_in_radius(&self, pos: &Point, radius: isize) -> Vec<Point> {
+        let mut points = Vec::new();
+        let x = pos.x as isize;
+        let y = pos.y as isize;
+
+        let min_x = (x - radius).max(0);
+        let max_x = (x + radius).min(self.width as isize - 1);
+        let min_y = (y - radius).max(0);
+        let max_y = (y + radius).min(self.height as isize - 1);
+
+        for i in min_x..=max_x {
+            for j in min_y..=max_y {
+                if ((x - i).pow(2) + (y - j).pow(2) - radius.pow(2)) <= radius.pow(2) {
+                    points.push(Point::new(i as usize, j as usize));
                 }
             }
         }
@@ -267,8 +249,8 @@ impl World {
         }
     }
 
-    pub fn move_entity<E: Entity + Movable>(
-        &mut self,
+    pub fn move_player_character<E: Entity + Movable>(
+        &self,
         entity: &mut E,
         dx: i32,
         dy: i32,
@@ -285,6 +267,36 @@ impl World {
         }
 
         entity.move_to(Point { x: new_x as usize, y: new_y as usize });
+        Ok(())
+    }
+
+    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> Result<(), NpcAiError> {
+        let (new_x, new_y) = {
+            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+
+            let new_x = npc.pos().x as isize + dx;
+            let new_y = npc.pos().y as isize + dy;
+
+            if !self.is_in_bounds(new_x, new_y) {
+                return Err(NpcAiError::MovementError(MovementError::OutOfBounds {
+                    x: new_x,
+                    y: new_y,
+                }));
+            }
+
+            if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
+                return Err(NpcAiError::MovementError(MovementError::NotWalkable {
+                    x: new_x,
+                    y: new_y,
+                }));
+            }
+
+            (new_x, new_y)
+        };
+
+        let npc = self.get_npc_mut(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+        npc.move_to(Point { x: new_x as usize, y: new_y as usize });
+
         Ok(())
     }
 

@@ -10,22 +10,12 @@ use crate::{
         entity_logic::{Entity, EntityBase, EntityId, Spawnable, SpawningError},
         game::GameState,
     },
-    data::item_defs::item_defs,
-    world::worldspace::Point,
+    data::item_defs::{GameItemDef, GameItemDefId, item_defs},
+    world::coordinate_system::Point,
 };
 
 // Static Item Definitions
 // Layer 1. This is where items and their kinds and details are defined.
-pub type GameItemDefId = String;
-
-#[derive(Clone)]
-pub struct GameItemDef {
-    pub name: String,
-    pub glyph: char,
-    pub style: Style,
-    pub kind: GameItemKindDef,
-}
-
 #[derive(Clone)]
 pub enum GameItemKindDef {
     Weapon { damage: u32 },
@@ -105,7 +95,7 @@ impl GameState {
             .ok_or(SpawningError::ItemNotDefined(item.def_id.clone()))?;
 
         self.spawn::<GameItemSprite>(
-            item_def.name.clone(),
+            item_def.name.into(),
             pos,
             item_def.glyph,
             item_def.style,

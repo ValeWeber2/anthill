@@ -3,14 +3,15 @@
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
+use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
 use crate::world::world_loader::load_world_from_ron;
 use crate::world::worldspace::World;
 
 use crate::core::entity_logic::{BaseStats, NpcStats};
+use crate::world::coordinate_system::Point;
 use crate::world::world_data::SpawnKind;
-use crate::world::worldspace::Point;
 use ratatui::style::Color;
 
 // ----------------------------------------------
@@ -50,8 +51,7 @@ impl GameState {
         state.world.apply_world_data(&data).expect("Failed to apply world data");
 
         if let Some(r) = data.rooms.first() {
-            state.player.character.base.pos =
-                crate::world::worldspace::Point::new(r.x + 1, r.y + 1);
+            state.player.character.base.pos = Point::new(r.x + 1, r.y + 1);
         }
 
         for s in &data.spawns {
@@ -63,7 +63,7 @@ impl GameState {
             }
 
             match &s.kind {
-                SpawnKind::Npc { id } => match id.as_str() {
+                SpawnKind::Npc { def_id: id } => match id.as_str() {
                     "goblin" => {
                         let _ = state.spawn_npc(
                             "Goblin".into(),
@@ -85,8 +85,8 @@ impl GameState {
                     other => state.log.debug_print(format!("Unknown NPC id: {}", other)),
                 },
 
-                SpawnKind::Item { id } => {
-                    let item_id = state.register_item(id.clone());
+                SpawnKind::Item { def_id: id } => {
+                    let item_id = state.register_item(id.to_string());
                     let _ = state.spawn_item(item_id, pos);
                 }
             }
@@ -97,6 +97,12 @@ impl GameState {
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
+        let npc_ids: Vec<EntityId> = self.world.npc_index.keys().copied().collect();
+
+        for npc_id in npc_ids {
+            let _ = self.npc_take_turn(npc_id);
+        }
+
         self.round_nr += 1;
     }
 }
