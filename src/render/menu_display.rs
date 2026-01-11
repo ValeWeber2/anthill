@@ -69,7 +69,7 @@ impl Menu {
         let item_list_names: Vec<&'static str> = item_list_def_ids
             .iter()
             .map(|item_id| {
-                if let Some(item_def) = game_state.get_item_def_by_id(item_id) {
+                if let Some(item_def) = game_state.get_item_def_by_id(item_id.to_string()) {
                     item_def.name
                 } else {
                     "Unknown Item"

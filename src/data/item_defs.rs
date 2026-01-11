@@ -25,7 +25,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Rusty Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 5 },
+                kind: GameItemKindDef::Weapon { damage: 5, crit_chance: 5 },
             },
         );
         m.insert(
