@@ -88,7 +88,7 @@ impl Widget for &App {
 
         // Menu (Log, menus, tables)
         let block_menu = Block::default()
-            .title("Menu")
+            .title(format!("Menu─({})", self.ui.menu.mode))
             .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
                 Style::default().fg(Color::LightBlue)
             } else {
@@ -102,7 +102,7 @@ impl Widget for &App {
 
         // Modal
         if let Some(modal) = &self.ui.modal {
-            modal.render(area, buf);
+            modal.render(area, buf, &self.game);
         }
     }
 }

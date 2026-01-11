@@ -6,18 +6,26 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
-use crate::render::ui::get_centered_rect;
+use crate::{
+    core::{game::GameState, game_items::GameItemId},
+    render::ui::get_centered_rect,
+};
 
 pub enum ModalInterface {
     ConfirmQuit,
+    ConfirmUseItem { item_id: GameItemId },
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
 }
 
 impl ModalInterface {
-    pub fn render(&self, rect: Rect, buf: &mut Buffer) {
+    // render takes gamestate as argument to have access to item fields
+    pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
+            ModalInterface::ConfirmUseItem { item_id } => {
+                render_confirm_use_item(rect, buf, game, *item_id)
+            }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
             ModalInterface::TextDisplay { title, paragraphs } => {
                 render_text_display(title, paragraphs, rect, buf)
@@ -53,6 +61,27 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
 
     let paragraph = Paragraph::new(text).alignment(Alignment::Center);
     paragraph.render(center_of_rect, buf);
+}
+
+fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
+    let modal_area = render_modal_window(50, 5, "Confirm Action".to_string(), rect, buf);
+
+    // look up item name
+    let instance = &game.items[&item_id];
+    let item_name = game
+        .get_item_def_by_id(&instance.def_id)
+        .map(|def| def.name)
+        .unwrap_or("<unknown item>".to_string());
+
+    let text = Text::from(vec![
+        Line::from(format!("Use {}?", item_name)),
+        Line::from(""),
+        Line::from("Press <y> to confirm, <n> to cancel"),
+    ]);
+
+    let center_of_rect = get_centered_rect(50, 3, modal_area);
+
+    Paragraph::new(text).alignment(Alignment::Center).render(center_of_rect, buf);
 }
 
 fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {
