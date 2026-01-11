@@ -92,7 +92,8 @@ impl GameState {
         let item_name = {
             let (_, item) =
                 self.items.get_key_value(item_id).ok_or(InventoryError::ItemNotFound)?;
-            let def = self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
+            let def =
+                self.get_item_def_by_id(item.def_id.clone()).ok_or(InventoryError::ItemNotFound)?;
             def.name
         };
 
@@ -102,18 +103,7 @@ impl GameState {
 
     pub fn unequip_armor(&mut self) -> Result<(), InventoryError> {
         if let Some(armor_item) = self.player.character.armor.take() {
-            // return armor to inventory
             self.add_item_to_inv(armor_item.0)?;
-
-            let item = self.get_item_by_id(armor_item.0).ok_or(InventoryError::ItemNotFound)?;
-            let item_def =
-                self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
-
-            // remove stat effects
-            if let GameItemKindDef::Armor { mitigation } = item_def.kind {
-                self.player.character.stats.vitality -= mitigation as u8; // will later be replaced by a better logic
-                self.player.character.stats.dexterity += mitigation as u8; // same as above
-            }
 
             Ok(())
         } else {
@@ -124,6 +114,7 @@ impl GameState {
     pub fn unequip_weapon(&mut self) -> Result<(), InventoryError> {
         if let Some(weapon_item) = self.player.character.weapon.take() {
             self.add_item_to_inv(weapon_item.0)?;
+
             Ok(())
         } else {
             Err(InventoryError::NoWeaponEquipped)

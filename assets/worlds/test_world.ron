@@ -1,0 +1,48 @@
+WorldData(
+  width: 100,
+  height: 25,
+
+  rooms: [
+    RoomData(x: 10, y: 5, width: 15, height: 10),
+    RoomData(x: 35, y: 5, width: 20, height: 12),
+    RoomData(x: 65, y: 8, width: 18, height: 10),
+  ],
+
+  tiles: [],
+
+  spawns: [
+    //NPCs
+
+    SpawnData(
+      x: 50,
+      y: 10,
+      kind: Npc(def_id: "goblin"),
+    ),
+
+    SpawnData(
+      x: 35,
+      y: 7,
+      kind: Npc(def_id: "frog"),
+    ),
+
+    //Items on ground
+
+    SpawnData(
+      x: 50,
+      y: 11,
+      kind: Item(def_id: "weapon_sword_rusty"),
+    ),
+
+    SpawnData(
+      x: 36,
+      y: 8,
+      kind: Item(def_id: "armor_leather"),
+    ),
+
+    SpawnData(
+      x: 37,
+      y: 8,
+      kind: Item(def_id: "food_cake"),
+    ),
+  ],
+)

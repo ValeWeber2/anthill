@@ -10,21 +10,12 @@ use crate::{
         entity_logic::{Entity, EntityBase, EntityId, Spawnable, SpawningError},
         game::GameState,
     },
-    data::item_defs::item_defs,
-    world::worldspace::Point,
+    data::item_defs::{GameItemDef, GameItemDefId, item_defs},
+    world::coordinate_system::Point,
 };
 
 // Static Item Definitions
 // Layer 1. This is where items and their kinds and details are defined.
-pub type GameItemDefId = &'static str;
-
-#[derive(Clone)]
-pub struct GameItemDef {
-    pub name: &'static str,
-    pub glyph: char,
-    pub style: Style,
-    pub kind: GameItemKindDef,
-}
 
 #[derive(Clone)]
 pub enum GameItemKindDef {
@@ -86,7 +77,7 @@ impl GameState {
 
     pub fn register_item(&mut self, def_id: GameItemDefId) -> GameItemId {
         let id: GameItemId = self.next_item_id();
-        self.items.insert(id, GameItem { def_id });
+        self.items.insert(id, GameItem { def_id: def_id.clone() });
 
         self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
 
@@ -101,7 +92,7 @@ impl GameState {
         let item = self.get_item_by_id(item_id).ok_or(SpawningError::ItemNotRegistered(item_id))?;
 
         let item_def = self
-            .get_item_def_by_id(item.def_id)
+            .get_item_def_by_id(item.def_id.clone())
             .ok_or(SpawningError::ItemNotDefined(item.def_id))?;
 
         self.spawn::<GameItemSprite>(
@@ -118,7 +109,7 @@ impl GameState {
     }
 
     pub fn get_item_def_by_id(&self, item_def_id: GameItemDefId) -> Option<GameItemDef> {
-        item_defs().get(item_def_id).cloned()
+        item_defs().get(&item_def_id).cloned()
     }
 
     pub fn format_weapon(&self) -> String {
@@ -131,7 +122,7 @@ impl GameState {
                 };
 
                 // look up the definition by def_id
-                let def = match self.get_item_def_by_id(instance.def_id) {
+                let def = match self.get_item_def_by_id(instance.def_id.clone()) {
                     Some(d) => d,
                     None => return "Invalid weapon".to_string(),
                 };
@@ -156,7 +147,7 @@ impl GameState {
                     None => return "Invalid armor".to_string(),
                 };
 
-                let def = match self.get_item_def_by_id(instance.def_id) {
+                let def = match self.get_item_def_by_id(instance.def_id.clone()) {
                     Some(d) => d,
                     None => return "Invalid armor".to_string(),
                 };

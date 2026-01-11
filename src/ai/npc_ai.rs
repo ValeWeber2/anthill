@@ -1,0 +1,101 @@
+#![allow(dead_code)]
+
+use crate::{
+    core::{
+        entity_logic::{Entity, EntityId, Npc},
+        game::GameState,
+    },
+    world::coordinate_system::{Direction, Point, PointDelta},
+    world::worldspace::MovementError,
+};
+
+#[derive(Default)]
+pub enum NpcAiState {
+    #[default]
+    Inactive,
+    Wandering,
+    Aggressive,
+}
+
+pub enum NpcActionKind {
+    Wait,
+    Move(Direction),
+    Attack,
+}
+
+impl GameState {
+    pub fn npc_take_turn(&mut self, npc_id: EntityId) -> Result<(), &'static str> {
+        // Update NpcAiState
+        self.npc_refresh_ai_state(npc_id)?;
+
+        // Decide Action
+        let npc_action = self.npc_choose_action(npc_id)?;
+
+        // Resolve Action
+        match npc_action {
+            NpcActionKind::Wait => {}
+            NpcActionKind::Move(direction) => {
+                let delta = PointDelta::from(direction);
+                let _ = self.world.move_npc(npc_id, delta.x, delta.y);
+            }
+            NpcActionKind::Attack => {
+                self.log.print("The NPC attacks".to_string());
+                todo!("Implement NPC Attack");
+            }
+        }
+
+        Ok(())
+    }
+
+    fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, &'static str> {
+        let npc = self.world.get_npc(npc_id).ok_or("npc not found")?;
+        let melee_area = self.world.get_points_in_radius(npc.pos(), 1);
+
+        let action = match npc.ai_state {
+            NpcAiState::Inactive => NpcActionKind::Wait,
+
+            NpcAiState::Wandering => {
+                let random_direction = Direction::random(&mut self.rng);
+                NpcActionKind::Move(random_direction)
+            }
+
+            NpcAiState::Aggressive => {
+                if melee_area.contains(self.player.character.pos()) {
+                    NpcActionKind::Attack
+                } else if let Some(next_step) =
+                    self.world.next_step_toward(npc.pos(), self.player.character.pos())
+                {
+                    NpcActionKind::Move(next_step)
+                } else {
+                    let random_direction = Direction::random(&mut self.rng);
+                    NpcActionKind::Move(random_direction)
+                }
+            }
+        };
+        Ok(action)
+    }
+
+    fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), &'static str> {
+        let npc_pos: Point = {
+            let npc: &Npc = self.world.get_npc(npc_id).ok_or("npc not found")?;
+            *npc.pos()
+        };
+
+        let detectable_area: Vec<Point> = self.world.get_points_in_radius(&npc_pos, 10);
+
+        let npc: &mut Npc = self.world.get_npc_mut(npc_id).ok_or("npc not found")?;
+
+        if detectable_area.contains(self.player.character.pos()) {
+            npc.ai_state = NpcAiState::Aggressive;
+        } else {
+            npc.ai_state = NpcAiState::Wandering;
+        }
+
+        Ok(())
+    }
+}
+
+pub enum NpcAiError {
+    MovementError(MovementError),
+    NpcNotFound,
+}

@@ -1,18 +1,22 @@
 #![allow(dead_code)]
 
+use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
-use std::{collections::HashMap, ops::Add};
 
 use ratatui::style::Style;
 
+use crate::ai::npc_ai::NpcAiError;
+use crate::world::coordinate_system::Point;
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable, Npc},
         game::GameState,
         game_items::GameItemSprite,
     },
-    world::tiles::{Tile, TileType},
+    world::tiles::{DoorType, Tile, TileType},
 };
+
+use crate::world::world_data::{TileTypeData, WorldData};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -27,46 +31,8 @@ pub trait Collision {
 }
 
 // ----------------------------------------------
-//                Coordinates & Rooms
+//                     Rooms
 // ----------------------------------------------
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub struct Point {
-    pub x: usize,
-    pub y: usize,
-}
-
-impl Point {
-    pub fn new(x: usize, y: usize) -> Self {
-        Self { x, y }
-    }
-
-    pub fn get_neighbour(self, direction: Direction) -> Point {
-        match direction {
-            Direction::Up => Point { x: self.x, y: self.y.saturating_sub(1) },
-            Direction::Right => Point { x: self.x + 1, y: self.y },
-            Direction::Down => Point { x: self.x, y: self.y + 1 },
-            Direction::Left => Point { x: self.x.saturating_sub(1), y: self.y },
-        }
-    }
-}
-
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
 #[derive(Debug)]
 pub struct Room {
     pub origin: Point,
@@ -152,24 +118,112 @@ impl World {
             && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
     }
 
-    // could be used in combat system or graphics
-    pub fn get_points_in_radius(&self, pos: Point, radius: usize) -> Vec<Point> {
-        let mut points = Vec::new();
-        let x = pos.x;
-        let y = pos.y;
-        const TOLERANCE: f32 = 0.5;
+    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
+        self.npc_index.get(&id).map(|&index| &self.npcs[index])
+    }
 
-        for i in x - radius..=x + radius {
-            for j in y - radius..=y + radius {
-                if self.is_in_bounds(i as isize, j as isize)
-                    && ((x - i).pow(2) + (y - j).pow(2) - radius.pow(2)) as f32 <= TOLERANCE
-                {
-                    points.push(Point::new(i, j));
+    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
+        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
+    }
+
+    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
+    }
+
+    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
+    }
+
+    // could be used in combat system or graphics
+    pub fn get_points_in_radius(&self, pos: &Point, radius: isize) -> Vec<Point> {
+        let mut points = Vec::new();
+        let x = pos.x as isize;
+        let y = pos.y as isize;
+
+        let min_x = (x - radius).max(0);
+        let max_x = (x + radius).min(self.width as isize - 1);
+        let min_y = (y - radius).max(0);
+        let max_y = (y + radius).min(self.height as isize - 1);
+
+        for i in min_x..=max_x {
+            for j in min_y..=max_y {
+                if ((x - i).pow(2) + (y - j).pow(2) - radius.pow(2)) <= radius.pow(2) {
+                    points.push(Point::new(i as usize, j as usize));
                 }
             }
         }
 
         points
+    }
+
+    pub fn carve_corridor(&mut self, from: Point, to: Point) {
+        let mut x = from.x;
+        let mut y = from.y;
+
+        while x != to.x {
+            self.carve_corridor_step(x, y);
+            if to.x > x {
+                x += 1
+            } else {
+                x -= 1
+            };
+        }
+
+        while y != to.y {
+            self.carve_corridor_step(x, y);
+            if to.y > y {
+                y += 1
+            } else {
+                y -= 1
+            };
+        }
+
+        self.carve_corridor_step(x, y);
+    }
+
+    fn carve_corridor_step(&mut self, x: usize, y: usize) {
+        let tile = self.get_tile_mut(x, y);
+
+        tile.tile_type = match tile.tile_type {
+            TileType::Wall => TileType::Door(DoorType::Archway),
+            TileType::Door(DoorType::Closed) => TileType::Door(DoorType::Archway),
+            _ => TileType::Floor,
+        }
+    }
+
+    pub fn add_walls_around_walkables(&mut self) {
+        let mut to_wall: Vec<(usize, usize)> = Vec::new();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let tt = self.get_tile(x, y).tile_type;
+
+                if matches!(tt, TileType::Floor | TileType::Hallway | TileType::Door(_)) {
+                    let y0 = y.saturating_sub(1);
+                    let y1 = (y + 1).min(self.height - 1);
+                    let x0 = x.saturating_sub(1);
+                    let x1 = (x + 1).min(self.width - 1);
+
+                    for ny in y0..=y1 {
+                        for nx in x0..=x1 {
+                            if nx == x && ny == y {
+                                continue;
+                            }
+
+                            if self.get_tile(nx, ny).tile_type == TileType::Void {
+                                to_wall.push((nx, ny));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (x, y) in to_wall {
+            if self.get_tile(x, y).tile_type == TileType::Void {
+                self.get_tile_mut(x, y).tile_type = TileType::Wall;
+            }
+        }
     }
 
     pub fn carve_room(&mut self, room: &Room) {
@@ -195,8 +249,8 @@ impl World {
         }
     }
 
-    pub fn move_entity<E: Entity + Movable>(
-        &mut self,
+    pub fn move_player_character<E: Entity + Movable>(
+        &self,
         entity: &mut E,
         dx: i32,
         dy: i32,
@@ -213,6 +267,83 @@ impl World {
         }
 
         entity.move_to(Point { x: new_x as usize, y: new_y as usize });
+        Ok(())
+    }
+
+    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> Result<(), NpcAiError> {
+        let (new_x, new_y) = {
+            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+
+            let new_x = npc.pos().x as isize + dx;
+            let new_y = npc.pos().y as isize + dy;
+
+            if !self.is_in_bounds(new_x, new_y) {
+                return Err(NpcAiError::MovementError(MovementError::OutOfBounds {
+                    x: new_x,
+                    y: new_y,
+                }));
+            }
+
+            if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
+                return Err(NpcAiError::MovementError(MovementError::NotWalkable {
+                    x: new_x,
+                    y: new_y,
+                }));
+            }
+
+            (new_x, new_y)
+        };
+
+        let npc = self.get_npc_mut(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+        npc.move_to(Point { x: new_x as usize, y: new_y as usize });
+
+        Ok(())
+    }
+
+    pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {
+        if data.width != self.width || data.height != self.height {
+            return Err("WorldData dimensions do not match current ones");
+        }
+
+        for t in self.tiles.iter_mut() {
+            *t = Tile::default();
+        }
+
+        for r in &data.rooms {
+            let room = Room::new(Point::new(r.x, r.y), r.width, r.height);
+            self.carve_room(&room);
+        }
+
+        for w in data.rooms.windows(2) {
+            let a = &w[0];
+            let b = &w[1];
+
+            let start = Point::new(a.x + a.width / 2, a.y + a.height / 2);
+            let end = Point::new(b.x + b.width / 2, b.y + b.height / 2);
+
+            self.carve_corridor(start, end);
+        }
+
+        for td in &data.tiles {
+            if td.x >= self.width || td.y >= self.height {
+                return Err("WorldData contains tile out of bounds");
+            }
+
+            let idx = self.index(td.x, td.y);
+
+            let tile_type = match td.tile_type {
+                TileTypeData::Floor => TileType::Floor,
+                TileTypeData::Wall => TileType::Wall,
+                TileTypeData::Door { open } => {
+                    TileType::Door(if open { DoorType::Open } else { DoorType::Closed })
+                }
+            };
+
+            self.tiles[idx] = Tile::new(tile_type);
+        }
+
+        self.add_walls_around_walkables();
+
         Ok(())
     }
 }

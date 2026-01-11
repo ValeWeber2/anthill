@@ -1,21 +1,15 @@
+mod ai;
 mod core;
 mod data;
 mod render;
 mod util;
 mod world;
 
-use ratatui::{DefaultTerminal, style::Color};
 use std::io;
 
-use crate::{
-    core::{
-        entity_logic::{BaseStats, NpcStats},
-        game::GameState,
-    },
-    render::ui::UserInterface,
-    util::input_handler::KeyboardFocus,
-    world::worldspace::{Point, Room},
-};
+use ratatui::DefaultTerminal;
+
+use crate::{core::game::GameState, render::ui::UserInterface, util::input_handler::KeyboardFocus};
 
 fn main() -> io::Result<()> {
     let terminal = ratatui::init();
@@ -33,9 +27,10 @@ struct App {
 
 impl App {
     fn new() -> Self {
-        let mut game = GameState::new();
+        let game = GameState::new();
+        // game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        /*
 
         // Example: Spawn NPC after game state is initialized
         let _ = game.spawn_npc(
@@ -68,6 +63,7 @@ impl App {
             Color::LightGreen.into(),
             NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
         );
+        */
 
         Self {
             should_quit: false,
