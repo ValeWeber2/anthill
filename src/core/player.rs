@@ -47,8 +47,8 @@ impl PlayerCharacter {
             weapon: None,
         }
     }
-    pub fn attack_damage(&self) -> u32 {
-        self.stats.strength as u32 * 2
+    pub fn attack_damage_bonus(&self) -> u32 {
+        self.stats.strength as u32
     }
 
     pub fn dodge_chance(&self) -> u8 {
@@ -90,7 +90,7 @@ impl PlayerCharacter {
 
 impl Default for PlayerCharacter {
     fn default() -> Self {
-        Self::new(999999) // placeholder, never inserted into world
+        Self::new(999999) // placeholder, never inserted inro world
     }
 }
 
@@ -156,5 +156,17 @@ impl Movable for PlayerCharacter {
     fn move_to(&mut self, point: Point) {
         self.base.pos.x = point.x;
         self.base.pos.y = point.y;
+    }
+}
+
+#[derive(Clone)]
+pub struct Weapon {
+    pub base_damage: u32,
+    pub crit_chance: u8,
+}
+
+impl Weapon {
+    pub fn new(base_damage: u32, crit_chance: u8) -> Self {
+        Self { base_damage, crit_chance }
     }
 }

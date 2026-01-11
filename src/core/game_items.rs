@@ -28,7 +28,7 @@ pub struct GameItemDef {
 
 #[derive(Clone)]
 pub enum GameItemKindDef {
-    Weapon { damage: u32 },
+    Weapon { damage: u32, crit_chance: u8 },
     Armor { mitigation: u32 },
     Food { nutrition: u32 },
 }
@@ -138,8 +138,8 @@ impl GameState {
 
                 // extract stats from GameItemKindDef
                 match def.kind {
-                    GameItemKindDef::Weapon { damage } => {
-                        format!("{} (damage {})", def.name, damage)
+                    GameItemKindDef::Weapon { damage, crit_chance } => {
+                        format!("{} (damage {}, crit chance {})", def.name, damage, crit_chance)
                     }
                     _ => "Invalid weapon".to_string(),
                 }

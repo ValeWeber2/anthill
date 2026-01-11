@@ -4,7 +4,7 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::core::{
     game::GameState,
-    game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
+    game_items::{ArmorItem, GameItemId, GameItemKindDef},
 };
 
 impl GameState {
@@ -44,7 +44,7 @@ impl GameState {
 
             match item_def.kind {
                 GameItemKindDef::Armor { mitigation } => self.use_armor(&item_id, mitigation),
-                GameItemKindDef::Weapon { damage } => self.use_weapon(&item_id, damage),
+                GameItemKindDef::Weapon { .. } => self.use_weapon(&item_id),
                 GameItemKindDef::Food { nutrition } => self.use_food(&item_id, nutrition),
             }
         } else {
@@ -74,19 +74,13 @@ impl GameState {
         Ok(())
     }
 
-    pub fn use_weapon(&mut self, item_id: &GameItemId, damage: u32) -> Result<(), InventoryError> {
+    pub fn use_weapon(&mut self, item_id: &GameItemId) -> Result<(), InventoryError> {
         self.remove_item_from_inv(*item_id)?;
 
         // if old weapon exists, return it to inventory
         if let Some(old_weapon) = self.player.character.weapon.take() {
             self.add_item_to_inv(old_weapon.0)?;
         }
-
-        // equip the new armor
-        self.player.character.weapon = Some(WeaponItem(*item_id));
-        self.player.character.stats.strength += damage as u8; // multiply by some factor?
-        self.player.character.stats.dexterity -= damage as u8; // multiply by some factor?
-
         Ok(())
     }
 
@@ -130,16 +124,6 @@ impl GameState {
     pub fn unequip_weapon(&mut self) -> Result<(), InventoryError> {
         if let Some(weapon_item) = self.player.character.weapon.take() {
             self.add_item_to_inv(weapon_item.0)?;
-
-            let item = self.get_item_by_id(weapon_item.0).ok_or(InventoryError::ItemNotFound)?;
-            let item_def =
-                self.get_item_def_by_id(item.def_id).ok_or(InventoryError::ItemNotFound)?;
-
-            if let GameItemKindDef::Weapon { damage } = item_def.kind {
-                self.player.character.stats.strength -= damage as u8; // will later be replaced by a better logic
-                self.player.character.stats.dexterity += damage as u8; // same as above
-            }
-
             Ok(())
         } else {
             Err(InventoryError::NoWeaponEquipped)

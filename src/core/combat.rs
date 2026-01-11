@@ -23,13 +23,14 @@ impl GameState {
         }
 
         //Damage
-        let damage = self.player.character.attack_damage();
+        let damage = self.player.character.attack_damage(&mut self.rng);
+        let mitigated = damage;
+
         npc.stats.base.take_damage(mitigated);
 
         self.log.print(format!(
             "Player hits {} for {} damage!",
-            npc.name(),
-            mitigated
+            npc.name(), mitigated
         ));
 
         if !npc.stats.base.is_alive() {
@@ -48,6 +49,15 @@ impl GameState {
 
 
         let damage = npc.stats.damage as u32;
+        
+        let mitigated = {
+            if let Some(armor) = &self.player.charcter.armor {
+                damage.saturating_sub(armor.mitigation())
+            } else {
+                damage
+            }
+        };
+
         self.player.character.take_damage(mitigated);
 
         self.log.print(format!(
