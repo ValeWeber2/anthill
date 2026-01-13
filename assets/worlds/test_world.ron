@@ -20,9 +20,9 @@ WorldData(
     ),
 
     SpawnData(
-      x: 35,
+      x: 36,
       y: 7,
-      kind: Npc(def_id: "frog"),
+      kind: Npc(def_id: "funny_frog"),
     ),
 
     //Items on ground

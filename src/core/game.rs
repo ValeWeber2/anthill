@@ -9,10 +9,8 @@ use crate::core::player::Player;
 use crate::world::world_loader::load_world_from_ron;
 use crate::world::worldspace::World;
 
-use crate::core::entity_logic::{BaseStats, NpcStats};
 use crate::world::coordinate_system::Point;
 use crate::world::world_data::SpawnKind;
-use ratatui::style::Color;
 
 // ----------------------------------------------
 //                Game State Struct
@@ -65,40 +63,11 @@ impl GameState {
             }
 
             match &s.kind {
-                SpawnKind::Npc { def_id: id } => match id.as_str() {
-                    "goblin" => {
-                        let _ = state.spawn_npc(
-                            "Goblin".into(),
-                            pos,
-                            'g',
-                            Color::Green.into(),
-                            NpcStats {
-                                base: BaseStats { hp_max: 10, hp_current: 10 },
-                                damage: 2,
-                                dodge: 10,
-                                mitigation: 0,
-                            },
-                        );
-                    }
-                    "frog" => {
-                        let _ = state.spawn_npc(
-                            "Funny Frog".into(),
-                            pos,
-                            'f',
-                            Color::LightGreen.into(),
-                            NpcStats {
-                                base: BaseStats { hp_max: 5, hp_current: 5 },
-                                damage: 0,
-                                dodge: 5,
-                                mitigation: 0,
-                            },
-                        );
-                    }
-                    other => state.log.debug_print(format!("Unknown NPC id: {}", other)),
-                },
-
-                SpawnKind::Item { def_id: id } => {
-                    let item_id = state.register_item(id.to_string());
+                SpawnKind::Npc { def_id } => {
+                    let _ = state.spawn_npc(def_id.clone(), pos);
+                }
+                SpawnKind::Item { def_id } => {
+                    let item_id = state.register_item(def_id.clone());
                     let _ = state.spawn_item(item_id, pos);
                 }
             }

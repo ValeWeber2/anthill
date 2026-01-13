@@ -8,7 +8,6 @@ use crate::core::entity_logic::{BaseStats, NpcStats};
 pub type NpcDefId = String;
 
 #[derive(Clone)]
-#[allow(dead_code)]
 pub struct NpcDef {
     pub name: &'static str,
     pub glyph: char,
