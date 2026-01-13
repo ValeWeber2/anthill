@@ -108,8 +108,10 @@ impl App {
                 }
             }
             Command::Give { item_def, amount } => {
-                let item_id = self.game.register_item(item_def.clone());
-                let _ = self.game.add_item_to_inv(item_id);
+                for _ in 0..amount {
+                    let item_id = self.game.register_item(item_def.clone());
+                    let _ = self.game.add_item_to_inv(item_id);
+                }
 
                 self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
             }

@@ -4,7 +4,10 @@ use std::io;
 use crate::{
     App,
     core::player_actions::PlayerInput,
-    render::{menu_display::MenuMode, modal_display::ModalInterface},
+    render::{
+        menu_display::{InventoryAction, MenuMode},
+        modal_display::ModalInterface,
+    },
     world::coordinate_system::Direction,
 };
 
@@ -89,10 +92,6 @@ impl App {
             KeyCode::Char('.') => {
                 self.game.resolve_player_action(PlayerInput::Wait);
             }
-            // Action: Leave item
-            KeyCode::Char('l') => {
-                self.game.resolve_player_action(PlayerInput::DropItem(1));
-            }
             // Action: Unequip Weapon
             KeyCode::Char('W') => {
                 self.game.resolve_player_action(PlayerInput::UnequipWeapon);
@@ -102,9 +101,17 @@ impl App {
                 self.game.resolve_player_action(PlayerInput::UnequipArmor);
             }
 
-            // Control: Open Inventory (shifts focus to menu)
+            // Control: Open Inventory without any intentions
             KeyCode::Char('i') => {
-                self.focus_menu(MenuMode::Inventory);
+                self.focus_menu(MenuMode::Inventory(InventoryAction::View));
+            }
+            // Control: Open Inventory with intention to Action: Use Item (shifts focus to menu)
+            KeyCode::Char('u') => {
+                self.focus_menu(MenuMode::Inventory(InventoryAction::Use));
+            }
+            // Control: Open Inventory with intention to Action: Leave Item (shifts focus to menu)
+            KeyCode::Char('l') => {
+                self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
             }
 
             // Debug: Print player pos
@@ -134,8 +141,8 @@ impl App {
     }
 
     fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
-        match self.ui.menu.mode {
-            MenuMode::Inventory => self.handle_inventory_key_event(key_event),
+        match &self.ui.menu.mode {
+            MenuMode::Inventory(_) => self.handle_inventory_key_event(key_event),
             MenuMode::Log => {}
         }
     }
@@ -150,9 +157,17 @@ impl App {
                     }
                     _ => ModalAction::CloseModal,
                 },
-                ModalInterface::ConfirmUseItem { item_id } => match key_event.code {
-                    KeyCode::Char('y') => {
-                        self.game.resolve_player_action(PlayerInput::UseItem(*item_id));
+                ModalInterface::ConfirmChooseItem { item_id } => match key_event.code {
+                    KeyCode::Char('y') | KeyCode::Enter => {
+                        match self.ui.menu.mode {
+                            MenuMode::Inventory(InventoryAction::Use) => {
+                                self.game.resolve_player_action(PlayerInput::UseItem(*item_id))
+                            }
+                            MenuMode::Inventory(InventoryAction::Drop) => {
+                                self.game.resolve_player_action(PlayerInput::DropItem(*item_id))
+                            }
+                            _ => {}
+                        }
 
                         // close inventory after using
                         self.focus_reset();
@@ -213,7 +228,8 @@ impl App {
             KeyCode::Char(c) => {
                 if let Some(index) = App::letter_to_index(c) {
                     if let Some(item_id) = self.game.player.character.inventory.get(index) {
-                        self.ui.modal = Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                        self.ui.modal =
+                            Some(ModalInterface::ConfirmChooseItem { item_id: *item_id });
                     }
                 }
             }

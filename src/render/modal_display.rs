@@ -13,7 +13,7 @@ use crate::{
 
 pub enum ModalInterface {
     ConfirmQuit,
-    ConfirmUseItem { item_id: GameItemId },
+    ConfirmChooseItem { item_id: GameItemId },
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
 }
@@ -23,7 +23,7 @@ impl ModalInterface {
     pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
-            ModalInterface::ConfirmUseItem { item_id } => {
+            ModalInterface::ConfirmChooseItem { item_id } => {
                 render_confirm_use_item(rect, buf, game, *item_id)
             }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
