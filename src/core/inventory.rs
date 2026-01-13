@@ -81,7 +81,7 @@ impl GameState {
         Ok(())
     }
 
-    pub fn use_food(&mut self, item_id: &GameItemId, nutrition: u32) -> Result<(), InventoryError> {
+    pub fn use_food(&mut self, item_id: &GameItemId, nutrition: u16) -> Result<(), InventoryError> {
         self.player.character.stats.base.hp_current = (self.player.character.stats.base.hp_current
             + nutrition)
             .min(self.player.character.stats.base.hp_max); // multiply by some factor?

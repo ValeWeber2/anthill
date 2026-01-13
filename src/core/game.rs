@@ -72,7 +72,12 @@ impl GameState {
                             pos,
                             'g',
                             Color::Green.into(),
-                            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+                            NpcStats {
+                                base: BaseStats { hp_max: 10, hp_current: 10 },
+                                damage: 2,
+                                dodge: 10,
+                                mitigation: 0,
+                            },
                         );
                     }
                     "frog" => {
@@ -81,7 +86,12 @@ impl GameState {
                             pos,
                             'f',
                             Color::LightGreen.into(),
-                            NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
+                            NpcStats {
+                                base: BaseStats { hp_max: 5, hp_current: 5 },
+                                damage: 0,
+                                dodge: 5,
+                                mitigation: 0,
+                            },
                         );
                     }
                     other => state.log.debug_print(format!("Unknown NPC id: {}", other)),

@@ -9,6 +9,7 @@ use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
 use crate::core::game_items::{GameItemId, GameItemSprite};
 use crate::data::item_defs::GameItemDefId;
+use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
 use crate::world::coordinate_system::Point;
 use crate::world::worldspace::Drawable;
 
@@ -113,6 +114,10 @@ impl GameState {
 
         None
     }
+
+    pub fn get_npc_def_by_id(&self, npc_def_id: NpcDefId) -> Option<NpcDef> {
+        npc_defs().get(&npc_def_id).cloned()
+    }
 }
 
 pub enum EntityRef<'a> {
@@ -149,6 +154,7 @@ pub trait Movable {
 
 pub type EntityId = u32;
 
+#[derive(Clone)]
 pub struct EntityBase {
     pub id: EntityId,
     pub name: String,
@@ -166,9 +172,10 @@ impl Drawable for EntityBase {
     }
 }
 
+#[derive(Clone)]
 pub struct BaseStats {
-    pub hp_max: u32,
-    pub hp_current: u32,
+    pub hp_max: u16,
+    pub hp_current: u16,
 }
 
 // NPC
@@ -176,11 +183,6 @@ pub struct Npc {
     pub base: EntityBase,
     pub stats: NpcStats,
     pub ai_state: NpcAiState,
-}
-
-pub struct NpcStats {
-    pub base: BaseStats,
-    pub damage: u8,
 }
 
 impl Entity for Npc {
@@ -242,6 +244,20 @@ impl Npc {
     }
 }
 
+#[derive(Clone)]
+pub struct NpcStats {
+    pub base: BaseStats,
+    pub damage: u16,
+    pub dodge: u8,
+    pub mitigation: u16,
+}
+
+impl NpcStats {
+    pub fn dodge_chance(&self) -> u8 {
+        self.dodge.min(50)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum SpawningError {
     PositionUnavailable { x: usize, y: usize },
@@ -284,7 +300,12 @@ mod tests {
                 Point::new(50, 7),
                 'g',
                 Color::Green.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 2,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -307,7 +328,12 @@ mod tests {
                 Point { x: 50, y: 7 },
                 'o',
                 Color::LightGreen.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 2,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -344,7 +370,12 @@ mod tests {
                 pos,
                 's',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 2,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -362,7 +393,12 @@ mod tests {
                 Point::new(50, 7),
                 'a',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 1,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -372,7 +408,12 @@ mod tests {
                 Point::new(51, 7),
                 'b',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 1,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -399,7 +440,12 @@ mod tests {
                 pos,
                 'G',
                 Color::Cyan.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 1,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -430,7 +476,12 @@ mod tests {
                 Point::new(50, 7),
                 'a',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 1,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -440,7 +491,12 @@ mod tests {
                 Point::new(51, 7),
                 'b',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 1,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 

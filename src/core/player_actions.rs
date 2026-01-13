@@ -55,7 +55,7 @@ impl GameState {
                 .world
                 .move_player_character(&mut self.player.character, -1, 0)
                 .map_err(GameActionError::MovementError),
-            ActionKind::Attack(_) => todo!(),
+            ActionKind::Attack(npc_id) => self.player_attack_npc(npc_id),
             ActionKind::PickUpItem(entity_id) => self.pick_up_item(entity_id),
             ActionKind::DropItem(item_id) => self.drop_item(item_id),
             ActionKind::UseItem(item_id) => {
@@ -143,6 +143,7 @@ pub enum GameActionError {
     NotAnItem(EntityId),
     InventoryError(InventoryError),
     SpawningError(SpawningError),
+    Other(&'static str),
 }
 
 impl GameActionError {
@@ -176,6 +177,9 @@ impl Display for GameActionError {
             }
             GameActionError::SpawningError(spawning_error) => {
                 write!(f, "Spawning Error: {}", spawning_error)
+            }
+            GameActionError::Other(text) => {
+                write!(f, "Other Error: {}", text)
             }
         }
     }

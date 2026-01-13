@@ -1,69 +1,144 @@
-use rand::Rng;
-
-use crate::core::{
-    entity_logic::{Npc},
-    game::GameState,
-    player::PlayerCharacter,
+use crate::{
+    ai::npc_ai::NpcAiError,
+    core::{
+        entity_logic::EntityId, game::GameState, game_items::GameItemKindDef,
+        player_actions::GameActionError,
+    },
+    util::rng::{DieSize, Roll},
 };
 
 impl GameState {
-    pub fn player_attack_npc(&mut self, npc_id: u32) {
-        let npc_index = match self.world.npc_index.get(&npc_id) {
-            Some(i) => *i,
-            None => return,
-        };
+    pub fn player_attack_npc(&mut self, npc_id: u32) -> Result<(), GameActionError> {
+        // Fetching values
+        let npc = self.world.get_npc(npc_id).ok_or(GameActionError::EntityNotFound(npc_id))?;
+        let npc_name = npc.base.name.clone();
+        let npc_mitigation = npc.stats.mitigation;
+        let npc_dodge_chance = npc.stats.dodge_chance();
 
-        let npc = &mut self.world.npcs[npc_index];
+        // Damage
+        let base_damage = self.player.character.attack_damage_bonus();
+        let (weapon_damage, crit_chance): (u16, u8) =
+            self.get_player_weapon_damage().map_err(GameActionError::Other)?;
 
-        //Dodge
-        let dodge_roll: u8 = self.rng.gen_range(0..=100);
-        if dodge_roll < npc.stats.dodge_chance() {
-            self.log.print(format!("{} dodged the attack!", npc.name()));
-            return;
+        // Calculate resulting damage (if any)
+        let attack_result = self.resolve_attack(
+            base_damage + weapon_damage,
+            crit_chance,
+            npc_dodge_chance,
+            npc_mitigation,
+        );
+
+        match attack_result {
+            None => {
+                self.log.print(format!("{} dodged the attack!", npc_name));
+            }
+            Some(damage) => {
+                // Apply Damage
+                let npc = self
+                    .world
+                    .get_npc_mut(npc_id)
+                    .ok_or(GameActionError::EntityNotFound(npc_id))?;
+                npc.stats.base.take_damage(damage);
+
+                self.log.print(format!("Player hits {} for {} damage!", npc.base.name, damage));
+
+                if !npc.stats.base.is_alive() {
+                    self.log.print(format!("{} died!", npc.base.name));
+                    self.despawn(npc_id);
+                    self.player.character.gain_experience(25);
+                }
+            }
         }
 
-        //Damage
-        let damage = self.player.character.attack_damage(&mut self.rng);
-        let mitigated = damage;
+        Ok(())
+    }
 
-        npc.stats.base.take_damage(mitigated);
+    pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
+        let (npc_name, npc_damage) = {
+            let npc = self.world.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            (npc.base.name.to_string(), npc.stats.damage)
+        };
 
-        self.log.print(format!(
-            "Player hits {} for {} damage!",
-            npc.name(), mitigated
-        ));
+        let attack_result = self.resolve_attack(
+            npc_damage,
+            5,
+            self.player.character.dodge_chance(),
+            self.get_player_armor_mitigation().unwrap_or(0),
+        );
 
-        if !npc.stats.base.is_alive() {
-            self.log.print(format!("{} died!", npc.name()));
-            self.despawn(npc_id);
-            self.player.character.gain_experience(25);
+        match attack_result {
+            None => {
+                self.log.print("Player dodged the attack!".to_string());
+            }
+            Some(damage) => {
+                self.player.character.take_damage(damage);
+                self.log.print(format!("{} hits Player for {} damage!", npc_name, damage,));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Rolls to see if a dodg occurs.
+    fn dodge_roll(&mut self, dodge_chance: u8) -> bool {
+        self.roll(&Roll::new(1, DieSize::D100)) as u8 <= dodge_chance
+    }
+
+    /// Rolls to see if a critical strike occurs.
+    fn is_critical_strike(&mut self, crit_chance: u8) -> bool {
+        self.roll(&Roll::new(1, DieSize::D100)) as u8 <= crit_chance
+    }
+
+    /// Resolves all computation steps as part of attack. Returns the damage dealt (if any).
+    fn resolve_attack(
+        &mut self,
+        attacker_damage: u16,
+        attacker_crit_chance: u8,
+        defender_dodge_chance: u8,
+        defender_mitigation: u16,
+    ) -> Option<u16> {
+        if self.dodge_roll(defender_dodge_chance) {
+            return None;
+        }
+
+        let damage_unmitigated = if self.is_critical_strike(attacker_crit_chance) {
+            2 * attacker_damage
+        } else {
+            attacker_damage
+        };
+
+        let damage_mitigated = damage_unmitigated.saturating_sub(defender_mitigation);
+
+        Some(damage_mitigated)
+    }
+
+    fn get_player_weapon_damage(&self) -> Result<(u16, u8), &'static str> {
+        if let Some(weapon) = &self.player.character.weapon {
+            let item_id = self.get_item_by_id(weapon.0).ok_or("The item is not registered")?;
+            let item_def =
+                self.get_item_def_by_id(item_id.def_id).ok_or("The item is not defined")?;
+
+            match item_def.kind {
+                GameItemKindDef::Weapon { damage, crit_chance } => Ok((damage, crit_chance)),
+                _ => Err("The given item is not a weapon"),
+            }
+        } else {
+            Ok((1, 5)) // If no weapon is equipped, fist damage is just 1.
         }
     }
 
-    pub fn npc_attack_player(&mut self, npc: &Npc) {
-        let dodge_roll: u8 = self.rng.gen_range(0..=100);
-        if dodge_roll < self.player.character.dodge_chance() {
-            self.log.print("Player dodged the attack!".to_string());
-            return;
-        }
+    fn get_player_armor_mitigation(&self) -> Result<u16, &'static str> {
+        if let Some(armor) = &self.player.character.armor {
+            let item_id = self.get_item_by_id(armor.0).ok_or("The item is not registered")?;
+            let item_def =
+                self.get_item_def_by_id(item_id.def_id).ok_or("The item is not defined")?;
 
-
-        let damage = npc.stats.damage as u32;
-        
-        let mitigated = {
-            if let Some(armor) = &self.player.charcter.armor {
-                damage.saturating_sub(armor.mitigation())
-            } else {
-                damage
+            match item_def.kind {
+                GameItemKindDef::Armor { mitigation } => Ok(mitigation),
+                _ => Err("The given item is not a weapon"),
             }
-        };
-
-        self.player.character.take_damage(mitigated);
-
-        self.log.print(format!(
-            "{} hits Player for {} damage!",
-            npc.name(),
-            mitigated,
-        ));
+        } else {
+            Ok(0)
+        }
     }
 }

@@ -40,7 +40,7 @@ impl GameState {
             }
             NpcActionKind::Attack => {
                 self.log.print("The NPC attacks".to_string());
-                todo!("Implement NPC Attack");
+                let _ = self.npc_attack_player(npc_id);
             }
         }
 

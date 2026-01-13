@@ -19,9 +19,9 @@ use crate::{
 
 #[derive(Clone)]
 pub enum GameItemKindDef {
-    Weapon { damage: u32, crit_chance: u8 },
-    Armor { mitigation: u32 },
-    Food { nutrition: u32 },
+    Weapon { damage: u16, crit_chance: u8 },
+    Armor { mitigation: u16 },
+    Food { nutrition: u16 },
 }
 
 pub struct ArmorItem(pub GameItemId);

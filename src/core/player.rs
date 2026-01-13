@@ -47,19 +47,19 @@ impl PlayerCharacter {
             weapon: None,
         }
     }
-    pub fn attack_damage_bonus(&self) -> u32 {
-        self.stats.strength as u32
+    pub fn attack_damage_bonus(&self) -> u16 {
+        self.stats.strength as u16
     }
 
     pub fn dodge_chance(&self) -> u8 {
         (self.stats.dexterity / 2).min(50)
     }
 
-    pub fn take_damage(&mut self, amount: u32) {
+    pub fn take_damage(&mut self, amount: u16) {
         self.stats.base.take_damage(amount);
     }
 
-    pub fn heal(&mut self, amount: u32) {
+    pub fn heal(&mut self, amount: u16) {
         self.stats.base.heal(amount);
     }
 
@@ -107,7 +107,7 @@ pub struct PcStats {
 impl PcStats {
     pub fn new() -> Self {
         let vitality = 10;
-        let hp_max = vitality as u32 * 10;
+        let hp_max = vitality as u16 * 10;
 
         Self {
             base: BaseStats { hp_max, hp_current: hp_max },
@@ -122,7 +122,7 @@ impl PcStats {
 }
 
 impl BaseStats {
-    pub fn take_damage(&mut self, amount: u32) {
+    pub fn take_damage(&mut self, amount: u16) {
         if amount >= self.hp_current {
             self.hp_current = 0;
         } else {
@@ -130,7 +130,7 @@ impl BaseStats {
         }
     }
 
-    pub fn heal(&mut self, amount: u32) {
+    pub fn heal(&mut self, amount: u16) {
         self.hp_current = (self.hp_current + amount).min(self.hp_max);
     }
 
