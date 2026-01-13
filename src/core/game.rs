@@ -46,8 +46,8 @@ impl GameState {
         let player_id = state.next_entity_id();
         state.player = Player::new(player_id);
 
-        let data =
-            load_world_from_ron("assets/worlds/test_world.ron").expect("Failed to load .ron file");
+        let data = load_world_from_ron("assets/worlds/test_world.ron")
+            .expect("Failed to load or parse .ron file");
 
         state.world = World::new(&mut state);
         state.world.apply_world_data(&data).expect("Failed to apply world data");

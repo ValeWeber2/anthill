@@ -1,24 +1,23 @@
 use crate::{
     ai::npc_ai::NpcAiError,
-    core::{
-        entity_logic::EntityId, game::GameState, game_items::GameItemKindDef,
-        player_actions::GameActionError,
+    core::{entity_logic::EntityId, game::GameState, game_items::GameItemKindDef},
+    util::{
+        errors_results::{DataError, EngineError, GameError, GameOutcome, GameResult},
+        rng::{DieSize, Roll},
     },
-    util::rng::{DieSize, Roll},
 };
 
 impl GameState {
-    pub fn player_attack_npc(&mut self, npc_id: u32) -> Result<(), GameActionError> {
+    pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
         // Fetching values
-        let npc = self.world.get_npc(npc_id).ok_or(GameActionError::EntityNotFound(npc_id))?;
+        let npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.base.name.clone();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
 
         // Damage
         let base_damage = self.player.character.attack_damage_bonus();
-        let (weapon_damage, crit_chance): (u16, u8) =
-            self.get_player_weapon_damage().map_err(GameActionError::Other)?;
+        let (weapon_damage, crit_chance): (u16, u8) = self.get_player_weapon_damage()?;
 
         // Calculate resulting damage (if any)
         let attack_result = self.resolve_attack(
@@ -34,10 +33,7 @@ impl GameState {
             }
             Some(damage) => {
                 // Apply Damage
-                let npc = self
-                    .world
-                    .get_npc_mut(npc_id)
-                    .ok_or(GameActionError::EntityNotFound(npc_id))?;
+                let npc = self.world.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
                 self.log.print(format!("Player hits {} for {} damage!", npc.base.name, damage));
@@ -50,7 +46,7 @@ impl GameState {
             }
         }
 
-        Ok(())
+        Ok(GameOutcome::Success)
     }
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
@@ -112,15 +108,17 @@ impl GameState {
         Some(damage_mitigated)
     }
 
-    fn get_player_weapon_damage(&self) -> Result<(u16, u8), &'static str> {
+    fn get_player_weapon_damage(&self) -> Result<(u16, u8), GameError> {
         if let Some(weapon) = &self.player.character.weapon {
-            let item_id = self.get_item_by_id(weapon.0).ok_or("The item is not registered")?;
-            let item_def =
-                self.get_item_def_by_id(item_id.def_id).ok_or("The item is not defined")?;
+            let item_id =
+                self.get_item_by_id(weapon.0).ok_or(EngineError::UnregisteredItem(weapon.0))?;
+            let item_def = self
+                .get_item_def_by_id(item_id.def_id.clone())
+                .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
 
             match item_def.kind {
                 GameItemKindDef::Weapon { damage, crit_chance } => Ok((damage, crit_chance)),
-                _ => Err("The given item is not a weapon"),
+                _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {
             Ok((1, 5)) // If no weapon is equipped, fist damage is just 1.

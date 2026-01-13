@@ -1,15 +1,14 @@
 #![allow(dead_code)]
 
 use std::collections::HashMap;
-use std::fmt::{self, Display, Formatter};
 
 use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
-use crate::core::game_items::{GameItemId, GameItemSprite};
-use crate::data::item_defs::GameItemDefId;
+use crate::core::game_items::GameItemSprite;
 use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
+use crate::util::errors_results::{EngineError, GameError};
 use crate::world::coordinate_system::Point;
 use crate::world::worldspace::Drawable;
 
@@ -21,9 +20,9 @@ impl GameState {
         glyph: char,
         style: Style,
         extra: T::Extra,
-    ) -> Result<EntityId, SpawningError> {
+    ) -> Result<EntityId, GameError> {
         if !self.world.is_available(pos) {
-            let err = SpawningError::PositionUnavailable { x: pos.x, y: pos.y };
+            let err = GameError::from(EngineError::SpawningError(pos));
             self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
             return Err(err);
         }
@@ -53,7 +52,7 @@ impl GameState {
         glyph: char,
         style: Style,
         stats: NpcStats,
-    ) -> Result<EntityId, SpawningError> {
+    ) -> Result<EntityId, GameError> {
         self.spawn::<Npc>(name, pos, glyph, style, stats)
     }
 
@@ -255,29 +254,6 @@ pub struct NpcStats {
 impl NpcStats {
     pub fn dodge_chance(&self) -> u8 {
         self.dodge.min(50)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum SpawningError {
-    PositionUnavailable { x: usize, y: usize },
-    ItemNotRegistered(GameItemId),
-    ItemNotDefined(GameItemDefId),
-}
-
-impl Display for SpawningError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            SpawningError::PositionUnavailable { x, y } => {
-                write!(f, "Position ({}, {}) is not available", x, y)
-            }
-            SpawningError::ItemNotRegistered(id) => {
-                write!(f, "No item with id {} registered.", id)
-            }
-            SpawningError::ItemNotDefined(id) => {
-                write!(f, "No item with def_id {} defined.", id)
-            }
-        }
     }
 }
 

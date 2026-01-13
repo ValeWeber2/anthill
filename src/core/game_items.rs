@@ -7,17 +7,18 @@ use ratatui::style::Style;
 
 use crate::{
     core::{
-        entity_logic::{Entity, EntityBase, EntityId, Spawnable, SpawningError},
+        entity_logic::{Entity, EntityBase, EntityId, Spawnable},
         game::GameState,
     },
     data::item_defs::{GameItemDef, GameItemDefId, item_defs},
+    util::errors_results::{DataError, EngineError, GameError},
     world::coordinate_system::Point,
 };
 
 // Static Item Definitions
 // Layer 1. This is where items and their kinds and details are defined.
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GameItemKindDef {
     Weapon { damage: u16, crit_chance: u8 },
     Armor { mitigation: u16 },
@@ -84,16 +85,12 @@ impl GameState {
         id
     }
 
-    pub fn spawn_item(
-        &mut self,
-        item_id: GameItemId,
-        pos: Point,
-    ) -> Result<EntityId, SpawningError> {
-        let item = self.get_item_by_id(item_id).ok_or(SpawningError::ItemNotRegistered(item_id))?;
+    pub fn spawn_item(&mut self, item_id: GameItemId, pos: Point) -> Result<EntityId, GameError> {
+        let item = self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
 
         let item_def = self
             .get_item_def_by_id(item.def_id.clone())
-            .ok_or(SpawningError::ItemNotDefined(item.def_id))?;
+            .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
         self.spawn::<GameItemSprite>(
             item_def.name.into(),
