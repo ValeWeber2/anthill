@@ -45,7 +45,7 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        // Prioritises Model
+        // Prioritises Modal
         if self.ui.modal.is_some() {
             self.handle_modal_key_event(key_event);
             return;
@@ -152,10 +152,7 @@ impl App {
                 },
                 ModalInterface::ConfirmUseItem { item_id } => match key_event.code {
                     KeyCode::Char('y') => {
-                        let result = self.game.use_item(*item_id);
-                        if let Err(e) = result {
-                            self.game.log.print(format!("Cannot use item: {}", e));
-                        }
+                        self.game.resolve_player_action(PlayerInput::UseItem(*item_id));
 
                         // close inventory after using
                         self.focus_reset();
