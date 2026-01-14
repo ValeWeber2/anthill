@@ -1,5 +1,7 @@
 use std::ops::{Add, Sub};
 
+use strum_macros::EnumIter;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
 pub struct Point {
     pub x: usize,
@@ -68,7 +70,7 @@ impl From<Direction> for PointDelta {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
 pub enum Direction {
     Up,
     Right,

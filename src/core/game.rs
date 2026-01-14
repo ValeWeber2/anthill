@@ -73,6 +73,8 @@ impl GameState {
             }
         }
 
+        state.compute_fov();
+
         state
     }
 
@@ -83,6 +85,8 @@ impl GameState {
         for npc_id in npc_ids {
             let _ = self.npc_take_turn(npc_id);
         }
+
+        self.compute_fov();
 
         self.round_nr += 1;
     }

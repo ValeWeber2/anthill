@@ -14,6 +14,14 @@ impl Tile {
     pub fn new(tile_type: TileType) -> Self {
         Self { tile_type, visible: false }
     }
+
+    pub fn make_visible(&mut self) {
+        self.visible = true;
+    }
+
+    pub fn make_invisible(&mut self) {
+        self.visible = false;
+    }
 }
 
 impl Default for Tile {
@@ -72,6 +80,20 @@ impl Drawable for TileType {
             TileType::Hallway => Style::new().dark_gray(),
             TileType::Door(DoorType::Archway) => Style::new().white(),
             TileType::Door(_) => Style::new().yellow(),
+        }
+    }
+}
+
+impl TileType {
+    pub fn is_opaque(&self) -> bool {
+        match self {
+            TileType::Void => true,
+            TileType::Floor => false,
+            TileType::Wall => true,
+            TileType::Hallway => false,
+            TileType::Door(DoorType::Open) => false,
+            TileType::Door(DoorType::Closed) => true,
+            TileType::Door(DoorType::Archway) => false,
         }
     }
 }
