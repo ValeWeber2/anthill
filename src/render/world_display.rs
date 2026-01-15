@@ -20,22 +20,32 @@ impl WorldDisplay {
             for x in 0..world.width {
                 let tile: &Tile = world.get_tile(x, y);
 
-                if !tile.visible {
+                // Skip invisible and unexplored tiles
+                if !tile.visible && !tile.explored {
                     continue;
                 }
 
+                // Display coordinates
                 let (display_x, display_y) = get_world_display_pos(x, y, rect);
+                // Cell on the terminal canvas
                 let cell: Option<&mut buffer::Cell> =
                     buf.cell_mut(Position::new(display_x, display_y));
 
                 if let Some(cell_content) = cell {
+                    // Walls are a special case due to their conditional rendering (wall mask)
                     if tile.tile_type == TileType::Wall {
                         let mask = wall_mask(world, x, y);
                         cell_content.set_char(wall_glyph(mask));
                     } else {
                         cell_content.set_char(tile.tile_type.glyph());
                     }
-                    cell_content.set_style(tile.tile_type.style());
+
+                    // Invisible explored tiles are styled in a shade of grey, others normally
+                    if !tile.visible && tile.explored {
+                        cell_content.set_style(Style::default().fg(Color::DarkGray));
+                    } else {
+                        cell_content.set_style(tile.tile_type.style());
+                    }
                 }
             }
         }

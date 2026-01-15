@@ -39,7 +39,9 @@ impl From<IPoint> for Point {
 
 /// The entrypoint to the program. Call this function to compute the field of view from an origin tile.
 pub fn compute_fov(origin: Point, world: &mut World) {
+    // Make the tile of origin (where player is) visible and explored
     world.mark_visible(origin);
+    world.mark_explored(origin);
 
     // Make all tiles invisible
     for i in 0..WORLD_WIDTH {
@@ -58,7 +60,7 @@ pub fn compute_fov(origin: Point, world: &mut World) {
 }
 
 /// Scan a row and recursively scan all of its children. If you think of each quadrant as a tree of rows, this essentially is a depth-first tree traversal.
-fn scan(origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
+fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
     let mut prev_tile: Option<IPoint> = None;
     let mut row = row;
 
@@ -73,17 +75,18 @@ fn scan(origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
         let prev_tile_is_floor =
             prev_tile.is_some_and(|prev| !world.is_blocking(quadrant.transform(prev).into()));
 
-        // Vision Range = 5 tiles
-        if (Point::from(quadrant.transform(tile)).distance_squared_from(origin) as f32).sqrt()
-            >= 30.0
-        {
-            continue;
-        }
+        // Vision Range = 30 tiles (commented out, so now vision range is infinite)
+        // if (Point::from(quadrant.transform(tile)).distance_squared_from(origin) as f32).sqrt()
+        //     >= 30.0
+        // {
+        //     continue;
+        // }
 
         // Tile is in both start and end slope
         if tile_is_wall || is_symmetric(row, tile) {
             let pos = quadrant.transform(tile);
             world.mark_visible(pos.into());
+            world.mark_explored(pos.into());
         }
 
         // Covered by wall
@@ -95,18 +98,18 @@ fn scan(origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
         if prev_tile_is_floor && tile_is_wall {
             let mut next_row = row.next();
             next_row.end_slope = slope(tile);
-            scan(origin, next_row, quadrant, world);
+            scan(_origin, next_row, quadrant, world);
         }
         prev_tile = Some(tile);
     }
     if prev_tile.is_some_and(|tile| !world.is_blocking(quadrant.transform(tile).into())) {
-        scan(origin, row.next(), quadrant, world);
+        scan(_origin, row.next(), quadrant, world);
     }
 }
 
 trait FieldOfView {
-    fn is_blocking(&self, p: Point) -> bool;
-    fn mark_visible(&mut self, p: Point);
+    fn is_blocking(&self, point: Point) -> bool;
+    fn mark_visible(&mut self, point: Point);
 }
 
 impl FieldOfView for World {
@@ -116,6 +119,16 @@ impl FieldOfView for World {
     }
     fn mark_visible(&mut self, point: Point) {
         self.get_tile_mut(point.x, point.y).visible = true;
+    }
+}
+
+trait FogOfWar {
+    fn mark_explored(&mut self, point: Point);
+}
+
+impl FogOfWar for World {
+    fn mark_explored(&mut self, point: Point) {
+        self.get_tile_mut(point.x, point.y).explored = true;
     }
 }
 
