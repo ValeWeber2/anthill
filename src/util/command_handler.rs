@@ -17,6 +17,7 @@ pub enum Command {
     PlayerInfo,
     RngTest,
     Teleport { x: usize, y: usize },
+    Suicide,
 }
 
 impl Command {
@@ -32,6 +33,7 @@ impl Command {
             Command::PlayerInfo => "Prints player info to log.",
             Command::RngTest => "Makes a roll and a check to test the RNG Engine",
             Command::Teleport { .. } => "Teleports the player to the given absolute position",
+            Command::Suicide => "Set HP to zero to test game over state.",
         }
     }
 
@@ -45,6 +47,7 @@ impl Command {
             Command::PlayerInfo => "playerinfo",
             Command::RngTest => "rngtest",
             Command::Teleport { .. } => "teleport",
+            Command::Suicide => "suicide",
         }
     }
 }
@@ -88,6 +91,7 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
 
             Ok(Command::Teleport { x: arg_x, y: arg_y })
         }
+        "suicide" => Ok(Command::Suicide),
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
@@ -164,6 +168,10 @@ impl App {
 
                 self.game.player.character.base.pos.x = x;
                 self.game.player.character.base.pos.y = y;
+            }
+
+            Command::Suicide => {
+                self.game.player.character.stats.base.hp_current = 0;
             }
         }
     }

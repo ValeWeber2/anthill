@@ -2,7 +2,8 @@ use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
 use std::io;
 
 use crate::{
-    App,
+    App, State,
+    ascii_art::HELP_CONTENT,
     core::player_actions::PlayerInput,
     render::{
         menu_display::{InventoryAction, MenuMode},
@@ -48,17 +49,58 @@ impl App {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) {
-        // Prioritises Modal
+        // 1. Prioritise Modal
         if self.ui.modal.is_some() {
             self.handle_modal_key_event(key_event);
             return;
         }
 
-        // Universal key_events (regardless of focus)
+        // 2. Global hotkeys (work in all states)
+        if self.handle_global_hotkeys(key_event) {
+            return;
+        }
+
+        // 3. State-specific input
+        match self.state {
+            State::StartScreen => {
+                self.handle_start_screen_input(key_event);
+            }
+            State::Playing => {
+                self.handle_playing_input(key_event);
+            }
+            State::GameOver => {
+                self.handle_game_over_input(key_event);
+            }
+        }
+    }
+
+    fn handle_global_hotkeys(&mut self, key_event: KeyEvent) -> bool {
         match key_event.code {
             // Control: Open game closing modal (SHIFT+q)
-            KeyCode::Char('Q') => self.ui.modal = Some(ModalInterface::ConfirmQuit),
-            // Control: Open command input modal
+            KeyCode::Char('Q') => {
+                self.ui.modal = Some(ModalInterface::ConfirmQuit);
+                true
+            }
+            // Control: Open help window
+            KeyCode::Char('H') => {
+                self.ui.modal = Some(ModalInterface::TextDisplay {
+                    title: " Help ".into(),
+                    paragraphs: HELP_CONTENT.lines().map(|l| l.to_string()).collect(),
+                });
+                true
+            }
+            _ => false,
+        }
+    }
+
+    fn handle_start_screen_input(&mut self, key_event: KeyEvent) {
+        if key_event.code == KeyCode::Enter {
+            self.state = State::Playing
+        }
+    }
+
+    fn handle_playing_input(&mut self, key_event: KeyEvent) {
+        match key_event.code {
             KeyCode::Char(':') => {
                 self.ui.modal = Some(ModalInterface::CommandInput { buffer: "".to_string() })
             }
@@ -67,6 +109,12 @@ impl App {
                 KeyboardFocus::FocusWorld => self.handle_world_key_event(key_event),
                 KeyboardFocus::FocusMenu => self.handle_menu_key_event(key_event),
             },
+        }
+    }
+
+    fn handle_game_over_input(&mut self, key_event: KeyEvent) {
+        if key_event.code == KeyCode::Enter {
+            self.restart()
         }
     }
 

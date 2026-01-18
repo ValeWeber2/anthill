@@ -1,4 +1,5 @@
 mod ai;
+mod ascii_art;
 mod core;
 mod data;
 mod render;
@@ -23,6 +24,14 @@ struct App {
     keyboard_focus: KeyboardFocus,
     game: GameState,
     ui: UserInterface,
+    state: State,
+}
+
+#[derive(PartialEq)]
+enum State {
+    StartScreen,
+    Playing,
+    GameOver,
 }
 
 impl App {
@@ -70,14 +79,22 @@ impl App {
             keyboard_focus: KeyboardFocus::FocusWorld,
             game,
             ui: UserInterface::new(),
+            state: State::StartScreen,
         }
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
         while !self.should_quit {
+            if self.state == State::Playing && !self.game.player.character.is_alive() {
+                self.state = State::GameOver;
+            }
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
             self.handle_events()?;
         }
         Ok(())
+    }
+
+    fn restart(&mut self) {
+        *self = App::new();
     }
 }
