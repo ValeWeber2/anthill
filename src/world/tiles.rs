@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use ratatui::style::{Style, Stylize};
+use ratatui::style::{Color, Style};
 
 use crate::world::worldspace::{Collision, Drawable};
 
@@ -8,17 +8,26 @@ use crate::world::worldspace::{Collision, Drawable};
 pub struct Tile {
     pub tile_type: TileType,
     pub visible: bool,
+    pub explored: bool,
 }
 
 impl Tile {
     pub fn new(tile_type: TileType) -> Self {
-        Self { tile_type, visible: false }
+        Self { tile_type, visible: false, explored: false }
+    }
+
+    pub fn make_visible(&mut self) {
+        self.visible = true;
+    }
+
+    pub fn make_invisible(&mut self) {
+        self.visible = false;
     }
 }
 
 impl Default for Tile {
     fn default() -> Self {
-        Self { tile_type: TileType::Void, visible: false }
+        Self { tile_type: TileType::Void, visible: false, explored: false }
     }
 }
 
@@ -56,22 +65,36 @@ impl Drawable for TileType {
     fn glyph(&self) -> char {
         match self {
             TileType::Void => ' ',
-            TileType::Floor => '.',
-            TileType::Wall => '#',
-            TileType::Hallway => '.',
+            TileType::Floor => '·',
+            TileType::Wall => '#', // Will not be displayed Is replaced with a directional wall character instead.
+            TileType::Hallway => '░',
             TileType::Door(DoorType::Open) => '_',
             TileType::Door(DoorType::Closed) => '+',
-            TileType::Door(DoorType::Archway) => '.',
+            TileType::Door(DoorType::Archway) => '·',
         }
     }
     fn style(&self) -> Style {
         match self {
-            TileType::Void => Style::new().white(),
-            TileType::Floor => Style::new().dark_gray(),
-            TileType::Wall => Style::new().white(),
-            TileType::Hallway => Style::new().dark_gray(),
-            TileType::Door(DoorType::Archway) => Style::new().white(),
-            TileType::Door(_) => Style::new().yellow(),
+            TileType::Void => Style::default(),
+            TileType::Floor => Style::default().fg(Color::Gray),
+            TileType::Wall => Style::default().fg(Color::White),
+            TileType::Hallway => Style::default().fg(Color::DarkGray),
+            TileType::Door(DoorType::Archway) => Style::default().fg(Color::Gray),
+            TileType::Door(_) => Style::default().fg(Color::Yellow),
+        }
+    }
+}
+
+impl TileType {
+    pub fn is_opaque(&self) -> bool {
+        match self {
+            TileType::Void => true,
+            TileType::Floor => false,
+            TileType::Wall => true,
+            TileType::Hallway => false,
+            TileType::Door(DoorType::Open) => false,
+            TileType::Door(DoorType::Closed) => true,
+            TileType::Door(DoorType::Archway) => false,
         }
     }
 }

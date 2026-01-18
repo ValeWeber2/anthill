@@ -2,8 +2,7 @@ use ratatui::prelude::*;
 
 use crate::{
     core::{
-        entity_logic::{EntityBase, Npc},
-        game_items::GameItemSprite,
+        entity_logic::{Entity, EntityBase},
         player::PlayerCharacter,
     },
     world::{
@@ -20,18 +19,33 @@ impl WorldDisplay {
         for y in 0..world.height {
             for x in 0..world.width {
                 let tile: &Tile = world.get_tile(x, y);
+
+                // Skip invisible and unexplored tiles
+                if !tile.visible && !tile.explored {
+                    continue;
+                }
+
+                // Display coordinates
                 let (display_x, display_y) = get_world_display_pos(x, y, rect);
+                // Cell on the terminal canvas
                 let cell: Option<&mut buffer::Cell> =
                     buf.cell_mut(Position::new(display_x, display_y));
 
                 if let Some(cell_content) = cell {
+                    // Walls are a special case due to their conditional rendering (wall mask)
                     if tile.tile_type == TileType::Wall {
                         let mask = wall_mask(world, x, y);
                         cell_content.set_char(wall_glyph(mask));
                     } else {
                         cell_content.set_char(tile.tile_type.glyph());
                     }
-                    cell_content.set_style(tile.tile_type.style());
+
+                    // Invisible explored tiles are styled in a shade of grey, others normally
+                    if !tile.visible && tile.explored {
+                        cell_content.set_style(Style::default().fg(Color::DarkGray));
+                    } else {
+                        cell_content.set_style(tile.tile_type.style());
+                    }
                 }
             }
         }
@@ -41,15 +55,21 @@ impl WorldDisplay {
         self.render_sprite(&pc.base, rect, buf);
     }
 
-    pub fn render_npcs(&self, npcs: &Vec<Npc>, rect: Rect, buf: &mut Buffer) {
-        for npc in npcs {
-            self.render_sprite(&npc.base, rect, buf);
+    pub fn render_npcs(&self, world: &World, rect: Rect, buf: &mut Buffer) {
+        for npc in &world.npcs {
+            let npc_pos = npc.pos();
+            if world.get_tile(npc_pos.x, npc_pos.y).visible {
+                self.render_sprite(&npc.base, rect, buf);
+            }
         }
     }
 
-    pub fn render_items(&self, item_sprites: &Vec<GameItemSprite>, rect: Rect, buf: &mut Buffer) {
-        for item_sprite in item_sprites {
-            self.render_sprite(&item_sprite.base, rect, buf);
+    pub fn render_items(&self, world: &World, rect: Rect, buf: &mut Buffer) {
+        for item_sprite in &world.item_sprites {
+            let sprite_pos = item_sprite.pos();
+            if world.get_tile(sprite_pos.x, sprite_pos.y).visible {
+                self.render_sprite(&item_sprite.base, rect, buf);
+            }
         }
     }
 
