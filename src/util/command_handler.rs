@@ -17,6 +17,7 @@ pub enum Command {
     PlayerInfo,
     RngTest,
     Teleport { x: usize, y: usize },
+    Suicide,
 }
 
 impl Command {
@@ -32,6 +33,7 @@ impl Command {
             Command::PlayerInfo => "Prints player info to log.",
             Command::RngTest => "Makes a roll and a check to test the RNG Engine",
             Command::Teleport { .. } => "Teleports the player to the given absolute position",
+            Command::Suicide => "Set HP to zero to test game over state.",
         }
     }
 
@@ -45,6 +47,7 @@ impl Command {
             Command::PlayerInfo => "playerinfo",
             Command::RngTest => "rngtest",
             Command::Teleport { .. } => "teleport",
+            Command::Suicide => "suicide",
         }
     }
 }
@@ -88,6 +91,7 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
 
             Ok(Command::Teleport { x: arg_x, y: arg_y })
         }
+        "suicide" => Ok(Command::Suicide),
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
@@ -108,20 +112,35 @@ impl App {
                 }
             }
             Command::Give { item_def, amount } => {
+                for _ in 0..amount {
+                    let item_id = self.game.register_item(item_def.clone());
+                    let _ = self.game.add_item_to_inv(item_id);
+                }
+
                 self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
-                todo!("Implement a cheat to give player character an item.");
             }
-            Command::MaxStats => todo!("Implement once player logic is finished"),
+            Command::MaxStats => {
+                self.game.player.character.stats.dexterity = 100;
+                self.game.player.character.stats.perception = 100;
+                self.game.player.character.stats.strength = 100;
+                self.game.player.character.stats.vitality = 100;
+                self.game.player.character.stats.base.hp_max = 500;
+                self.game.player.character.stats.base.hp_current = 500;
+            }
             Command::MaxEquip => todo!("Implement once items are finished"),
 
             Command::PlayerInfo => {
                 self.game.log.print(format!(
-                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}",
+                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}\n-  S:{}, D:{}, V:{}, P:{}",
                     self.game.player.character.base.name,
                     self.game.player.character.stats.base.hp_current,
                     self.game.player.character.stats.base.hp_max,
                     self.game.player.character.base.pos.x,
                     self.game.player.character.base.pos.y,
+                    self.game.player.character.stats.dexterity,
+                    self.game.player.character.stats.perception,
+                    self.game.player.character.stats.strength,
+                    self.game.player.character.stats.vitality,
                 ));
             }
 
@@ -149,6 +168,10 @@ impl App {
 
                 self.game.player.character.base.pos.x = x;
                 self.game.player.character.base.pos.y = y;
+            }
+
+            Command::Suicide => {
+                self.game.player.character.stats.base.hp_current = 0;
             }
         }
     }

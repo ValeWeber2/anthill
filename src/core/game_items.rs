@@ -7,32 +7,33 @@ use ratatui::style::Style;
 
 use crate::{
     core::{
-        entity_logic::{Entity, EntityBase, EntityId, Spawnable, SpawningError},
+        entity_logic::{Entity, EntityBase, EntityId, Spawnable},
         game::GameState,
     },
     data::item_defs::{GameItemDef, GameItemDefId, item_defs},
+    util::errors_results::{DataError, EngineError, GameError},
     world::coordinate_system::Point,
 };
 
 // Static Item Definitions
 // Layer 1. This is where items and their kinds and details are defined.
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum GameItemKindDef {
-    Weapon { damage: u32, crit_chance: u8 },
-    Armor { mitigation: u32 },
-    Food { nutrition: u32 },
+    Weapon { damage: u16, crit_chance: u8 },
+    Armor { mitigation: u16 },
+    Food { nutrition: u16 },
     Potion { effect: PotionEffect },
 }
 
 #[derive(Clone, Debug)]
 pub enum PotionEffect {
-    Heal { amount: u32 },
-    Strength { amount: u32, duration: u8 },
-    Dexterity { amount: u32, duration: u8 },
-    Poison { damage_per_tick: u32, ticks_left: u8 },
-    Fatigue { strength_penalty: u32, duration: u8 },
-    Cramp { dexterity_penalty: u32, duration: u8 },
+    Heal { amount: u16 },
+    Strength { amount: u8, duration: u8 },
+    Dexterity { amount: u8, duration: u8 },
+    Poison { damage_per_tick: u16, ticks_left: u8 },
+    Fatigue { strength_penalty: u8, duration: u8 },
+    Cramp { dexterity_penalty: u8, duration: u8 },
 }
 
 pub struct ArmorItem(pub GameItemId);
@@ -95,16 +96,19 @@ impl GameState {
         id
     }
 
-    pub fn spawn_item(
-        &mut self,
-        item_id: GameItemId,
-        pos: Point,
-    ) -> Result<EntityId, SpawningError> {
-        let item = self.get_item_by_id(item_id).ok_or(SpawningError::ItemNotRegistered(item_id))?;
+    pub fn deregister_item(&mut self, item_id: GameItemId) -> Result<(), GameError> {
+        match self.items.remove(&item_id) {
+            Some(_) => Ok(()),
+            None => Err(GameError::from(EngineError::UnregisteredItem(item_id))),
+        }
+    }
+
+    pub fn spawn_item(&mut self, item_id: GameItemId, pos: Point) -> Result<EntityId, GameError> {
+        let item = self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
 
         let item_def = self
             .get_item_def_by_id(item.def_id.clone())
-            .ok_or(SpawningError::ItemNotDefined(item.def_id))?;
+            .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
         self.spawn::<GameItemSprite>(
             item_def.name.into(),
@@ -121,57 +125,6 @@ impl GameState {
 
     pub fn get_item_def_by_id(&self, item_def_id: GameItemDefId) -> Option<GameItemDef> {
         item_defs().get(&item_def_id).cloned()
-    }
-
-    pub fn format_weapon(&self) -> String {
-        match &self.player.character.weapon {
-            Some(w) => {
-                // look up the instance by GameItemId
-                let instance = match self.items.get(&w.0) {
-                    Some(i) => i,
-                    None => return "Invalid weapon".to_string(),
-                };
-
-                // look up the definition by def_id
-                let def = match self.get_item_def_by_id(instance.def_id.clone()) {
-                    Some(d) => d,
-                    None => return "Invalid weapon".to_string(),
-                };
-
-                // extract stats from GameItemKindDef
-                match def.kind {
-                    GameItemKindDef::Weapon { damage, crit_chance } => {
-                        format!("{} (damage {}, crit chance {})", def.name, damage, crit_chance)
-                    }
-                    _ => "Invalid weapon".to_string(),
-                }
-            }
-            None => "None".to_string(),
-        }
-    }
-
-    pub fn format_armor(&self) -> String {
-        match &self.player.character.armor {
-            Some(a) => {
-                let instance = match self.items.get(&a.0) {
-                    Some(i) => i,
-                    None => return "Invalid armor".to_string(),
-                };
-
-                let def = match self.get_item_def_by_id(instance.def_id.clone()) {
-                    Some(d) => d,
-                    None => return "Invalid armor".to_string(),
-                };
-
-                match def.kind {
-                    GameItemKindDef::Armor { mitigation } => {
-                        format!("{} (mitigation {})", def.name, mitigation)
-                    }
-                    _ => "Invalid armor".to_string(),
-                }
-            }
-            None => "None".to_string(),
-        }
     }
 }
 

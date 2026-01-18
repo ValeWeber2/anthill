@@ -13,7 +13,7 @@ use crate::{
 
 pub enum ModalInterface {
     ConfirmQuit,
-    ConfirmUseItem { item_id: GameItemId },
+    ConfirmChooseItem { item_id: GameItemId },
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
 }
@@ -23,7 +23,7 @@ impl ModalInterface {
     pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
-            ModalInterface::ConfirmUseItem { item_id } => {
+            ModalInterface::ConfirmChooseItem { item_id } => {
                 render_confirm_use_item(rect, buf, game, *item_id)
             }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
@@ -36,19 +36,18 @@ impl ModalInterface {
 
 fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
     // Making the Window
-    let modal_area = render_modal_window(150, 30, title.to_string(), rect, buf);
+    let modal_area = render_modal_window(150, 33, title.to_string(), rect, buf);
 
     let page_text = Text::from(
         paragraphs.iter().map(|paragraph| Line::from(paragraph.as_str())).collect::<Vec<Line>>(),
     );
 
-    let paragraph = Paragraph::new(page_text);
-    paragraph.render(modal_area, buf);
+    Paragraph::new(page_text).render(modal_area, buf);
 }
 
 fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
     // Making the Window
-    let modal_area = render_modal_window(50, 5, "Confirm Quit".to_string(), rect, buf);
+    let modal_area = render_modal_window(50, 5, " Confirm Quit ".to_string(), rect, buf);
 
     // Filling the Window
     let text = Text::from(vec![
@@ -64,7 +63,7 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
 }
 
 fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
-    let modal_area = render_modal_window(50, 5, "Confirm Action".to_string(), rect, buf);
+    let modal_area = render_modal_window(50, 5, " Confirm Action ".to_string(), rect, buf);
 
     // look up item name
     let instance = &game.items[&item_id];
@@ -86,7 +85,7 @@ fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_
 
 fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {
     // Making the Window
-    let modal_area = render_modal_window(50, 5, "Execute a Command".to_string(), rect, buf);
+    let modal_area = render_modal_window(50, 5, " Execute a Command ".to_string(), rect, buf);
 
     // Filling the window
     let input_area = Rect {

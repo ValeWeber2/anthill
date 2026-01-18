@@ -5,7 +5,7 @@ use std::fmt::{self, Display, Formatter};
 
 use ratatui::style::Style;
 
-use crate::ai::npc_ai::NpcAiError;
+use crate::util::errors_results::{EngineError, FailReason, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
 use crate::{
     core::{
@@ -254,50 +254,47 @@ impl World {
         entity: &mut E,
         dx: i32,
         dy: i32,
-    ) -> Result<(), MovementError> {
+    ) -> GameResult {
         let new_x = entity.pos().x as isize + dx as isize;
         let new_y = entity.pos().y as isize + dy as isize;
+        let new_point = Point { x: new_x as usize, y: new_y as usize };
 
         if !self.is_in_bounds(new_x, new_y) {
-            return Err(MovementError::OutOfBounds { x: new_x, y: new_y });
+            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
         }
 
         if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-            return Err(MovementError::NotWalkable { x: new_x, y: new_y });
+            return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
         }
 
-        entity.move_to(Point { x: new_x as usize, y: new_y as usize });
-        Ok(())
+        entity.move_to(new_point);
+
+        Ok(GameOutcome::Success)
     }
 
-    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> Result<(), NpcAiError> {
+    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> GameResult {
         let (new_x, new_y) = {
-            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
             let new_x = npc.pos().x as isize + dx;
             let new_y = npc.pos().y as isize + dy;
+            let new_point = Point { x: new_x as usize, y: new_y as usize };
 
             if !self.is_in_bounds(new_x, new_y) {
-                return Err(NpcAiError::MovementError(MovementError::OutOfBounds {
-                    x: new_x,
-                    y: new_y,
-                }));
+                return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
             }
 
             if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-                return Err(NpcAiError::MovementError(MovementError::NotWalkable {
-                    x: new_x,
-                    y: new_y,
-                }));
+                return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
             }
 
             (new_x, new_y)
         };
 
-        let npc = self.get_npc_mut(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+        let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         npc.move_to(Point { x: new_x as usize, y: new_y as usize });
 
-        Ok(())
+        Ok(GameOutcome::Success)
     }
 
     pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {

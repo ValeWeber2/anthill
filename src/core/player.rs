@@ -74,8 +74,8 @@ impl PlayerCharacter {
             potion_usage: HashMap::new(),
         }
     }
-    pub fn attack_damage_bonus(&self) -> u32 {
-        let mut bonus = self.stats.strength as u32;
+    pub fn attack_damage_bonus(&self) -> u16 {
+        let mut bonus = self.stats.strength;
 
         for buff in &self.active_buffs {
             match buff.effect {
@@ -88,7 +88,7 @@ impl PlayerCharacter {
                 _ => {}
             }
         }
-        bonus
+        bonus as u16
     }
 
     pub fn dodge_chance(&self) -> u8 {
@@ -97,7 +97,7 @@ impl PlayerCharacter {
         for buff in &self.active_buffs {
             match buff.effect {
                 PotionEffect::Dexterity { amount, .. } => {
-                    dodge = ((dodge as u32 + amount) as u8).min(100);
+                    dodge = (dodge + amount).min(100);
                 }
                 PotionEffect::Cramp { .. } => dodge /= 2,
                 _ => {}
@@ -155,7 +155,7 @@ impl PlayerCharacter {
                     self.active_buffs.push(ActiveBuff { effect, remaining_turns: duration });
                     println!("Strength increased by {} for {} turns.", amount, duration);
                 } else {
-                    let strength_penalty: u32 = amount / 2;
+                    let strength_penalty: u8 = amount / 2;
                     self.active_buffs.push(ActiveBuff {
                         effect: PotionEffect::Fatigue { strength_penalty, duration },
                         remaining_turns: duration,
@@ -210,7 +210,7 @@ impl PlayerCharacter {
                 if hp_loss > 0 {
                     let poison_buff = ActiveBuff {
                         effect: PotionEffect::Poison {
-                            damage_per_tick: hp_loss / penalty_turns as u32,
+                            damage_per_tick: hp_loss / penalty_turns as u16,
                             ticks_left: penalty_turns,
                         },
                         remaining_turns: penalty_turns,
@@ -224,11 +224,11 @@ impl PlayerCharacter {
         }
     }
 
-    pub fn take_damage(&mut self, amount: u32) {
+    pub fn take_damage(&mut self, amount: u16) {
         self.stats.base.take_damage(amount);
     }
 
-    pub fn heal(&mut self, amount: u32) {
+    pub fn heal(&mut self, amount: u16) {
         self.stats.base.heal(amount);
     }
 
@@ -257,7 +257,7 @@ impl PlayerCharacter {
     }
 
     pub fn tick_buffs(&mut self) {
-        let mut damage_accrued: u32 = 0;
+        let mut damage_accrued: u16 = 0;
         for buff in &mut self.active_buffs {
             if let PotionEffect::Poison { ticks_left, damage_per_tick } = &mut buff.effect {
                 if *ticks_left > 0 {
@@ -293,7 +293,7 @@ pub struct PcStats {
 impl PcStats {
     pub fn new() -> Self {
         let vitality = 10;
-        let hp_max = vitality as u32 * 10;
+        let hp_max = vitality as u16 * 10;
 
         Self {
             base: BaseStats { hp_max, hp_current: hp_max },
@@ -308,7 +308,7 @@ impl PcStats {
 }
 
 impl BaseStats {
-    pub fn take_damage(&mut self, amount: u32) {
+    pub fn take_damage(&mut self, amount: u16) {
         if amount >= self.hp_current {
             self.hp_current = 0;
         } else {
@@ -316,7 +316,7 @@ impl BaseStats {
         }
     }
 
-    pub fn heal(&mut self, amount: u32) {
+    pub fn heal(&mut self, amount: u16) {
         self.hp_current = (self.hp_current + amount).min(self.hp_max);
     }
 

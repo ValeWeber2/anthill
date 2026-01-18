@@ -1,14 +1,14 @@
 #![allow(dead_code)]
 
 use std::collections::HashMap;
-use std::fmt::{self, Display, Formatter};
 
 use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
-use crate::core::game_items::{GameItemId, GameItemSprite};
-use crate::data::item_defs::GameItemDefId;
+use crate::core::game_items::GameItemSprite;
+use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
+use crate::util::errors_results::{DataError, EngineError, GameError};
 use crate::world::coordinate_system::Point;
 use crate::world::worldspace::Drawable;
 
@@ -20,9 +20,9 @@ impl GameState {
         glyph: char,
         style: Style,
         extra: T::Extra,
-    ) -> Result<EntityId, SpawningError> {
+    ) -> Result<EntityId, GameError> {
         if !self.world.is_available(pos) {
-            let err = SpawningError::PositionUnavailable { x: pos.x, y: pos.y };
+            let err = GameError::from(EngineError::SpawningError(pos));
             self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
             return Err(err);
         }
@@ -45,15 +45,12 @@ impl GameState {
         Ok(id)
     }
 
-    pub fn spawn_npc(
-        &mut self,
-        name: String,
-        pos: Point,
-        glyph: char,
-        style: Style,
-        stats: NpcStats,
-    ) -> Result<EntityId, SpawningError> {
-        self.spawn::<Npc>(name, pos, glyph, style, stats)
+    pub fn spawn_npc(&mut self, npc_def_id: NpcDefId, pos: Point) -> Result<EntityId, GameError> {
+        self.log.debug_print(format!("Trying to spawn {}", npc_def_id));
+        let npc_def = self
+            .get_npc_def_by_id(npc_def_id.clone())
+            .ok_or(DataError::MissingNpcDefinition(npc_def_id))?;
+        self.spawn::<Npc>(npc_def.name.to_owned(), pos, npc_def.glyph, npc_def.style, npc_def.stats)
     }
 
     pub fn next_entity_id(&mut self) -> EntityId {
@@ -113,6 +110,10 @@ impl GameState {
 
         None
     }
+
+    pub fn get_npc_def_by_id(&self, npc_def_id: NpcDefId) -> Option<NpcDef> {
+        npc_defs().get(&npc_def_id).cloned()
+    }
 }
 
 pub enum EntityRef<'a> {
@@ -149,6 +150,7 @@ pub trait Movable {
 
 pub type EntityId = u32;
 
+#[derive(Clone)]
 pub struct EntityBase {
     pub id: EntityId,
     pub name: String,
@@ -166,9 +168,10 @@ impl Drawable for EntityBase {
     }
 }
 
+#[derive(Clone)]
 pub struct BaseStats {
-    pub hp_max: u32,
-    pub hp_current: u32,
+    pub hp_max: u16,
+    pub hp_current: u16,
 }
 
 // NPC
@@ -176,11 +179,6 @@ pub struct Npc {
     pub base: EntityBase,
     pub stats: NpcStats,
     pub ai_state: NpcAiState,
-}
-
-pub struct NpcStats {
-    pub base: BaseStats,
-    pub damage: u8,
 }
 
 impl Entity for Npc {
@@ -242,26 +240,17 @@ impl Npc {
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum SpawningError {
-    PositionUnavailable { x: usize, y: usize },
-    ItemNotRegistered(GameItemId),
-    ItemNotDefined(GameItemDefId),
+#[derive(Clone)]
+pub struct NpcStats {
+    pub base: BaseStats,
+    pub damage: u16,
+    pub dodge: u8,
+    pub mitigation: u16,
 }
 
-impl Display for SpawningError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            SpawningError::PositionUnavailable { x, y } => {
-                write!(f, "Position ({}, {}) is not available", x, y)
-            }
-            SpawningError::ItemNotRegistered(id) => {
-                write!(f, "No item with id {} registered.", id)
-            }
-            SpawningError::ItemNotDefined(id) => {
-                write!(f, "No item with def_id {} defined.", id)
-            }
-        }
+impl NpcStats {
+    pub fn dodge_chance(&self) -> u8 {
+        self.dodge.min(50)
     }
 }
 
@@ -278,15 +267,7 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id = game
-            .spawn_npc(
-                "Goblin".into(),
-                Point::new(50, 7),
-                'g',
-                Color::Green.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-            )
-            .unwrap();
+        let id = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
         // Vec contains NPC
         assert_eq!(game.world.npcs.len(), 1);
@@ -301,15 +282,7 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let npc_id = game
-            .spawn_npc(
-                "Orc".into(),
-                Point { x: 50, y: 7 },
-                'o',
-                Color::LightGreen.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-            )
-            .unwrap();
+        let npc_id = game.spawn_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
 
         match game.get_entity_by_id(npc_id) {
             Some(EntityRef::Npc(npc)) => assert_eq!(npc.name(), "Orc"),
@@ -344,7 +317,12 @@ mod tests {
                 pos,
                 's',
                 Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
+                NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: 2,
+                    dodge: 50,
+                    mitigation: 0,
+                },
             )
             .unwrap();
 
@@ -356,25 +334,9 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game
-            .spawn_npc(
-                "A".into(),
-                Point::new(50, 7),
-                'a',
-                Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-            )
-            .unwrap();
+        let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
-        let id2 = game
-            .spawn_npc(
-                "B".into(),
-                Point::new(51, 7),
-                'b',
-                Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-            )
-            .unwrap();
+        let id2 = game.spawn_npc("orc".into(), Point::new(51, 7)).unwrap();
 
         // Remove the first NPC
         game.despawn(id1);
@@ -393,15 +355,7 @@ mod tests {
 
         let pos = Point::new(50, 7);
 
-        let id = game
-            .spawn_npc(
-                "Ghost".into(),
-                pos,
-                'G',
-                Color::Cyan.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-            )
-            .unwrap();
+        let id = game.spawn_npc("goblin".into(), pos).unwrap();
 
         assert_eq!(game.get_entity_at(pos), Some(id));
 
@@ -424,25 +378,9 @@ mod tests {
         let mut game = GameState::default();
         game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game
-            .spawn_npc(
-                "A".into(),
-                Point::new(50, 7),
-                'a',
-                Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-            )
-            .unwrap();
+        let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
-        let id2 = game
-            .spawn_npc(
-                "B".into(),
-                Point::new(51, 7),
-                'b',
-                Color::White.into(),
-                NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 1 },
-            )
-            .unwrap();
+        let id2 = game.spawn_npc("orc".into(), Point::new(51, 7)).unwrap();
 
         assert_eq!(game.world.npc_index.get(&id1), Some(&0));
         assert_eq!(game.world.npc_index.get(&id2), Some(&1));

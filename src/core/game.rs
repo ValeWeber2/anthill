@@ -9,10 +9,8 @@ use crate::core::player::Player;
 use crate::world::world_loader::load_world_from_ron;
 use crate::world::worldspace::World;
 
-use crate::core::entity_logic::{BaseStats, NpcStats};
 use crate::world::coordinate_system::Point;
 use crate::world::world_data::SpawnKind;
-use ratatui::style::Color;
 
 // ----------------------------------------------
 //                Game State Struct
@@ -22,6 +20,7 @@ pub struct GameState {
     pub player: Player,
     pub log: Log,
     pub round_nr: u64,
+    pub level_nr: u8,
     pub entity_id_counter: u32,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
@@ -35,6 +34,7 @@ impl GameState {
             player: Player::new(0),
             log: Log::new(true),
             round_nr: 0,
+            level_nr: 1,
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,
@@ -44,8 +44,8 @@ impl GameState {
         let player_id = state.next_entity_id();
         state.player = Player::new(player_id);
 
-        let data =
-            load_world_from_ron("assets/worlds/test_world.ron").expect("Failed to load .ron file");
+        let data = load_world_from_ron("assets/worlds/test_world.ron")
+            .expect("Failed to load or parse .ron file");
 
         state.world = World::new(&mut state);
         state.world.apply_world_data(&data).expect("Failed to apply world data");
@@ -63,34 +63,17 @@ impl GameState {
             }
 
             match &s.kind {
-                SpawnKind::Npc { def_id: id } => match id.as_str() {
-                    "goblin" => {
-                        let _ = state.spawn_npc(
-                            "Goblin".into(),
-                            pos,
-                            'g',
-                            Color::Green.into(),
-                            NpcStats { base: BaseStats { hp_max: 10, hp_current: 10 }, damage: 2 },
-                        );
-                    }
-                    "frog" => {
-                        let _ = state.spawn_npc(
-                            "Funny Frog".into(),
-                            pos,
-                            'f',
-                            Color::LightGreen.into(),
-                            NpcStats { base: BaseStats { hp_max: 5, hp_current: 5 }, damage: 0 },
-                        );
-                    }
-                    other => state.log.debug_print(format!("Unknown NPC id: {}", other)),
-                },
-
-                SpawnKind::Item { def_id: id } => {
-                    let item_id = state.register_item(id.to_string());
+                SpawnKind::Npc { def_id } => {
+                    let _ = state.spawn_npc(def_id.clone(), pos);
+                }
+                SpawnKind::Item { def_id } => {
+                    let item_id = state.register_item(def_id.clone());
                     let _ = state.spawn_item(item_id, pos);
                 }
             }
         }
+
+        state.compute_fov();
 
         state
     }
@@ -104,6 +87,8 @@ impl GameState {
             let _ = self.npc_take_turn(npc_id);
         }
 
+        self.compute_fov();
+
         self.round_nr += 1;
     }
 }
@@ -116,6 +101,7 @@ impl Default for GameState {
             player: Player::default(),
             log: Log::new(true),
             round_nr: 0,
+            level_nr: 1,
             entity_id_counter: 0,
             items: HashMap::new(),
             item_id_counter: 0,
