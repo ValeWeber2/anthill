@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 
 use ratatui::style::{Color, Style};
 
-use crate::core::game_items::{GameItemKindDef, PotionEffect};
+use crate::core::{buff_effects::PotionEffect, game_items::GameItemKindDef};
 
 pub type GameItemDefId = String;
 

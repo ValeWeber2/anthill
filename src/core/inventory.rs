@@ -2,9 +2,9 @@
 
 use crate::{
     core::{
+        buff_effects::{ActiveBuff, PotionEffect},
         game::GameState,
-        game_items::{ArmorItem, GameItemId, GameItemKindDef, PotionEffect, WeaponItem},
-        player::ActiveBuff,
+        game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
     },
     util::errors_results::{
         DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,

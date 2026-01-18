@@ -7,6 +7,7 @@ use ratatui::style::Style;
 
 use crate::{
     core::{
+        buff_effects::PotionEffect,
         entity_logic::{Entity, EntityBase, EntityId, Spawnable},
         game::GameState,
     },
@@ -24,16 +25,6 @@ pub enum GameItemKindDef {
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
     Potion { effect: PotionEffect },
-}
-
-#[derive(Clone, Debug)]
-pub enum PotionEffect {
-    Heal { amount: u16 },
-    Strength { amount: u8, duration: u8 },
-    Dexterity { amount: u8, duration: u8 },
-    Poison { damage_per_tick: u16, ticks_left: u8 },
-    Fatigue { strength_penalty: u8, duration: u8 },
-    Cramp { dexterity_penalty: u8, duration: u8 },
 }
 
 pub struct ArmorItem(pub GameItemId);
