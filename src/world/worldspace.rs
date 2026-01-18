@@ -46,7 +46,7 @@ impl Room {
     }
 
     pub fn center(&self) -> Point {
-        Point { x: self.origin.x + self.width / 2, y: self.origin.y + self.height / 2 }
+        Point::new(self.origin.x + self.width / 2, self.origin.y + self.height / 2)
     }
 
     pub fn left(&self) -> usize {
@@ -94,13 +94,13 @@ impl World {
         y * self.width + x
     }
 
-    pub fn get_tile(&self, x: usize, y: usize) -> &Tile {
-        let index = self.index(x, y);
+    pub fn get_tile(&self, pos: Point) -> &Tile {
+        let index = self.index(pos.x, pos.y);
         &self.tiles[index]
     }
 
-    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> &mut Tile {
-        let index = self.index(x, y);
+    pub fn get_tile_mut(&mut self, pos: Point) -> &mut Tile {
+        let index = self.index(pos.x, pos.y);
         &mut self.tiles[index]
     }
 
@@ -115,7 +115,7 @@ impl World {
         self.is_in_bounds(pos.x as isize, pos.y as isize)
             && self.npcs.iter().all(|npc| npc.base.pos != pos)
             && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
+            && self.get_tile(pos).tile_type.is_walkable()
     }
 
     pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
@@ -135,7 +135,7 @@ impl World {
     }
 
     // could be used in combat system or graphics
-    pub fn get_points_in_radius(&self, pos: &Point, radius: isize) -> Vec<Point> {
+    pub fn get_points_in_radius(&self, pos: Point, radius: isize) -> Vec<Point> {
         let mut points = Vec::new();
         let x = pos.x as isize;
         let y = pos.y as isize;
@@ -161,7 +161,7 @@ impl World {
         let mut y = from.y;
 
         while x != to.x {
-            self.carve_corridor_step(x, y);
+            self.carve_corridor_step(Point::new(x, y));
             if to.x > x {
                 x += 1
             } else {
@@ -170,7 +170,7 @@ impl World {
         }
 
         while y != to.y {
-            self.carve_corridor_step(x, y);
+            self.carve_corridor_step(Point::new(x, y));
             if to.y > y {
                 y += 1
             } else {
@@ -178,11 +178,11 @@ impl World {
             };
         }
 
-        self.carve_corridor_step(x, y);
+        self.carve_corridor_step(Point::new(x, y));
     }
 
-    fn carve_corridor_step(&mut self, x: usize, y: usize) {
-        let tile = self.get_tile_mut(x, y);
+    fn carve_corridor_step(&mut self, pos: Point) {
+        let tile = self.get_tile_mut(pos);
 
         tile.tile_type = match tile.tile_type {
             TileType::Wall => TileType::Door(DoorType::Archway),
@@ -192,11 +192,11 @@ impl World {
     }
 
     pub fn add_walls_around_walkables(&mut self) {
-        let mut to_wall: Vec<(usize, usize)> = Vec::new();
+        let mut to_wall: Vec<Point> = Vec::new();
 
         for y in 0..self.height {
             for x in 0..self.width {
-                let tt = self.get_tile(x, y).tile_type;
+                let tt = self.get_tile(Point::new(x, y)).tile_type;
 
                 if matches!(tt, TileType::Floor | TileType::Hallway | TileType::Door(_)) {
                     let y0 = y.saturating_sub(1);
@@ -210,8 +210,9 @@ impl World {
                                 continue;
                             }
 
-                            if self.get_tile(nx, ny).tile_type == TileType::Void {
-                                to_wall.push((nx, ny));
+                            let new_point = Point::new(nx, ny);
+                            if self.get_tile(new_point).tile_type == TileType::Void {
+                                to_wall.push(new_point);
                             }
                         }
                     }
@@ -219,9 +220,9 @@ impl World {
             }
         }
 
-        for (x, y) in to_wall {
-            if self.get_tile(x, y).tile_type == TileType::Void {
-                self.get_tile_mut(x, y).tile_type = TileType::Wall;
+        for point in to_wall {
+            if self.get_tile(point).tile_type == TileType::Void {
+                self.get_tile_mut(point).tile_type = TileType::Wall;
             }
         }
     }
@@ -234,18 +235,18 @@ impl World {
 
         for y in oy + 1..oy + h - 1 {
             for x in ox + 1..ox + w - 1 {
-                self.get_tile_mut(x, y).tile_type = TileType::Floor;
+                self.get_tile_mut(Point::new(x, y)).tile_type = TileType::Floor;
             }
         }
 
         for y in oy..oy + h {
-            self.get_tile_mut(ox, y).tile_type = TileType::Wall;
-            self.get_tile_mut(ox + w - 1, y).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(ox, y)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(ox + w - 1, y)).tile_type = TileType::Wall;
         }
 
         for x in ox..ox + w {
-            self.get_tile_mut(x, oy).tile_type = TileType::Wall;
-            self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(x, oy)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(x, oy + h - 1)).tile_type = TileType::Wall;
         }
     }
 
@@ -257,13 +258,13 @@ impl World {
     ) -> GameResult {
         let new_x = entity.pos().x as isize + dx as isize;
         let new_y = entity.pos().y as isize + dy as isize;
-        let new_point = Point { x: new_x as usize, y: new_y as usize };
+        let new_point = Point::new(new_x as usize, new_y as usize);
 
         if !self.is_in_bounds(new_x, new_y) {
             return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
         }
 
-        if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
+        if !self.get_tile(Point::new(new_x as usize, new_y as usize)).tile_type.is_walkable() {
             return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
         }
 
@@ -278,13 +279,13 @@ impl World {
 
             let new_x = npc.pos().x as isize + dx;
             let new_y = npc.pos().y as isize + dy;
-            let new_point = Point { x: new_x as usize, y: new_y as usize };
+            let new_point = Point::new(new_x as usize, new_y as usize);
 
             if !self.is_in_bounds(new_x, new_y) {
                 return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
             }
 
-            if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
+            if !self.get_tile(new_point).tile_type.is_walkable() {
                 return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
             }
 
@@ -292,7 +293,7 @@ impl World {
         };
 
         let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        npc.move_to(Point { x: new_x as usize, y: new_y as usize });
+        npc.move_to(Point::new(new_x as usize, new_y as usize));
 
         Ok(GameOutcome::Success)
     }

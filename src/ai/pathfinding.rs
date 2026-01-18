@@ -32,17 +32,17 @@ impl PartialOrd for Node {
     }
 }
 
-fn heuristic(a: &Point, b: &Point) -> usize {
-    a.distance_squared_from(*b)
+fn heuristic(a: Point, b: Point) -> usize {
+    a.distance_squared_from(b)
 }
 
 impl World {
     /// Uses the A* algorithm to find the next direction to move in.
-    pub fn next_step_toward(&self, start: &Point, goal: &Point) -> Option<Direction> {
+    pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
         let a_star_path: Vec<Point> = self.a_star(start, goal)?;
         let next = a_star_path.get(1)?;
 
-        let delta = *next - *start;
+        let delta = *next - start;
 
         Direction::try_from(delta).ok()
     }
@@ -50,15 +50,15 @@ impl World {
     /// A* Algorithm to find the shortest path between two Points on the Map.
     ///
     /// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
-    fn a_star(&self, start: &Point, goal: &Point) -> Option<Vec<Point>> {
+    fn a_star(&self, start: Point, goal: Point) -> Option<Vec<Point>> {
         let mut open_list = BinaryHeap::new();
         let mut closed_list = HashMap::new();
         let mut came_from = HashMap::new();
 
-        open_list.push(Node { point: *start, g: 0, h: heuristic(start, goal) });
+        open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
 
         while let Some(current) = open_list.pop() {
-            if current.point == *goal {
+            if current.point == goal {
                 let mut path = vec![current.point];
                 let mut current_position = current.point;
                 while let Some(&prev_position) = came_from.get(&current_position) {
@@ -77,7 +77,7 @@ impl World {
                 Point { x: current.point.x, y: current.point.y.saturating_sub(1) },
                 Point { x: current.point.x, y: current.point.y + 1 },
             ] {
-                if !self.get_tile(neighbor.x, neighbor.y).tile_type.is_walkable() {
+                if !self.get_tile(neighbor).tile_type.is_walkable() {
                     continue;
                 }
                 if closed_list.contains_key(&neighbor) {
@@ -95,7 +95,7 @@ impl World {
                 open_list.push(Node {
                     point: neighbor,
                     g: tentative_g,
-                    h: heuristic(&neighbor, goal),
+                    h: heuristic(neighbor, goal),
                 });
 
                 came_from.insert(neighbor, current.point);

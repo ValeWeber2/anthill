@@ -97,13 +97,13 @@ impl GameState {
 
     pub fn get_entity_at(&self, pos: Point) -> Option<EntityId> {
         for npc in &self.world.npcs {
-            if *npc.pos() == pos {
+            if npc.pos() == pos {
                 return Some(npc.id());
             }
         }
 
         for item in &self.world.item_sprites {
-            if *item.pos() == pos {
+            if item.pos() == pos {
                 return Some(item.id());
             }
         }
@@ -141,7 +141,7 @@ pub trait Spawnable {
 pub trait Entity {
     fn name(&self) -> &str;
     fn id(&self) -> EntityId;
-    fn pos(&self) -> &Point;
+    fn pos(&self) -> Point;
 }
 
 pub trait Movable {
@@ -188,8 +188,8 @@ impl Entity for Npc {
     fn id(&self) -> EntityId {
         self.base.id
     }
-    fn pos(&self) -> &Point {
-        &self.base.pos
+    fn pos(&self) -> Point {
+        self.base.pos
     }
 }
 

@@ -4,7 +4,7 @@ use strum_macros::EnumIter;
 use crate::{
     App,
     util::rng::{Check, DieSize, Roll},
-    world::worldspace::Collision,
+    world::{coordinate_system::Point, worldspace::Collision},
 };
 
 #[derive(Debug, EnumIter)]
@@ -16,7 +16,7 @@ pub enum Command {
     MaxEquip,
     PlayerInfo,
     RngTest,
-    Teleport { x: usize, y: usize },
+    Teleport(Point),
     Suicide,
 }
 
@@ -32,7 +32,7 @@ impl Command {
             Command::MaxEquip => "Grants the best equipment to the player.",
             Command::PlayerInfo => "Prints player info to log.",
             Command::RngTest => "Makes a roll and a check to test the RNG Engine",
-            Command::Teleport { .. } => "Teleports the player to the given absolute position",
+            Command::Teleport(_) => "Teleports the player to the given absolute position",
             Command::Suicide => "Set HP to zero to test game over state.",
         }
     }
@@ -46,7 +46,7 @@ impl Command {
             Command::MaxEquip => "maxequip",
             Command::PlayerInfo => "playerinfo",
             Command::RngTest => "rngtest",
-            Command::Teleport { .. } => "teleport",
+            Command::Teleport(_) => "teleport",
             Command::Suicide => "suicide",
         }
     }
@@ -89,7 +89,7 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
                 .parse::<usize>()
                 .map_err(|_| "Invalid format for y-coordinate.")?;
 
-            Ok(Command::Teleport { x: arg_x, y: arg_y })
+            Ok(Command::Teleport(Point { x: arg_x, y: arg_y }))
         }
         "suicide" => Ok(Command::Suicide),
         _ => Err(format!("Unknown Command {}", command)),
@@ -153,21 +153,18 @@ impl App {
                 ))
             }
 
-            Command::Teleport { x, y } => {
-                if !self.game.world.get_tile(x, y).tile_type.is_walkable() {
-                    self.game
-                        .log
-                        .print(format!("Position {} {} cannot be occupied by player", x, y));
+            Command::Teleport(pos) => {
+                if !self.game.world.get_tile(pos).tile_type.is_walkable() {
+                    self.game.log.print(format!("Position {} cannot be occupied by player", pos));
                     return;
                 }
 
-                if !self.game.world.is_in_bounds(x as isize, y as isize) {
-                    self.game.log.print(format!("Position {} {} is out of bounds", x, y));
+                if !self.game.world.is_in_bounds(pos.x as isize, pos.y as isize) {
+                    self.game.log.print(format!("Position {} is out of bounds", pos));
                     return;
                 }
 
-                self.game.player.character.base.pos.x = x;
-                self.game.player.character.base.pos.y = y;
+                self.game.player.character.base.pos = pos;
             }
 
             Command::Suicide => {

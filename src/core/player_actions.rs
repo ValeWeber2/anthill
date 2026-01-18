@@ -117,7 +117,7 @@ impl GameState {
         self.remove_item_from_inv(item_id)?;
 
         let player_pos = self.player.character.pos();
-        self.spawn_item(item_id, *player_pos)?;
+        self.spawn_item(item_id, player_pos)?;
 
         Ok(GameOutcome::Success)
     }

@@ -133,8 +133,8 @@ impl Entity for GameItemSprite {
         self.base.id
     }
 
-    fn pos(&self) -> &Point {
-        &self.base.pos
+    fn pos(&self) -> Point {
+        self.base.pos
     }
 }
 

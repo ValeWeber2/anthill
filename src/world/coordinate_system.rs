@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::{Add, Sub};
 
 use strum_macros::EnumIter;
@@ -8,13 +9,18 @@ pub struct Point {
     pub y: usize,
 }
 
+/// Basic coordinate point in the coordinate system.
+///
+/// Forms a whole number vector space together with PointVector, which allows basic algebraic operations:
+/// - Add: (Point, PointVector) -> Point
+/// - Subtract: (Point, Point) -> PointVector
 impl Point {
     pub fn new(x: usize, y: usize) -> Self {
         Self { x, y }
     }
 
     pub fn get_adjacent(self, direction: Direction) -> Point {
-        self + PointDelta::from(direction)
+        self + PointVector::from(direction)
     }
 
     pub fn distance_squared_from(&self, other: Point) -> usize {
@@ -24,48 +30,60 @@ impl Point {
     }
 }
 
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-impl Add<PointDelta> for Point {
+impl Add<PointVector> for Point {
     type Output = Point;
 
-    fn add(self, delta: PointDelta) -> Point {
-        let new_x = self.x as isize + delta.x;
-        let new_y = self.y as isize + delta.y;
+    fn add(self, vector: PointVector) -> Self::Output {
+        let new_x = self.x as isize + vector.x;
+        let new_y = self.y as isize + vector.y;
 
         Point { x: new_x.max(0) as usize, y: new_y.max(0) as usize }
     }
 }
 
-impl Sub for Point {
-    type Output = PointDelta;
+impl Add<Direction> for Point {
+    type Output = Point;
 
-    fn sub(self, other: Point) -> PointDelta {
-        let new_x = self.x as isize - other.x as isize;
-        let new_y = self.y as isize - other.y as isize;
-
-        PointDelta { x: new_x, y: new_y }
+    fn add(self, rhs: Direction) -> Self::Output {
+        self + PointVector::from(rhs)
     }
 }
 
-pub struct PointDelta {
+impl Sub for Point {
+    type Output = PointVector;
+
+    fn sub(self, other: Point) -> PointVector {
+        let new_x = self.x as isize - other.x as isize;
+        let new_y = self.y as isize - other.y as isize;
+
+        PointVector::new(new_x, new_y)
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "x:{} y:{}", self.x, self.y)
+    }
+}
+
+pub struct PointVector {
     pub x: isize,
     pub y: isize,
 }
 
-impl From<Direction> for PointDelta {
+impl PointVector {
+    fn new(x: isize, y: isize) -> Self {
+        Self { x, y }
+    }
+}
+
+impl From<Direction> for PointVector {
     fn from(direction: Direction) -> Self {
         match direction {
-            Direction::Up => PointDelta { x: 0, y: -1 },
-            Direction::Right => PointDelta { x: 1, y: 0 },
-            Direction::Down => PointDelta { x: 0, y: 1 },
-            Direction::Left => PointDelta { x: -1, y: 0 },
+            Direction::Up => PointVector { x: 0, y: -1 },
+            Direction::Right => PointVector { x: 1, y: 0 },
+            Direction::Down => PointVector { x: 0, y: 1 },
+            Direction::Left => PointVector { x: -1, y: 0 },
         }
     }
 }
@@ -78,15 +96,15 @@ pub enum Direction {
     Left,
 }
 
-impl TryFrom<PointDelta> for Direction {
+impl TryFrom<PointVector> for Direction {
     type Error = &'static str;
 
-    fn try_from(value: PointDelta) -> Result<Self, Self::Error> {
+    fn try_from(value: PointVector) -> Result<Self, Self::Error> {
         match value {
-            PointDelta { x: 0, y: -1 } => Ok(Direction::Up),
-            PointDelta { x: 1, y: 0 } => Ok(Direction::Right),
-            PointDelta { x: 0, y: 1 } => Ok(Direction::Down),
-            PointDelta { x: -1, y: 0 } => Ok(Direction::Left),
+            PointVector { x: 0, y: -1 } => Ok(Direction::Up),
+            PointVector { x: 1, y: 0 } => Ok(Direction::Right),
+            PointVector { x: 0, y: 1 } => Ok(Direction::Down),
+            PointVector { x: -1, y: 0 } => Ok(Direction::Left),
             _ => Err("Can't coerce PointDelta into a cardinal direction"),
         }
     }
