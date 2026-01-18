@@ -97,6 +97,7 @@ impl GameState {
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
+        self.player.character.tick_buffs();
         let npc_ids: Vec<EntityId> = self.world.npc_index.keys().copied().collect();
 
         for npc_id in npc_ids {

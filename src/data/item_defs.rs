@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 
 use ratatui::style::{Color, Style};
 
-use crate::core::game_items::GameItemKindDef;
+use crate::core::game_items::{GameItemKindDef, PotionEffect};
 
 pub type GameItemDefId = String;
 
@@ -29,11 +29,119 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
             },
         );
         m.insert(
+            "weapon_mace".to_string(),
+            GameItemDef {
+                name: "Iron Mace",
+                glyph: '/',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Weapon { damage: 10, crit_chance: 5 },
+            },
+        );
+        m.insert(
+            "weapon_axe_iron".to_string(),
+            GameItemDef {
+                name: "Iron Axe",
+                glyph: '/',
+                style: Style::default().fg(Color::DarkGray),
+                kind: GameItemKindDef::Weapon { damage: 8, crit_chance: 7 },
+            },
+        );
+        m.insert(
+            "weapon_dagger".to_string(),
+            GameItemDef {
+                name: "Sharp Dagger",
+                glyph: '\\',
+                style: Style::default().fg(Color::White),
+                kind: GameItemKindDef::Weapon { damage: 4, crit_chance: 15 },
+            },
+        );
+        m.insert(
+            "weapon_warhammer".to_string(),
+            GameItemDef {
+                name: "Warhammer",
+                glyph: '/',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Weapon { damage: 12, crit_chance: 5 },
+            },
+        );
+        m.insert(
+            "weapon_short_sword".to_string(),
+            GameItemDef {
+                name: "Short Sword",
+                glyph: '/',
+                style: Style::default().fg(Color::Gray),
+                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 10 },
+            },
+        );
+        m.insert(
+            "weapon_spear".to_string(),
+            GameItemDef {
+                name: "Spear",
+                glyph: '/',
+                style: Style::default().fg(Color::White),
+                kind: GameItemKindDef::Weapon { damage: 7, crit_chance: 8 },
+            },
+        );
+        m.insert(
             "armor_leather".to_string(),
             GameItemDef {
                 name: "Leather Armor",
                 glyph: 'A',
                 style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Armor { mitigation: 2 },
+            },
+        );
+        m.insert(
+            "armor_chainmail".to_string(),
+            GameItemDef {
+                name: "Chainmail Armor",
+                glyph: 'A',
+                style: Style::default().fg(Color::LightBlue),
+                kind: GameItemKindDef::Armor { mitigation: 4 },
+            },
+        );
+        m.insert(
+            "armor_plate".to_string(),
+            GameItemDef {
+                name: "Plate Armor",
+                glyph: 'A',
+                style: Style::default().fg(Color::Gray),
+                kind: GameItemKindDef::Armor { mitigation: 6 },
+            },
+        );
+        m.insert(
+            "armor_helmet".to_string(),
+            GameItemDef {
+                name: "Steel Helmet",
+                glyph: 'A',
+                style: Style::default().fg(Color::Gray),
+                kind: GameItemKindDef::Armor { mitigation: 2 },
+            },
+        );
+        m.insert(
+            "armor_gauntlets".to_string(),
+            GameItemDef {
+                name: "Iron Gauntlets",
+                glyph: 'A',
+                style: Style::default().fg(Color::DarkGray),
+                kind: GameItemKindDef::Armor { mitigation: 1 },
+            },
+        );
+        m.insert(
+            "armor_shield".to_string(),
+            GameItemDef {
+                name: "Wooden Shield",
+                glyph: 'A',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Armor { mitigation: 3 },
+            },
+        );
+        m.insert(
+            "armor_cloak".to_string(),
+            GameItemDef {
+                name: "Cloak of Shadows",
+                glyph: 'A',
+                style: Style::default().fg(Color::Black),
                 kind: GameItemKindDef::Armor { mitigation: 2 },
             },
         );
@@ -44,6 +152,109 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: '%',
                 style: Style::default().fg(Color::Red),
                 kind: GameItemKindDef::Food { nutrition: 1 },
+            },
+        );
+        m.insert(
+            "food_grapefruit".to_string(),
+            GameItemDef {
+                name: "Grapefruit",
+                glyph: '%',
+                style: Style::default().fg(Color::LightRed),
+                kind: GameItemKindDef::Food { nutrition: 2 },
+            },
+        );
+        m.insert(
+            "food_honey".to_string(),
+            GameItemDef {
+                name: "Honey Jar",
+                glyph: '%',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Food { nutrition: 4 },
+            },
+        );
+        m.insert(
+            "food_fish".to_string(),
+            GameItemDef {
+                name: "Cooked Fish",
+                glyph: '%',
+                style: Style::default().fg(Color::Blue),
+                kind: GameItemKindDef::Food { nutrition: 6 },
+            },
+        );
+        m.insert(
+            "food_mushroom".to_string(),
+            GameItemDef {
+                name: "Mushroom",
+                glyph: '%',
+                style: Style::default().fg(Color::Green),
+                kind: GameItemKindDef::Food { nutrition: 1 },
+            },
+        );
+        m.insert(
+            "food_meat".to_string(),
+            GameItemDef {
+                name: "Cooked Meat",
+                glyph: '%',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Food { nutrition: 7 },
+            },
+        );
+        m.insert(
+            "food_apple".to_string(),
+            GameItemDef {
+                name: "Apple",
+                glyph: '%',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Food { nutrition: 2 },
+            },
+        );
+        m.insert(
+            "food_bread".to_string(),
+            GameItemDef {
+                name: "Loaf of Bread",
+                glyph: '%',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Food { nutrition: 5 },
+            },
+        );
+        m.insert(
+            "food_cheese".to_string(),
+            GameItemDef {
+                name: "Cheese",
+                glyph: '%',
+                style: Style::default().fg(Color::LightYellow),
+                kind: GameItemKindDef::Food { nutrition: 3 },
+            },
+        );
+        m.insert(
+            "potion_healing_small".to_string(),
+            GameItemDef {
+                name: "Small Healing Potion",
+                glyph: '!',
+                style: Style::default().fg(Color::Magenta),
+                kind: GameItemKindDef::Potion { effect: PotionEffect::Heal { amount: 20 } },
+            },
+        );
+        m.insert(
+            "potion_strength".to_string(),
+            GameItemDef {
+                name: "Potion of Strength",
+                glyph: '!',
+                style: Style::default().fg(Color::Magenta),
+                kind: GameItemKindDef::Potion {
+                    effect: PotionEffect::Strength { amount: 3, duration: 10 },
+                },
+            },
+        );
+        m.insert(
+            "potion_dexterity".to_string(),
+            GameItemDef {
+                name: "Potion of Dexterity",
+                glyph: '!',
+                style: Style::default().fg(Color::Blue),
+                kind: GameItemKindDef::Potion {
+                    effect: PotionEffect::Dexterity { amount: 2, duration: 10 },
+                },
             },
         );
         m

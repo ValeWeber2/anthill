@@ -22,6 +22,17 @@ pub enum GameItemKindDef {
     Weapon { damage: u32, crit_chance: u8 },
     Armor { mitigation: u32 },
     Food { nutrition: u32 },
+    Potion { effect: PotionEffect },
+}
+
+#[derive(Clone, Debug)]
+pub enum PotionEffect {
+    Heal { amount: u32 },
+    Strength { amount: u32, duration: u8 },
+    Dexterity { amount: u32, duration: u8 },
+    Poison { damage_per_tick: u32, ticks_left: u8 },
+    Fatigue { strength_penalty: u32, duration: u8 },
+    Cramp { dexterity_penalty: u32, duration: u8 },
 }
 
 pub struct ArmorItem(pub GameItemId);
