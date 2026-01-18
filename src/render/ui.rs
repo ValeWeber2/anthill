@@ -104,7 +104,7 @@ impl Widget for &App {
 
                 // Menu (Log, menus, tables)
                 let block_menu = Block::default()
-                    .title(format!(" Menu─({}) ", self.ui.menu.mode))
+                    .title(format!(" Menu:{} ", self.ui.menu.mode))
                     .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
                         Style::default().fg(Color::LightBlue)
                     } else {

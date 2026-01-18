@@ -9,7 +9,7 @@ use crate::{
         entity_logic::EntityId,
         game_items::{GameItemId, GameItemKindDef},
     },
-    data::item_defs::GameItemDefId,
+    data::{item_defs::GameItemDefId, npc_defs::NpcDefId},
     world::coordinate_system::Point,
 };
 
@@ -122,6 +122,7 @@ impl From<EngineError> for GameError {
 #[derive(Debug)]
 pub enum DataError {
     MissingItemDefinition(GameItemDefId),
+    MissingNpcDefinition(NpcDefId),
 }
 
 impl fmt::Display for DataError {
@@ -129,6 +130,9 @@ impl fmt::Display for DataError {
         match self {
             DataError::MissingItemDefinition(item_def_id) => {
                 write!(f, "Item of def_id {} not defined", item_def_id)
+            }
+            DataError::MissingNpcDefinition(npc_def_id) => {
+                write!(f, "Npc of def_id {} not defined", npc_def_id)
             }
         }
     }

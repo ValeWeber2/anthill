@@ -98,6 +98,7 @@ impl GameState {
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
             def.name
         };
+        self.deregister_item(item_id)?;
 
         self.log.print(format!("You have eaten {}.", item_name));
 

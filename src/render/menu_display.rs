@@ -9,16 +9,26 @@ use ratatui::{
 
 use crate::core::game::GameState;
 
+#[derive(Debug, Clone, Copy)]
 pub enum MenuMode {
     Log,
-    Inventory,
+    Inventory(InventoryAction),
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum InventoryAction {
+    View,
+    Use,
+    Drop,
 }
 
 impl fmt::Display for MenuMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MenuMode::Log => write!(f, "Log"),
-            MenuMode::Inventory => write!(f, "Inventory"),
+            MenuMode::Inventory(InventoryAction::View) => write!(f, "Inventory"),
+            MenuMode::Inventory(InventoryAction::Use) => write!(f, "Inventory (use)"),
+            MenuMode::Inventory(InventoryAction::Drop) => write!(f, "Inventory (drop)"),
         }
     }
 }
@@ -34,7 +44,7 @@ impl Menu {
     pub fn render(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         match self.mode {
             MenuMode::Log => self.render_log(&game_state.log.messages, rect, buf),
-            MenuMode::Inventory => self.render_inventory(game_state, rect, buf),
+            MenuMode::Inventory(_) => self.render_inventory(game_state, rect, buf),
         }
     }
 
