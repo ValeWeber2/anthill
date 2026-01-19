@@ -99,10 +99,13 @@ impl GameState {
         let item_sprite =
             self.get_item_sprite(entity_id).ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
 
-        self.add_item_to_inv(item_sprite.item_id)?;
-        self.despawn(entity_id);
+        let result = self.add_item_to_inv(item_sprite.item_id);
 
-        Ok(GameOutcome::Success)
+        if let Ok(GameOutcome::Success) = result {
+            self.despawn(entity_id);
+        }
+
+        result
     }
 
     fn drop_item(&mut self, item_id: GameItemId) -> GameResult {

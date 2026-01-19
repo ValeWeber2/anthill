@@ -24,7 +24,7 @@ impl ModalInterface {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
             ModalInterface::ConfirmChooseItem { item_id } => {
-                render_confirm_use_item(rect, buf, game, *item_id)
+                render_confirm_select_item(rect, buf, game, *item_id)
             }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
             ModalInterface::TextDisplay { title, paragraphs } => {
@@ -62,7 +62,7 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
     paragraph.render(center_of_rect, buf);
 }
 
-fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
+fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
     let modal_area = render_modal_window(50, 5, " Confirm Action ".to_string(), rect, buf);
 
     // look up item name
@@ -73,7 +73,7 @@ fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_
         .unwrap_or("<unknown item>");
 
     let text = Text::from(vec![
-        Line::from(format!("Use {}?", item_name)),
+        Line::from(format!("Selected: {}", item_name)),
         Line::from(""),
         Line::from("Press <y> to confirm, <n> to cancel"),
     ]);

@@ -3,7 +3,10 @@ use strum_macros::EnumIter;
 
 use crate::{
     App,
-    util::rng::{Check, DieSize, Roll},
+    util::{
+        errors_results::GameOutcome,
+        rng::{Check, DieSize, Roll},
+    },
     world::{coordinate_system::Point, worldspace::Collision},
 };
 
@@ -114,10 +117,20 @@ impl App {
             Command::Give { item_def, amount } => {
                 for _ in 0..amount {
                     let item_id = self.game.register_item(item_def.clone());
-                    let _ = self.game.add_item_to_inv(item_id);
+                    match self.game.add_item_to_inv(item_id) {
+                        Ok(GameOutcome::Success) => self
+                            .game
+                            .log
+                            .print(format!("Added {} {} to player's inventory", item_def, amount)),
+                        _ => {
+                            self.game
+                                .log
+                                .print("Inventory full. Cannot add another item.".to_string());
+                            let _ = self.game.deregister_item(item_id);
+                            break;
+                        }
+                    }
                 }
-
-                self.game.log.print(format!("Added {} {} to player's inventory", item_def, amount));
             }
             Command::MaxStats => {
                 self.game.player.character.stats.dexterity = 100;

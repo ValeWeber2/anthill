@@ -43,7 +43,7 @@ pub const HELP_CONTENT: &str = "
         Interaction:      Walk into an NPC or item to interact with it
 
         Inventory:        i - open inventory        |        a, b, c… - select item        |        ESC - close
-                          I - open inventory in drop mode
+                          D - open inventory in drop mode
 
         Actions:          W - unequip weapon        |        A - unequip armor
 

@@ -149,16 +149,12 @@ impl App {
                 self.game.resolve_player_action(PlayerInput::UnequipArmor);
             }
 
-            // Control: Open Inventory without any intentions
-            KeyCode::Char('i') => {
-                self.focus_menu(MenuMode::Inventory(InventoryAction::View));
-            }
             // Control: Open Inventory with intention to Action: Use Item (shifts focus to menu)
-            KeyCode::Char('u') => {
+            KeyCode::Char('i') => {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Use));
             }
             // Control: Open Inventory with intention to Action: Leave Item (shifts focus to menu)
-            KeyCode::Char('l') => {
+            KeyCode::Char('D') => {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
             }
 

@@ -17,7 +17,6 @@ pub enum MenuMode {
 
 #[derive(Debug, Clone, Copy)]
 pub enum InventoryAction {
-    View,
     Use,
     Drop,
 }
@@ -26,7 +25,6 @@ impl fmt::Display for MenuMode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MenuMode::Log => write!(f, "Log"),
-            MenuMode::Inventory(InventoryAction::View) => write!(f, "Inventory"),
             MenuMode::Inventory(InventoryAction::Use) => write!(f, "Inventory (use)"),
             MenuMode::Inventory(InventoryAction::Drop) => write!(f, "Inventory (drop)"),
         }
