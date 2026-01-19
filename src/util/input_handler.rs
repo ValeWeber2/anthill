@@ -3,8 +3,8 @@ use std::io;
 
 use crate::{
     App, State,
-    ascii_art::HELP_CONTENT,
     core::player_actions::PlayerInput,
+    data::ascii_art::HELP_CONTENT,
     render::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::ModalInterface,

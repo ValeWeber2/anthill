@@ -7,8 +7,8 @@ use ratatui::{
 
 use crate::{
     App, KeyboardFocus, State,
-    ascii_art::{GRAVESTONE, STARTSCREEN_ASCII},
     core::{entity_logic::Entity, game::GameState},
+    data::ascii_art::{GRAVESTONE, STARTSCREEN_ASCII},
     render::{menu_display::Menu, modal_display::ModalInterface, world_display::WorldDisplay},
 };
 use crate::{

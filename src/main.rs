@@ -1,5 +1,4 @@
 mod ai;
-mod ascii_art;
 mod core;
 mod data;
 mod render;
