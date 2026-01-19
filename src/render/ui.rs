@@ -17,7 +17,7 @@ use crate::{
 };
 
 const MIN_WIDTH: u16 = 150;
-const MIN_HEIGHT: u16 = 33;
+const MIN_HEIGHT: u16 = 33; // Technically just 30
 
 impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
@@ -31,89 +31,89 @@ impl Widget for &App {
                 area,
                 buf,
             );
-            return;
-        }
+        } else {
+            match self.state {
+                State::StartScreen => {
+                    render_start_screen(area, buf);
+                }
+                State::Playing => {
+                    // Normal
+                    let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
+                    let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
 
-        match self.state {
-            State::StartScreen => {
-                render_start_screen(area, buf);
-            }
-            State::Playing => {
-                // Normal
-                let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
-                let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
+                    let layout_top_bottom =
+                        Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
+                    let [area_game, area_info] = layout_top_bottom.areas(area);
 
-                let layout_top_bottom =
-                    Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
-                let [area_game, area_info] = layout_top_bottom.areas(area);
+                    let layout_left_right = Layout::horizontal([
+                        Constraint::Percentage(70),
+                        Constraint::Length(1),
+                        Constraint::Percentage(30),
+                    ]);
+                    let [area_world, _empty, area_menu] = layout_left_right.areas(area_game);
 
-                let layout_left_right = Layout::horizontal([
-                    Constraint::Percentage(70),
-                    Constraint::Length(1),
-                    Constraint::Percentage(30),
-                ]);
-                let [area_world, _empty, area_menu] = layout_left_right.areas(area_game);
+                    let outer_width = world_width_u16 + 2;
+                    let outer_height = world_height_u16 + 2;
+                    let area_worldspace = Layout::vertical([Constraint::Length(outer_height)])
+                        .horizontal_margin((area_world.width.saturating_sub(outer_width)) / 2)
+                        .vertical_margin((area_world.height.saturating_sub(outer_height)) / 2)
+                        .split(area_world)[0];
 
-                let outer_width = world_width_u16 + 2;
-                let outer_height = world_height_u16 + 2;
-                let area_worldspace = Layout::vertical([Constraint::Length(outer_height)])
-                    .horizontal_margin((area_world.width.saturating_sub(outer_width)) / 2)
-                    .vertical_margin((area_world.height.saturating_sub(outer_height)) / 2)
-                    .split(area_world)[0];
+                    // Character Info
+                    let block_info =
+                        Block::default().title(" Character Info ").borders(Borders::ALL);
+                    let block_info_inner = block_info.inner(area_info);
+                    block_info.render(area_info, buf);
 
-                // Character Info
-                let block_info = Block::default().title(" Character Info ").borders(Borders::ALL);
-                let block_info_inner = block_info.inner(area_info);
-                block_info.render(area_info, buf);
+                    self.ui.info.render(&self.game, block_info_inner, buf);
 
-                self.ui.info.render(&self.game, block_info_inner, buf);
+                    // World
+                    let block_world = Block::default()
+                        .title(" World ")
+                        .border_style(if self.keyboard_focus == KeyboardFocus::FocusWorld {
+                            Style::default().fg(Color::LightBlue)
+                        } else {
+                            Style::default()
+                        })
+                        .borders(Borders::ALL);
+                    block_world.render(area_world, buf);
 
-                // World
-                let block_world = Block::default()
-                    .title(" World ")
-                    .border_style(if self.keyboard_focus == KeyboardFocus::FocusWorld {
-                        Style::default().fg(Color::LightBlue)
-                    } else {
-                        Style::default()
-                    })
-                    .borders(Borders::ALL);
-                block_world.render(area_world, buf);
+                    // World Space
+                    // (Space actually occupied by tiles)
+                    let block_world = Block::default().title(" World Space ").borders(Borders::ALL);
+                    let block_world_inner = block_world.inner(area_worldspace);
+                    block_world.render(area_worldspace, buf);
 
-                // World Space
-                // (Space actually occupied by tiles)
-                let block_world = Block::default().title(" World Space ").borders(Borders::ALL);
-                let block_world_inner = block_world.inner(area_worldspace);
-                block_world.render(area_worldspace, buf);
+                    // Z-layer 0
+                    self.ui.world_display.render(&self.game, block_world_inner, buf);
+                    // Z-layer 1
+                    self.ui.world_display.render_items(&self.game, block_world_inner, buf);
+                    // Z-layer 2
+                    self.ui.world_display.render_npcs(&self.game, block_world_inner, buf);
+                    // Z-layer 3
+                    self.ui.world_display.render_player(
+                        &self.game.player.character,
+                        block_world_inner,
+                        buf,
+                    );
 
-                // Z-layer 0
-                self.ui.world_display.render(&self.game, block_world_inner, buf);
-                // Z-layer 1
-                self.ui.world_display.render_items(&self.game, block_world_inner, buf);
-                // Z-layer 2
-                self.ui.world_display.render_npcs(&self.game, block_world_inner, buf);
-                // Z-layer 3
-                self.ui.world_display.render_player(
-                    &self.game.player.character,
-                    block_world_inner,
-                    buf,
-                );
+                    // Menu (Log, menus, tables)
+                    let block_menu = Block::default()
+                        .title(format!(" Menu:{} ", self.ui.menu.mode))
+                        .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
+                            Style::default().fg(Color::LightBlue)
+                        } else {
+                            Style::default()
+                        })
+                        .borders(Borders::ALL);
+                    let block_menu_inner = block_menu.inner(area_menu);
+                    block_menu.render(area_menu, buf);
 
-                // Menu (Log, menus, tables)
-                let block_menu = Block::default()
-                    .title(format!(" Menu:{} ", self.ui.menu.mode))
-                    .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
-                        Style::default().fg(Color::LightBlue)
-                    } else {
-                        Style::default()
-                    })
-                    .borders(Borders::ALL);
-                let block_menu_inner = block_menu.inner(area_menu);
-                block_menu.render(area_menu, buf);
-
-                self.ui.menu.render(&self.game, block_menu_inner, buf);
-            }
-            State::GameOver => {
-                render_game_over(area, buf, &self.game);
+                    self.ui.menu.render(&self.game, block_menu_inner, buf);
+                }
+                State::GameOver => {
+                    render_game_over(area, buf, &self.game);
+                }
             }
         }
 
@@ -181,16 +181,29 @@ pub fn get_centered_rect(width: u16, height: u16, area: Rect) -> Rect {
 }
 
 fn render_start_screen(area: Rect, buf: &mut Buffer) {
-    let lines: Vec<String> = STARTSCREEN_ASCII.lines().map(|l| l.to_string()).collect();
+    // let center_rect = get_centered_rect(150, 33, area);
+    // let lines: Vec<String> = STARTSCREEN_ASCII.lines().map(|l| l.to_string()).collect();
+    //
+    // let block = Block::default().borders(Borders::empty()).padding(Padding::new(0, 0, 0, 0));
+    //
+    // let inner = block.inner(area);
+    // block.render(center_rect, buf);
+    //
+    // let text = Text::from(lines.iter().map(|l| Line::from(l.as_str())).collect::<Vec<Line>>());
+    //
+    // Paragraph::new(text).alignment(Alignment::Center).render(inner, buf);
 
-    let block = Block::default().borders(Borders::empty()).padding(Padding::new(0, 0, 0, 0));
+    let center_rect = get_centered_rect(150, 33, area);
+    let block = Block::default().borders(Borders::NONE);
 
-    let inner = block.inner(area);
-    block.render(area, buf);
+    let block_inner = block.inner(center_rect);
 
-    let text = Text::from(lines.iter().map(|l| Line::from(l.as_str())).collect::<Vec<Line>>());
+    block.render(center_rect, buf);
 
-    Paragraph::new(text).alignment(Alignment::Center).render(inner, buf);
+    // let lines: Vec<String> = STARTSCREEN_ASCII.lines().map(|l| l.to_string()).collect();
+
+    Paragraph::new(Text::from(STARTSCREEN_ASCII)).render(block_inner, buf);
+    // render_text_display("WELCOME", &lines, block_inner, buf);
 }
 
 fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {

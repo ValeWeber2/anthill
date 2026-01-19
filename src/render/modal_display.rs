@@ -34,7 +34,7 @@ impl ModalInterface {
     }
 }
 
-fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
+pub fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
     // Making the Window
     let modal_area = render_modal_window(150, 33, title.to_string(), rect, buf);
 
