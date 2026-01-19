@@ -1,10 +1,10 @@
 use crate::{
     core::{
-        entity_logic::{Entity, EntityId, EntityRef},
+        entity_logic::{Entity, EntityId},
         game::GameState,
         game_items::GameItemId,
     },
-    util::errors_results::{EngineError, GameError, GameOutcome, GameResult},
+    util::errors_results::{EngineError, GameOutcome, GameResult},
     world::coordinate_system::{Direction, Point},
 };
 
@@ -78,14 +78,11 @@ impl GameState {
                 // let target_tile = self.world.get_tile(target_point.x, target_point.y);
 
                 if let Some(entity_id) = self.get_entity_at(target_point) {
-                    match self.get_entity_by_id(entity_id) {
-                        Some(EntityRef::Npc(_)) => {
-                            return ActionKind::Attack(entity_id);
-                        }
-                        Some(EntityRef::ItemSprite(_)) => {
-                            return ActionKind::PickUpItem(entity_id);
-                        }
-                        _ => {}
+                    if self.get_npc(entity_id).is_some() {
+                        return ActionKind::Attack(entity_id);
+                    }
+                    if self.get_item_sprite(entity_id).is_some() {
+                        return ActionKind::PickUpItem(entity_id);
                     }
                 }
 
@@ -99,13 +96,8 @@ impl GameState {
     }
 
     fn pick_up_item(&mut self, entity_id: EntityId) -> GameResult {
-        let entity_ref =
-            self.get_entity_by_id(entity_id).ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
-
-        let item_sprite = match entity_ref {
-            EntityRef::ItemSprite(item_sprite) => item_sprite,
-            _ => return Err(GameError::from(EngineError::ItemSpriteNotFound(entity_id))),
-        };
+        let item_sprite =
+            self.get_item_sprite(entity_id).ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
 
         self.add_item_to_inv(item_sprite.item_id)?;
         self.despawn(entity_id);

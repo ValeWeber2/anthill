@@ -153,11 +153,11 @@ impl Spawnable for GameItemSprite {
     }
 
     fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
-        &mut state.world.item_sprites
+        &mut state.item_sprites
     }
 
     fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize> {
-        &mut state.world.item_sprites_index
+        &mut state.item_sprites_index
     }
 }
 

@@ -10,7 +10,7 @@ use crate::{
 impl GameState {
     pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
         // Fetching values
-        let npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.base.name.clone();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
@@ -27,31 +27,35 @@ impl GameState {
             npc_mitigation,
         );
 
+        let mut attack_message: String;
+
         match attack_result {
             None => {
-                self.log.print(format!("{} dodged the attack!", npc_name));
+                attack_message = format!("{} dodged the attack!", npc_name);
             }
             Some(damage) => {
                 // Apply Damage
-                let npc = self.world.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+                let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
-                self.log.print(format!("Player hits {} for {} damage!", npc.base.name, damage));
+                attack_message = format!("Player hits {} for {} damage!", npc.base.name, damage);
 
                 if !npc.stats.base.is_alive() {
-                    self.log.print(format!("{} died!", npc.base.name));
+                    attack_message = format!("{}\n{} died!", attack_message, npc.base.name);
                     self.despawn(npc_id);
                     self.player.character.gain_experience(25);
                 }
             }
         }
 
+        self.log.print(attack_message);
+
         Ok(GameOutcome::Success)
     }
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
         let (npc_name, npc_damage) = {
-            let npc = self.world.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
             (npc.base.name.to_string(), npc.stats.damage)
         };
 

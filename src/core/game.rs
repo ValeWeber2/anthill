@@ -3,8 +3,8 @@
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
-use crate::core::entity_logic::EntityId;
-use crate::core::game_items::{GameItem, GameItemId};
+use crate::core::entity_logic::{EntityId, Npc};
+use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
 use crate::world::world_loader::load_world_from_ron;
 use crate::world::worldspace::World;
@@ -22,6 +22,10 @@ pub struct GameState {
     pub round_nr: u64,
     pub level_nr: u8,
     pub entity_id_counter: u32,
+    pub npcs: Vec<Npc>,
+    pub npc_index: HashMap<EntityId, usize>,
+    pub item_sprites: Vec<GameItemSprite>,
+    pub item_sprites_index: HashMap<EntityId, usize>,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
     pub rng: StdRng,
@@ -36,6 +40,10 @@ impl GameState {
             round_nr: 0,
             level_nr: 1,
             entity_id_counter: 0,
+            npcs: Vec::new(),
+            npc_index: HashMap::new(),
+            item_sprites: Vec::new(),
+            item_sprites_index: HashMap::new(),
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
@@ -57,7 +65,7 @@ impl GameState {
         for s in &data.spawns {
             let pos = Point::new(s.x, s.y);
 
-            if !state.world.is_available(pos) {
+            if !state.is_available(pos) {
                 state.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y));
                 continue;
             }
@@ -80,7 +88,7 @@ impl GameState {
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
-        let npc_ids: Vec<EntityId> = self.world.npc_index.keys().copied().collect();
+        let npc_ids: Vec<EntityId> = self.npc_index.keys().copied().collect();
 
         for npc_id in npc_ids {
             let _ = self.npc_take_turn(npc_id);
@@ -102,6 +110,10 @@ impl Default for GameState {
             round_nr: 0,
             level_nr: 1,
             entity_id_counter: 0,
+            npcs: Vec::new(),
+            npc_index: HashMap::new(),
+            item_sprites: Vec::new(),
+            item_sprites_index: HashMap::new(),
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),

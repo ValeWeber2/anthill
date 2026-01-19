@@ -3,6 +3,7 @@ use ratatui::prelude::*;
 use crate::{
     core::{
         entity_logic::{Entity, EntityBase},
+        game::GameState,
         player::PlayerCharacter,
     },
     world::{
@@ -15,11 +16,11 @@ use crate::{
 pub struct WorldDisplay;
 
 impl WorldDisplay {
-    pub fn render(&self, world: &World, rect: Rect, buf: &mut Buffer) {
-        for y in 0..world.height {
-            for x in 0..world.width {
+    pub fn render(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
+        for y in 0..game.world.height {
+            for x in 0..game.world.width {
                 let point: Point = Point { x, y };
-                let tile: &Tile = world.get_tile(point);
+                let tile: &Tile = game.world.get_tile(point);
 
                 // Skip invisible and unexplored tiles
                 if !tile.visible && !tile.explored {
@@ -35,7 +36,7 @@ impl WorldDisplay {
                 if let Some(cell_content) = cell {
                     // Walls are a special case due to their conditional rendering (wall mask)
                     if tile.tile_type == TileType::Wall {
-                        let mask = wall_mask(world, point);
+                        let mask = wall_mask(&game.world, point);
                         cell_content.set_char(wall_glyph(mask));
                     } else {
                         cell_content.set_char(tile.tile_type.glyph());
@@ -56,17 +57,17 @@ impl WorldDisplay {
         self.render_sprite(&pc.base, rect, buf);
     }
 
-    pub fn render_npcs(&self, world: &World, rect: Rect, buf: &mut Buffer) {
-        for npc in &world.npcs {
-            if world.get_tile(npc.pos()).visible {
+    pub fn render_npcs(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
+        for npc in &game.npcs {
+            if game.world.get_tile(npc.pos()).visible {
                 self.render_sprite(&npc.base, rect, buf);
             }
         }
     }
 
-    pub fn render_items(&self, world: &World, rect: Rect, buf: &mut Buffer) {
-        for item_sprite in &world.item_sprites {
-            if world.get_tile(item_sprite.pos()).visible {
+    pub fn render_items(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
+        for item_sprite in &game.item_sprites {
+            if game.world.get_tile(item_sprite.pos()).visible {
                 self.render_sprite(&item_sprite.base, rect, buf);
             }
         }

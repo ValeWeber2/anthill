@@ -1,17 +1,15 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
 use ratatui::style::Style;
 
-use crate::util::errors_results::{EngineError, FailReason, GameOutcome, GameResult};
+use crate::util::errors_results::{FailReason, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
 use crate::{
     core::{
-        entity_logic::{Entity, EntityId, Movable, Npc},
+        entity_logic::{Entity, Movable},
         game::GameState,
-        game_items::GameItemSprite,
     },
     world::tiles::{DoorType, Tile, TileType},
 };
@@ -71,10 +69,6 @@ pub struct World {
     pub width: usize,
     pub height: usize,
     pub tiles: [Tile; WORLD_WIDTH * WORLD_HEIGHT], // Grid is 100 wide and 25 high.
-    pub npcs: Vec<Npc>,
-    pub npc_index: HashMap<EntityId, usize>,
-    pub item_sprites: Vec<GameItemSprite>,
-    pub item_sprites_index: HashMap<EntityId, usize>,
 }
 
 impl World {
@@ -83,10 +77,6 @@ impl World {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
         }
     }
 
@@ -109,29 +99,6 @@ impl World {
         let in_upper_bounds: bool = (x as usize) < self.width && (y as usize) < self.height;
 
         in_lower_bounds && in_upper_bounds
-    }
-
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.get_tile(pos).tile_type.is_walkable()
-    }
-
-    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
-        self.npc_index.get(&id).map(|&index| &self.npcs[index])
-    }
-
-    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
-        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
-    }
-
-    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
-        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
-    }
-
-    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
-        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
     }
 
     // could be used in combat system or graphics
@@ -273,31 +240,6 @@ impl World {
         Ok(GameOutcome::Success)
     }
 
-    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> GameResult {
-        let (new_x, new_y) = {
-            let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-
-            let new_x = npc.pos().x as isize + dx;
-            let new_y = npc.pos().y as isize + dy;
-            let new_point = Point::new(new_x as usize, new_y as usize);
-
-            if !self.is_in_bounds(new_x, new_y) {
-                return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-            }
-
-            if !self.get_tile(new_point).tile_type.is_walkable() {
-                return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
-            }
-
-            (new_x, new_y)
-        };
-
-        let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        npc.move_to(Point::new(new_x as usize, new_y as usize));
-
-        Ok(GameOutcome::Success)
-    }
-
     pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {
         if data.width != self.width || data.height != self.height {
             return Err("WorldData dimensions do not match current ones");
@@ -353,11 +295,16 @@ impl Default for World {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
         }
+    }
+}
+
+impl GameState {
+    pub fn is_available(&self, pos: Point) -> bool {
+        self.world.is_in_bounds(pos.x as isize, pos.y as isize)
+            && self.npcs.iter().all(|npc| npc.base.pos != pos)
+            && self.item_sprites.iter().all(|item| item.base.pos != pos)
+            && self.world.get_tile(pos).tile_type.is_walkable()
     }
 }
 

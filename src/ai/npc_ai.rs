@@ -39,7 +39,7 @@ impl GameState {
             NpcActionKind::Wait => {}
             NpcActionKind::Move(direction) => {
                 let delta = PointVector::from(direction);
-                let _ = self.world.move_npc(npc_id, delta.x, delta.y);
+                let _ = self.move_npc(npc_id, delta.x, delta.y);
             }
             NpcActionKind::Attack => {
                 self.log.print("The NPC attacks".to_string());
@@ -51,7 +51,7 @@ impl GameState {
     }
 
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
-        let npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let melee_area = self.world.get_points_in_radius(npc.pos(), 1);
 
         let action = match npc.ai_state {
@@ -80,16 +80,17 @@ impl GameState {
 
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let npc_pos: Point = {
-            let npc: &Npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+            let npc: &Npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
             npc.pos()
         };
 
+        let player_pos: Point = { self.player.character.pos() };
+
         let detectable_area: Vec<Point> = self.world.get_points_in_radius(npc_pos, 10);
 
-        let npc: &mut Npc =
-            self.world.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc: &mut Npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
-        if detectable_area.contains(&self.player.character.pos()) {
+        if detectable_area.contains(&player_pos) {
             npc.ai_state = NpcAiState::Aggressive;
         } else {
             npc.ai_state = NpcAiState::Wandering;

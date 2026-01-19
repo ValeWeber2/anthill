@@ -86,11 +86,11 @@ impl Widget for &App {
                 block_world.render(area_worldspace, buf);
 
                 // Z-layer 0
-                self.ui.world_display.render(&self.game.world, block_world_inner, buf);
+                self.ui.world_display.render(&self.game, block_world_inner, buf);
                 // Z-layer 1
-                self.ui.world_display.render_items(&self.game.world, block_world_inner, buf);
+                self.ui.world_display.render_items(&self.game, block_world_inner, buf);
                 // Z-layer 2
-                self.ui.world_display.render_npcs(&self.game.world, block_world_inner, buf);
+                self.ui.world_display.render_npcs(&self.game, block_world_inner, buf);
                 // Z-layer 3
                 self.ui.world_display.render_player(
                     &self.game.player.character,

@@ -8,9 +8,11 @@ use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
 use crate::core::game_items::GameItemSprite;
 use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
-use crate::util::errors_results::{DataError, EngineError, GameError};
+use crate::util::errors_results::{
+    DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
+};
 use crate::world::coordinate_system::Point;
-use crate::world::worldspace::Drawable;
+use crate::world::worldspace::{Collision, Drawable};
 
 impl GameState {
     pub fn spawn<T: Spawnable + Entity>(
@@ -21,7 +23,7 @@ impl GameState {
         style: Style,
         extra: T::Extra,
     ) -> Result<EntityId, GameError> {
-        if !self.world.is_available(pos) {
+        if !self.is_available(pos) {
             let err = GameError::from(EngineError::SpawningError(pos));
             self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
             return Err(err);
@@ -61,48 +63,36 @@ impl GameState {
     }
 
     pub fn despawn(&mut self, id: EntityId) {
-        if let Some(&index) = self.world.npc_index.get(&id) {
-            self.world.npcs.swap_remove(index);
+        if let Some(&index) = self.npc_index.get(&id) {
+            self.npcs.swap_remove(index);
 
-            if let Some(moved) = self.world.npcs.get(index) {
-                self.world.npc_index.insert(moved.id(), index);
+            if let Some(moved) = self.npcs.get(index) {
+                self.npc_index.insert(moved.id(), index);
             }
 
-            self.world.npc_index.remove(&id);
+            self.npc_index.remove(&id);
             return;
         }
 
-        if let Some(&index) = self.world.item_sprites_index.get(&id) {
-            self.world.item_sprites.swap_remove(index);
+        if let Some(&index) = self.item_sprites_index.get(&id) {
+            self.item_sprites.swap_remove(index);
 
-            if let Some(moved) = self.world.item_sprites.get(index) {
-                self.world.item_sprites_index.insert(moved.id(), index);
+            if let Some(moved) = self.item_sprites.get(index) {
+                self.item_sprites_index.insert(moved.id(), index);
             }
 
-            self.world.item_sprites_index.remove(&id);
+            self.item_sprites_index.remove(&id);
         }
-    }
-
-    pub fn get_entity_by_id(&'_ self, id: EntityId) -> Option<EntityRef<'_>> {
-        if let Some(&i) = self.world.npc_index.get(&id) {
-            return Some(EntityRef::Npc(&self.world.npcs[i]));
-        }
-
-        if let Some(&i) = self.world.item_sprites_index.get(&id) {
-            return Some(EntityRef::ItemSprite(&self.world.item_sprites[i]));
-        }
-
-        None
     }
 
     pub fn get_entity_at(&self, pos: Point) -> Option<EntityId> {
-        for npc in &self.world.npcs {
+        for npc in &self.npcs {
             if npc.pos() == pos {
                 return Some(npc.id());
             }
         }
 
-        for item in &self.world.item_sprites {
+        for item in &self.item_sprites {
             if item.pos() == pos {
                 return Some(item.id());
             }
@@ -114,11 +104,47 @@ impl GameState {
     pub fn get_npc_def_by_id(&self, npc_def_id: NpcDefId) -> Option<NpcDef> {
         npc_defs().get(&npc_def_id).cloned()
     }
-}
 
-pub enum EntityRef<'a> {
-    Npc(&'a Npc),
-    ItemSprite(&'a GameItemSprite),
+    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
+        self.npc_index.get(&id).map(|&index| &self.npcs[index])
+    }
+
+    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
+        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
+    }
+
+    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
+    }
+
+    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
+    }
+
+    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> GameResult {
+        let (new_x, new_y) = {
+            let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+
+            let new_x = npc.pos().x as isize + dx;
+            let new_y = npc.pos().y as isize + dy;
+            let new_point = Point::new(new_x as usize, new_y as usize);
+
+            if !self.world.is_in_bounds(new_x, new_y) {
+                return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
+            }
+
+            if !self.world.get_tile(new_point).tile_type.is_walkable() {
+                return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
+            }
+
+            (new_x, new_y)
+        };
+
+        let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        npc.move_to(Point::new(new_x as usize, new_y as usize));
+
+        Ok(GameOutcome::Success)
+    }
 }
 
 pub trait Spawnable {
@@ -208,11 +234,11 @@ impl Spawnable for Npc {
     }
 
     fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
-        &mut state.world.npcs
+        &mut state.npcs
     }
 
     fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize> {
-        &mut state.world.npc_index
+        &mut state.npc_index
     }
 }
 
@@ -270,11 +296,11 @@ mod tests {
         let id = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
         // Vec contains NPC
-        assert_eq!(game.world.npcs.len(), 1);
-        assert_eq!(game.world.npcs[0].id(), id);
+        assert_eq!(game.npcs.len(), 1);
+        assert_eq!(game.npcs[0].id(), id);
 
         // HashMap contains correct index
-        assert_eq!(game.world.npc_index.get(&id), Some(&0));
+        assert_eq!(game.npc_index.get(&id), Some(&0));
     }
 
     #[test]
@@ -284,8 +310,8 @@ mod tests {
 
         let npc_id = game.spawn_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
 
-        match game.get_entity_by_id(npc_id) {
-            Some(EntityRef::Npc(npc)) => assert_eq!(npc.name(), "Orc"),
+        match game.get_npc(npc_id) {
+            Some(npc) => assert_eq!(npc.name(), "Orc"),
             _ => panic!("Expected NPC"),
         }
     }
@@ -299,8 +325,8 @@ mod tests {
         let item_id = game.register_item(item_def_id);
         let item_sprite_id = game.spawn_item(item_id, Point::new(50, 7)).unwrap();
 
-        match game.get_entity_by_id(item_sprite_id) {
-            Some(EntityRef::ItemSprite(item)) => assert_eq!(item.name(), "Leather Armor"),
+        match game.get_item_sprite(item_sprite_id) {
+            Some(item) => assert_eq!(item.name(), "Leather Armor"),
             _ => panic!("Expected Item"),
         }
     }
@@ -342,10 +368,10 @@ mod tests {
         game.despawn(id1);
 
         // Only one NPC should remain
-        assert_eq!(game.world.npcs.len(), 1);
+        assert_eq!(game.npcs.len(), 1);
 
         // The remaining NPC must now be at index 0
-        assert_eq!(game.world.npc_index.get(&id2), Some(&0));
+        assert_eq!(game.npc_index.get(&id2), Some(&0));
     }
 
     #[test]
@@ -370,7 +396,8 @@ mod tests {
 
         let missing = 9999;
 
-        assert!(game.get_entity_by_id(missing).is_none());
+        assert!(game.get_npc(missing).is_none());
+        assert!(game.get_item_sprite(missing).is_none());
     }
 
     #[test]
@@ -382,7 +409,7 @@ mod tests {
 
         let id2 = game.spawn_npc("orc".into(), Point::new(51, 7)).unwrap();
 
-        assert_eq!(game.world.npc_index.get(&id1), Some(&0));
-        assert_eq!(game.world.npc_index.get(&id2), Some(&1));
+        assert_eq!(game.npc_index.get(&id1), Some(&0));
+        assert_eq!(game.npc_index.get(&id2), Some(&1));
     }
 }
