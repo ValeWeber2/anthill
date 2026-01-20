@@ -21,6 +21,7 @@ pub enum Command {
     RngTest,
     Teleport(Point),
     Suicide,
+    RevealAll,
 }
 
 impl Command {
@@ -37,6 +38,7 @@ impl Command {
             Command::RngTest => "Makes a roll and a check to test the RNG Engine",
             Command::Teleport(_) => "Teleports the player to the given absolute position",
             Command::Suicide => "Set HP to zero to test game over state.",
+            Command::RevealAll => "Get vision over the entire map for 1 round.",
         }
     }
 
@@ -51,6 +53,7 @@ impl Command {
             Command::RngTest => "rngtest",
             Command::Teleport(_) => "teleport",
             Command::Suicide => "suicide",
+            Command::RevealAll => "revealall",
         }
     }
 }
@@ -95,6 +98,7 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
             Ok(Command::Teleport(Point { x: arg_x, y: arg_y }))
         }
         "suicide" => Ok(Command::Suicide),
+        "revealall" => Ok(Command::RevealAll),
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
@@ -182,6 +186,15 @@ impl App {
 
             Command::Suicide => {
                 self.game.player.character.stats.base.hp_current = 0;
+            }
+
+            Command::RevealAll => {
+                self.game.log.print("Revealing all Tiles".to_string());
+
+                for tile in self.game.world.tiles.iter_mut() {
+                    tile.make_visible();
+                    tile.make_explored();
+                }
             }
         }
     }

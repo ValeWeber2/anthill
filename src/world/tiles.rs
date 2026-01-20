@@ -23,6 +23,10 @@ impl Tile {
     pub fn make_invisible(&mut self) {
         self.visible = false;
     }
+
+    pub fn make_explored(&mut self) {
+        self.explored = true;
+    }
 }
 
 impl Default for Tile {
