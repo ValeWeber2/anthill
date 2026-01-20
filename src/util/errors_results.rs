@@ -146,18 +146,26 @@ impl From<DataError> for GameError {
 
 #[derive(Debug)]
 pub enum IoError {
-    MapReadFailed(io::Error),
-    MapParseFailed(SpannedError),
+    FileReading(io::Error),
+    MapParsing(SpannedError),
+    FileCreation(io::Error),
+    MapWriting(ron::Error),
 }
 
 impl fmt::Display for IoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IoError::MapReadFailed(error) => {
+            IoError::FileReading(error) => {
                 write!(f, "Couldn't load map file: {}", error)
             }
-            IoError::MapParseFailed(error) => {
+            IoError::MapParsing(error) => {
                 write!(f, "Couldn't parse map file: {}", error)
+            }
+            IoError::FileCreation(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
+            }
+            IoError::MapWriting(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
             }
         }
     }

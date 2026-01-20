@@ -72,7 +72,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(_game: &mut GameState) -> Self {
+    pub fn new() -> Self {
         Self {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,

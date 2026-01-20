@@ -1,6 +1,7 @@
 mod ai;
 mod core;
 mod data;
+mod proc_gen;
 mod render;
 mod util;
 mod world;
