@@ -154,7 +154,9 @@ impl World {
         tile.tile_type = match tile.tile_type {
             TileType::Wall => TileType::Door(DoorType::Archway),
             TileType::Door(DoorType::Closed) => TileType::Door(DoorType::Archway),
-            _ => TileType::Floor,
+            TileType::Floor => TileType::Floor,
+            TileType::Void => TileType::Hallway,
+            other => other,
         }
     }
 
@@ -282,7 +284,7 @@ impl World {
             self.tiles[idx] = Tile::new(tile_type);
         }
 
-        self.add_walls_around_walkables();
+        // self.add_walls_around_walkables();
 
         Ok(())
     }

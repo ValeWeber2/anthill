@@ -98,16 +98,16 @@ const EAST: u8 = 1 << 3; // 1000 -> 8
 fn wall_mask(world: &World, point: Point) -> u8 {
     let mut mask = 0;
 
-    if world.get_tile(point + Direction::Up).tile_type == TileType::Wall {
+    if matches!(world.get_tile(point + Direction::Up).tile_type, TileType::Wall | TileType::Door(_)) {
         mask |= NORTH; // +0001 -> +1
     }
-    if world.get_tile(point + Direction::Down).tile_type == TileType::Wall {
+    if matches!(world.get_tile(point + Direction::Down).tile_type, TileType::Wall | TileType::Door(_)) {
         mask |= SOUTH; // +0010 -> +2
     }
-    if world.get_tile(point + Direction::Left).tile_type == TileType::Wall {
+    if matches!(world.get_tile(point + Direction::Left).tile_type, TileType::Wall | TileType::Door(_)) {
         mask |= WEST; // +0100 -> +4
     }
-    if world.get_tile(point + Direction::Right).tile_type == TileType::Wall {
+    if matches!(world.get_tile(point + Direction::Right).tile_type, TileType::Wall | TileType::Door(_)) {
         mask |= EAST; // +1000 -> +8
     }
 

@@ -71,7 +71,7 @@ impl Drawable for TileType {
             TileType::Void => ' ',
             TileType::Floor => '·',
             TileType::Wall => '#', // Will not be displayed Is replaced with a directional wall character instead.
-            TileType::Hallway => '░',
+            TileType::Hallway => '▒',
             TileType::Door(DoorType::Open) => '_',
             TileType::Door(DoorType::Closed) => '+',
             TileType::Door(DoorType::Archway) => '·',

@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::cmp;
+
 use rand::{Rng, SeedableRng, rngs::StdRng};
 
 /// Binary Space Partitioning to procedurally generate rooms
@@ -9,8 +11,13 @@ use crate::world::{
     worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH, World},
 };
 
+const RNG_SEED: u64 = 44;
 const GRID_SIZE: usize = 1;
-const MIN_CELL_DIM: usize = 2;
+const MIN_CELL_DIM: usize = 5; // was 2
+const PADDING: usize = 2;
+const ROOM_NUMBER: usize = 10;
+const SHRINK_FACTOR_RANGE: std::ops::Range<f32> = 0.25..0.9;
+const DIVIDER_RANGE: std::ops::Range<f32> = 0.3..0.6;
 
 type NodeId = usize;
 
@@ -48,8 +55,8 @@ impl MapCell {
 impl Default for MapCell {
     fn default() -> Self {
         Self {
-            point_a: Point::new(2, 2), // Leaves 2 tile-wide padding as to not encroach upon the border.
-            point_b: Point::new(WORLD_WIDTH - 2, WORLD_HEIGHT - 2),
+            point_a: Point::new(PADDING, PADDING), // Leaves 2 tile-wide padding as to not encroach upon the border.
+            point_b: Point::new(WORLD_WIDTH - PADDING, WORLD_HEIGHT - PADDING),
             left: None,
             right: None,
             h_neighbors: Vec::new(),
@@ -127,14 +134,14 @@ impl MapBSP {
         let room_width = room_dimensions.x as usize;
         let room_height = room_dimensions.y as usize;
 
-        if room_width < MIN_CELL_DIM && room_height < MIN_CELL_DIM {
+        if room_width < MIN_CELL_DIM || room_height < MIN_CELL_DIM {
             return false;
         }
 
         if self.get_node(node_id).is_leaf() {
             if room_width > room_height {
                 let new_midpoint =
-                    (point_a.x as f32 + rng.random_range(0.3..0.6) * room_width as f32) as usize;
+                    (point_a.x as f32 + rng.random_range(DIVIDER_RANGE) * room_width as f32) as usize;
 
                 let left_id = self.nodes.len();
                 self.nodes.push(MapCell::new(point_a, Point::new(new_midpoint, point_b.y)));
@@ -146,7 +153,7 @@ impl MapBSP {
                 self.get_node_mut(node_id).right = Some(right_id);
             } else {
                 let new_midpoint =
-                    (point_a.y as f32 + rng.random_range(0.3..0.6) * room_height as f32) as usize;
+                    (point_a.y as f32 + rng.random_range(DIVIDER_RANGE) * room_height as f32) as usize;
 
                 let left_id = self.nodes.len();
                 self.nodes.push(MapCell::new(point_a, Point::new(point_b.x, new_midpoint)));
@@ -244,8 +251,8 @@ impl MapBSP {
             let width = cell.point_b.x - cell.point_a.x;
             let height = cell.point_b.y - cell.point_a.y;
 
-            let new_width = 2.max((width as f32 * rng.random_range(0.25..0.9)) as usize);
-            let new_height = 2.max((height as f32 * rng.random_range(0.25..0.9)) as usize);
+            let new_width = MIN_CELL_DIM.max((width as f32 * rng.random_range(SHRINK_FACTOR_RANGE)) as usize);
+            let new_height = MIN_CELL_DIM.max((height as f32 * rng.random_range(SHRINK_FACTOR_RANGE)) as usize);
 
             let cell = self.get_node_mut(cell_id);
             cell.point_a.x += (width - new_width) / 2;
@@ -268,42 +275,52 @@ impl MapBSP {
                 let neighbor = self.get_node(neighbor_id);
 
                 if cell.point_b.y.min(neighbor.point_b.y) - cell.point_a.y.max(neighbor.point_a.y)
-                    > GRID_SIZE
+                    > GRID_SIZE * 3 // If there is overlap in the y-space
                 {
                     let y = rng.random_range(
-                        cell.point_a.y.max(neighbor.point_a.y)
-                            ..cell.point_b.y.min(neighbor.point_b.y) - GRID_SIZE,
+                        cmp::max(cell.point_a.y, neighbor.point_a.y)
+                            ..cmp::min(cell.point_b.y, neighbor.point_b.y) - GRID_SIZE,
                     );
 
-                    // let hall_id = self.halls.len();
+                    // Reject corridors that are on corners of rooms
+                    if y <= cell.point_a.y || y + GRID_SIZE >= cell.point_b.y {
+                        continue;
+                    }
+                    if y <= neighbor.point_a.y || y + GRID_SIZE >= neighbor.point_b.y {
+                        continue;
+                    }
+
                     let new_hall = MapHall::new(
                         Point::new(cell.point_b.x, y),
                         Point::new(neighbor.point_a.x, y + GRID_SIZE),
                     );
                     h_halls.push((cell_id, new_hall));
-                    // self.halls.push(MapHall::new(Point::new(cell.point_b.x, y), Point::new(neighbor.point_a.x, y + GRID_SIZE))); // Hallway exactly 1 cell wide
-                    // cell.h_halls.push(hall_id);
                 }
             }
             for neighbor_id in cell.v_neighbors.clone() {
                 let neighbor = self.get_node(neighbor_id);
 
                 if cell.point_b.x.min(neighbor.point_b.x) - cell.point_a.x.max(neighbor.point_a.x)
-                    > GRID_SIZE
+                    > GRID_SIZE * 3 // If there is overlap in the x-space
                 {
                     let x = rng.random_range(
-                        cell.point_a.x.max(neighbor.point_a.x)
-                            ..cell.point_b.x.min(neighbor.point_b.x) - GRID_SIZE,
+                        cmp::max(cell.point_a.x, neighbor.point_a.x)
+                            ..cmp::min(cell.point_b.x, neighbor.point_b.x) - GRID_SIZE,
                     );
 
-                    // let hall_id = self.halls.len();
+                    // Reject corridors that are on corners of rooms
+                    if x <= cell.point_a.x || x + GRID_SIZE >= cell.point_b.x {
+                        continue;
+                    }
+                    if x <= neighbor.point_a.x || x + GRID_SIZE >= neighbor.point_b.x {
+                        continue;
+                    }
+
                     let new_hall = MapHall::new(
                         Point::new(x, cell.point_b.y),
                         Point::new(x + GRID_SIZE, neighbor.point_a.y),
                     );
                     v_halls.push((cell_id, new_hall));
-                    // self.halls.push(MapHall::new(Point::new(x, cell.point_b.y), Point::new(x + GRID_SIZE, neighbor.point_a.y))); // Hallway exactly 1 cell wide
-                    // cell.v_halls.push(hall_id);
                 }
             }
 
@@ -364,12 +381,12 @@ impl Default for MapBSP {
         let root = nodes.len();
         nodes.push(MapCell::default());
 
-        Self { nodes, root, halls: Vec::new(), num_rooms: 8 }
+        Self { nodes, root, halls: Vec::new(), num_rooms: ROOM_NUMBER }
     }
 }
 
 pub fn generate_map() -> (World, WorldData) {
-    let mut rng = StdRng::seed_from_u64(73);
+    let mut rng = StdRng::seed_from_u64(RNG_SEED);
 
     let mut map = MapBSP::default();
     map.divide(&mut rng);
