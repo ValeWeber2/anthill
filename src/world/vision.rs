@@ -7,6 +7,7 @@ use crate::{
     core::{entity_logic::Entity, game::GameState},
     world::{
         coordinate_system::{Direction, Point},
+        tiles::Opacity,
         worldspace::World,
     },
 };

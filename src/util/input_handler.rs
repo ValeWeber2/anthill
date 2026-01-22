@@ -37,6 +37,9 @@ impl App {
         self.ui.menu.mode = MenuMode::Log;
     }
 
+    /// Central event handler.
+    ///
+    /// Currently, only takes keyboard events into consideration.
     pub fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
@@ -47,6 +50,9 @@ impl App {
         Ok(())
     }
 
+    /// Central event handler for keyboard input.
+    ///
+    /// Here it switches the event handling logic depending on what menu or ui-section the user is interacting with.
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         // 1. Prioritise Modal
         if self.ui.modal.is_some() {
@@ -73,6 +79,7 @@ impl App {
         }
     }
 
+    /// Hotkeys that are always available regardless of ui state.
     fn handle_global_hotkeys(&mut self, key_event: KeyEvent) -> bool {
         match key_event.code {
             // Control: Open game closing modal (SHIFT+q)
@@ -89,12 +96,16 @@ impl App {
         }
     }
 
+    /// Handling input in the starting screen.
     fn handle_start_screen_input(&mut self, key_event: KeyEvent) {
         if key_event.code == KeyCode::Enter {
             self.state = State::Playing
         }
     }
 
+    /// Handling while playing the game.
+    ///
+    /// Here it switches the event handling logic depending on if the UI focus is on the world or the menu.
     fn handle_playing_input(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char(':') => {
@@ -108,12 +119,14 @@ impl App {
         }
     }
 
+    /// Handling input in the Game Over screen.
     fn handle_game_over_input(&mut self, key_event: KeyEvent) {
         if key_event.code == KeyCode::Enter {
             self.restart()
         }
     }
 
+    /// Handling input while the focus is on the world. This is where the game's main controls for the player character are.
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             // Action: Move up
@@ -180,6 +193,9 @@ impl App {
         }
     }
 
+    /// Handling input while the focus is on the menu.
+    ///
+    /// Here it switches the event handling logic depending on if the inventory was opened or the log. The log has no controls and is generally not accessible to the player.
     fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
         match &self.ui.menu.mode {
             MenuMode::Inventory(_) => self.handle_inventory_key_event(key_event),
@@ -187,6 +203,9 @@ impl App {
         }
     }
 
+    /// Handling the input while a modal display is opened.
+    ///
+    /// Handling input for each of the different modal types.
     fn handle_modal_key_event(&mut self, key_event: KeyEvent) {
         let modal_action = if let Some(modal) = &mut self.ui.modal {
             match modal {
@@ -255,6 +274,7 @@ impl App {
         }
     }
 
+    /// Handling input while the menu is focused and the inventory is open. Allows interaction with the inventory.
     fn handle_inventory_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Esc => {
@@ -283,6 +303,7 @@ impl App {
         }
     }
 
+    /// Helper function to convert letter input [a-z] into a number [0-25] to access item indices in the inventory.
     fn letter_to_index(c: char) -> Option<usize> {
         if c.is_ascii_lowercase() { Some((c as u8 - b'a') as usize) } else { None }
     }

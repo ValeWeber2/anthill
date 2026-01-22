@@ -2,10 +2,9 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use ratatui::style::Style;
-
 use crate::util::errors_results::{FailReason, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
+use crate::world::tiles::Collision;
 use crate::{
     core::{
         entity_logic::{Entity, Movable},
@@ -18,15 +17,6 @@ use crate::world::world_data::{TileTypeData, WorldData};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
-
-pub trait Drawable {
-    fn glyph(&self) -> char;
-    fn style(&self) -> Style;
-}
-
-pub trait Collision {
-    fn is_walkable(&self) -> bool;
-}
 
 // ----------------------------------------------
 //                     Rooms

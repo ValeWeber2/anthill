@@ -8,8 +8,8 @@ use crate::{
     },
     world::{
         coordinate_system::{Direction, Point},
-        tiles::{Tile, TileType},
-        worldspace::{Drawable, World},
+        tiles::{Drawable, Tile, TileType},
+        worldspace::World,
     },
 };
 

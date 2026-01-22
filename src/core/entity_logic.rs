@@ -12,7 +12,7 @@ use crate::util::errors_results::{
     DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
 };
 use crate::world::coordinate_system::Point;
-use crate::world::worldspace::{Collision, Drawable};
+use crate::world::tiles::{Collision, Drawable};
 
 impl GameState {
     pub fn spawn<T: Spawnable + Entity>(

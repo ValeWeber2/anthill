@@ -7,24 +7,79 @@ use crate::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
     },
-    world::{coordinate_system::Point, worldspace::Collision},
+    world::{coordinate_system::Point, tiles::Collision},
 };
 
+/// Different available commands in the game.
 #[derive(Debug, EnumIter)]
 pub enum GameCommand {
+    /// Quits the game by closing the App. This does the same thing as pressing the quit button.
+    ///
+    /// # GameCommand Syntax
+    /// `quit`
     Quit,
+
+    /// Adds an item to the player character's inventory.
+    ///
+    /// # GameCommand Syntax
+    /// `give <item_def> <amount>`
+    /// * `item_def` - String of the `item_def_id`
+    /// * `amount` - Number of items to give. Must be coercible into a `u32`!
     Give { item_def: String, amount: u32 },
+
+    /// Displays all available commands and their descriptions.
+    ///
+    /// # GameCommand Syntax
+    /// `help`
     Help,
+
+    /// Gives the player character high statistics.
+    ///
+    /// # GameCommand Syntax
+    /// `maxstats`
     MaxStats,
+
+    /// Gives the player the best equipment in the game.
+    ///
+    /// # GameCommand Syntax
+    /// `maxequip`
     MaxEquip,
+
+    /// Prints player character debug info to the log.
+    ///
+    /// # GameCommand Syntax
+    /// `playerinfo` or `pi`
     PlayerInfo,
+
+    /// Prints rng debug info into the log.
+    ///
+    /// # GameCommand Syntax
+    /// `rngtest`
     RngTest,
+
+    /// Teleports the player.
+    ///
+    /// # GameCommand Syntax
+    /// `teleport <x> <y>`
+    /// * `x`/`y` - Coordinates to teleport to (must be coercible into a `usize`)
     Teleport(Point),
+
+    /// Reduces player to 0 HP, resulting in the Game Over screen.
+    ///
+    /// # GameCommand Syntax
+    /// suicide
     Suicide,
+
+    /// Reveals all tiles on the map for 1 round.
+    /// This also sets the exploration status of all tiles to `true`.
+    ///
+    /// # GameCommand Syntax
+    /// revealall
     RevealAll,
 }
 
 impl GameCommand {
+    /// Returns the description of the command as displayed in-game using the 'help' command.
     pub fn description(&self) -> &'static str {
         match self {
             GameCommand::Quit => "Quit the game",
@@ -42,6 +97,7 @@ impl GameCommand {
         }
     }
 
+    /// Returns the name of the command as displayed in-game using the 'help' command.
     pub fn name(&self) -> &'static str {
         match self {
             GameCommand::Quit => "quit",
@@ -58,52 +114,60 @@ impl GameCommand {
     }
 }
 
-pub fn parse_command(input: &str) -> Result<GameCommand, String> {
-    let mut tokens = input.split_whitespace();
+impl TryFrom<String> for GameCommand {
+    type Error = String;
 
-    let command = tokens.next().ok_or("No command given")?.to_lowercase();
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let mut tokens = value.split_whitespace();
 
-    match command.as_str() {
-        "quit" => Ok(GameCommand::Quit),
-        "exit" => Ok(GameCommand::Quit),
+        let command = tokens.next().ok_or("No command given")?.to_lowercase();
 
-        "help" => Ok(GameCommand::Help),
+        match command.as_str() {
+            "quit" => Ok(GameCommand::Quit),
+            "exit" => Ok(GameCommand::Quit),
 
-        "give" => {
-            let item_def = tokens.next().ok_or("Missing item name")?.to_string();
+            "help" => Ok(GameCommand::Help),
 
-            let amount = tokens.next().ok_or("Missing item amount")?.parse::<u32>().unwrap_or(1);
+            "give" => {
+                let item_def = tokens.next().ok_or("Missing item name")?.to_string();
 
-            Ok(GameCommand::Give { item_def, amount })
+                let amount =
+                    tokens.next().ok_or("Missing item amount")?.parse::<u32>().unwrap_or(1);
+
+                Ok(GameCommand::Give { item_def, amount })
+            }
+
+            "maxstats" => Ok(GameCommand::MaxStats),
+            "maxequip" => Ok(GameCommand::MaxEquip),
+
+            "playerinfo" => Ok(GameCommand::PlayerInfo),
+            "pi" => Ok(GameCommand::PlayerInfo),
+            "rngtest" => Ok(GameCommand::RngTest),
+            "teleport" => {
+                let arg_x = tokens
+                    .next()
+                    .ok_or("Missing coordinates")?
+                    .parse::<usize>()
+                    .map_err(|_| "Invalid format for coordinates.")?;
+                let arg_y = tokens
+                    .next()
+                    .ok_or("Missing y-coordinate")?
+                    .parse::<usize>()
+                    .map_err(|_| "Invalid format for y-coordinate.")?;
+
+                Ok(GameCommand::Teleport(Point { x: arg_x, y: arg_y }))
+            }
+            "suicide" => Ok(GameCommand::Suicide),
+            "revealall" => Ok(GameCommand::RevealAll),
+            _ => Err(format!("Unknown Command {}", command)),
         }
-
-        "maxstats" => Ok(GameCommand::MaxStats),
-        "maxequip" => Ok(GameCommand::MaxEquip),
-
-        "playerinfo" => Ok(GameCommand::PlayerInfo),
-        "pi" => Ok(GameCommand::PlayerInfo),
-        "rngtest" => Ok(GameCommand::RngTest),
-        "teleport" => {
-            let arg_x = tokens
-                .next()
-                .ok_or("Missing coordinates")?
-                .parse::<usize>()
-                .map_err(|_| "Invalid format for coordinates.")?;
-            let arg_y = tokens
-                .next()
-                .ok_or("Missing y-coordinate")?
-                .parse::<usize>()
-                .map_err(|_| "Invalid format for y-coordinate.")?;
-
-            Ok(GameCommand::Teleport(Point { x: arg_x, y: arg_y }))
-        }
-        "suicide" => Ok(GameCommand::Suicide),
-        "revealall" => Ok(GameCommand::RevealAll),
-        _ => Err(format!("Unknown Command {}", command)),
     }
 }
 
 impl App {
+    /// Handles the execution of a given [`GameCommand`] in the `App` State.
+    ///
+    /// This is written into the app state, because it not only needs access to the `GameState`, but also some App functions.
     fn execute_command(&mut self, command: GameCommand) {
         match command {
             GameCommand::Quit => {
@@ -199,8 +263,11 @@ impl App {
         }
     }
 
+    /// Tries to run a [`GameCommand`] from the string that was input by the user.
+    ///
+    /// If the String matches an available command, it is executed.
     pub fn run_command(&mut self, input: String) {
-        match parse_command(&input) {
+        match GameCommand::try_from(input) {
             Ok(command) => self.execute_command(command),
             Err(error) => self.game.log.print(error),
         }
