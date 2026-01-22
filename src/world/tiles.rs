@@ -4,7 +4,7 @@ use ratatui::style::{Color, Style};
 
 /// Represents the basic building block of the world.
 ///
-/// The `World` consists of [`WORLD_WIDTH`] x [`WORLD_WIDTH`] (default: 100x25) Tiles.
+/// The `World` consists of `WORLD_WIDTH` x `WORLD_WIDTH` (default: 100x25) Tiles.
 /// Tiles stand for the static environment of the world, not entities.
 #[derive(Clone, Copy, Debug)]
 pub struct Tile {

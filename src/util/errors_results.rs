@@ -76,12 +76,18 @@ pub type GameResult = Result<GameOutcome, GameError>;
 /// Central errors that can occur in the game, wrapped by this type.
 #[derive(Debug)]
 pub enum GameError {
+    /// Wrapper for [EngineError]
+    ///
     /// Failure of the game's central engine representing the player, npcs, world and more.
     Engine(EngineError),
 
+    /// Wrapper for [DataError]
+    ///
     /// Failure of the game's data. Like if game objects with invalid ids or non-existent static data is accessed.
     Data(DataError),
 
+    /// Wrapper for [IoError]
+    ///
     /// Failure of the game's IO. (Loading, saving, parsing save files)
     Io(IoError),
 }
@@ -102,6 +108,7 @@ impl fmt::Display for GameError {
     }
 }
 
+/// Failure of the game's central engine representing the player, npcs, world and more.
 #[derive(Debug)]
 pub enum EngineError {
     /// An item of the given id is not regstered in `GameState::items`, meaning it doesn't exist.
@@ -164,6 +171,7 @@ impl From<EngineError> for GameError {
     }
 }
 
+/// Failure of the game's data. Like if game objects with invalid ids or non-existent static data is accessed.
 #[derive(Debug)]
 pub enum DataError {
     /// The item of the given [GameItemDefId] does not exist in the game.
@@ -192,6 +200,7 @@ impl From<DataError> for GameError {
     }
 }
 
+/// Failure of the game's IO. (Loading, saving, parsing save files)
 #[derive(Debug)]
 pub enum IoError {
     /// Reading the map file from the assets has failed.
