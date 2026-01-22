@@ -11,7 +11,7 @@ use crate::{
 };
 
 #[derive(Debug, EnumIter)]
-pub enum Command {
+pub enum GameCommand {
     Quit,
     Give { item_def: String, amount: u32 },
     Help,
@@ -24,65 +24,65 @@ pub enum Command {
     RevealAll,
 }
 
-impl Command {
+impl GameCommand {
     pub fn description(&self) -> &'static str {
         match self {
-            Command::Quit => "Quit the game.",
-            Command::Give { .. } => {
-                "Give an item to the player. Usage `give <item def id> <amount>`."
+            GameCommand::Quit => "Quit the game",
+            GameCommand::Give { .. } => "Give an item to the player: `give <item def id> <amount>`",
+            GameCommand::Help => "List available commands",
+            GameCommand::MaxStats => "Grant max stats to player",
+            GameCommand::MaxEquip => "Grant the best equipment to the player",
+            GameCommand::PlayerInfo => "Print player info to log",
+            GameCommand::RngTest => "Make a roll and a check to test the RNG Engine",
+            GameCommand::Teleport(_) => {
+                "Teleport the player to the given absolute position: `teleport <x> <y>`"
             }
-            Command::Help => "List available commands.",
-            Command::MaxStats => "Grants max stats to player.",
-            Command::MaxEquip => "Grants the best equipment to the player.",
-            Command::PlayerInfo => "Prints player info to log.",
-            Command::RngTest => "Makes a roll and a check to test the RNG Engine",
-            Command::Teleport(_) => "Teleports the player to the given absolute position",
-            Command::Suicide => "Set HP to zero to test game over state.",
-            Command::RevealAll => "Get vision over the entire map for 1 round.",
+            GameCommand::RevealAll => "Get vision over the entire map for 1 round",
+            GameCommand::Suicide => "Set HP to zero to test game over state",
         }
     }
 
     pub fn name(&self) -> &'static str {
         match self {
-            Command::Quit => "quit",
-            Command::Give { .. } => "give",
-            Command::Help => "help",
-            Command::MaxStats => "maxstats",
-            Command::MaxEquip => "maxequip",
-            Command::PlayerInfo => "playerinfo",
-            Command::RngTest => "rngtest",
-            Command::Teleport(_) => "teleport",
-            Command::Suicide => "suicide",
-            Command::RevealAll => "revealall",
+            GameCommand::Quit => "quit",
+            GameCommand::Give { .. } => "give",
+            GameCommand::Help => "help",
+            GameCommand::MaxStats => "maxstats",
+            GameCommand::MaxEquip => "maxequip",
+            GameCommand::PlayerInfo => "playerinfo",
+            GameCommand::RngTest => "rngtest",
+            GameCommand::Teleport(_) => "teleport",
+            GameCommand::Suicide => "suicide",
+            GameCommand::RevealAll => "revealall",
         }
     }
 }
 
-pub fn parse_command(input: &str) -> Result<Command, String> {
+pub fn parse_command(input: &str) -> Result<GameCommand, String> {
     let mut tokens = input.split_whitespace();
 
     let command = tokens.next().ok_or("No command given")?.to_lowercase();
 
     match command.as_str() {
-        "quit" => Ok(Command::Quit),
-        "exit" => Ok(Command::Quit),
+        "quit" => Ok(GameCommand::Quit),
+        "exit" => Ok(GameCommand::Quit),
 
-        "help" => Ok(Command::Help),
+        "help" => Ok(GameCommand::Help),
 
         "give" => {
             let item_def = tokens.next().ok_or("Missing item name")?.to_string();
 
             let amount = tokens.next().ok_or("Missing item amount")?.parse::<u32>().unwrap_or(1);
 
-            Ok(Command::Give { item_def, amount })
+            Ok(GameCommand::Give { item_def, amount })
         }
 
-        "maxstats" => Ok(Command::MaxStats),
-        "maxequip" => Ok(Command::MaxEquip),
+        "maxstats" => Ok(GameCommand::MaxStats),
+        "maxequip" => Ok(GameCommand::MaxEquip),
 
-        "playerinfo" => Ok(Command::PlayerInfo),
-        "pi" => Ok(Command::PlayerInfo),
-        "rngtest" => Ok(Command::RngTest),
+        "playerinfo" => Ok(GameCommand::PlayerInfo),
+        "pi" => Ok(GameCommand::PlayerInfo),
+        "rngtest" => Ok(GameCommand::RngTest),
         "teleport" => {
             let arg_x = tokens
                 .next()
@@ -95,22 +95,22 @@ pub fn parse_command(input: &str) -> Result<Command, String> {
                 .parse::<usize>()
                 .map_err(|_| "Invalid format for y-coordinate.")?;
 
-            Ok(Command::Teleport(Point { x: arg_x, y: arg_y }))
+            Ok(GameCommand::Teleport(Point { x: arg_x, y: arg_y }))
         }
-        "suicide" => Ok(Command::Suicide),
-        "revealall" => Ok(Command::RevealAll),
+        "suicide" => Ok(GameCommand::Suicide),
+        "revealall" => Ok(GameCommand::RevealAll),
         _ => Err(format!("Unknown Command {}", command)),
     }
 }
 
 impl App {
-    fn execute_command(&mut self, command: Command) {
+    fn execute_command(&mut self, command: GameCommand) {
         match command {
-            Command::Quit => {
+            GameCommand::Quit => {
                 self.should_quit = true;
             }
-            Command::Help => {
-                for command in Command::iter() {
+            GameCommand::Help => {
+                for command in GameCommand::iter() {
                     self.game.log.print(format!(
                         "{:<12} - {}",
                         command.name(),
@@ -118,7 +118,7 @@ impl App {
                     ))
                 }
             }
-            Command::Give { item_def, amount } => {
+            GameCommand::Give { item_def, amount } => {
                 for _ in 0..amount {
                     let item_id = self.game.register_item(item_def.clone());
                     match self.game.add_item_to_inv(item_id) {
@@ -136,7 +136,7 @@ impl App {
                     }
                 }
             }
-            Command::MaxStats => {
+            GameCommand::MaxStats => {
                 self.game.player.character.stats.dexterity = 100;
                 self.game.player.character.stats.perception = 100;
                 self.game.player.character.stats.strength = 100;
@@ -144,9 +144,9 @@ impl App {
                 self.game.player.character.stats.base.hp_max = 500;
                 self.game.player.character.stats.base.hp_current = 500;
             }
-            Command::MaxEquip => todo!("Implement once items are finished"),
+            GameCommand::MaxEquip => todo!("Implement once items are finished"),
 
-            Command::PlayerInfo => {
+            GameCommand::PlayerInfo => {
                 self.game.log.print(format!(
                     "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}\n-  S:{}, D:{}, V:{}, P:{}",
                     self.game.player.character.base.name,
@@ -161,7 +161,7 @@ impl App {
                 ));
             }
 
-            Command::RngTest => {
+            GameCommand::RngTest => {
                 let roll: i16 = self.game.roll(&Roll::new(1, DieSize::D6));
                 let check: bool = self.game.check(&Check::default().set_difficulty(10));
                 self.game.log.print(format!(
@@ -170,7 +170,7 @@ impl App {
                 ))
             }
 
-            Command::Teleport(pos) => {
+            GameCommand::Teleport(pos) => {
                 if !self.game.world.get_tile(pos).tile_type.is_walkable() {
                     self.game.log.print(format!("Position {} cannot be occupied by player", pos));
                     return;
@@ -184,11 +184,11 @@ impl App {
                 self.game.player.character.base.pos = pos;
             }
 
-            Command::Suicide => {
+            GameCommand::Suicide => {
                 self.game.player.character.stats.base.hp_current = 0;
             }
 
-            Command::RevealAll => {
+            GameCommand::RevealAll => {
                 self.game.log.print("Revealing all Tiles".to_string());
 
                 for tile in self.game.world.tiles.iter_mut() {

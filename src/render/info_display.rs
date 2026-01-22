@@ -1,6 +1,6 @@
 use ratatui::{prelude::*, widgets::Paragraph};
 
-use crate::core::{game::GameState, game_items::GameItemKindDef};
+use crate::core::{entity_logic::Entity, game::GameState, game_items::GameItemKindDef};
 
 pub struct InfoDisplay;
 
@@ -17,19 +17,22 @@ impl InfoDisplay {
 
         let lines: Vec<Line> = vec![
             Line::raw(format!(
-                "STR:{} DEX:{}, VIT:{}, PER:{} HP:{}({})    Armor:{} Weapon:{}",
+                "STR:{} DEX:{}, VIT:{}, PER:{} HP:{}({})",
                 game.player.character.stats.strength,
                 game.player.character.stats.dexterity,
                 game.player.character.stats.vitality,
                 game.player.character.stats.perception,
                 player_hp_current,
                 player_hp_max,
-                player_armor,
-                player_weapon
             )),
+            Line::raw(format!("Armor:{} Weapon:{}", player_armor, player_weapon)),
             Line::raw(format!(
-                "Dungeon Floor:{} Exp:{} Round:{}",
-                game.level_nr, game.player.character.stats.experience, game.round_nr,
+                "Dungeon Floor:{} x:{} y:{} Exp:{} Round:{} ",
+                game.level_nr,
+                game.player.character.pos().x,
+                game.player.character.pos().y,
+                game.player.character.stats.experience,
+                game.round_nr,
             )),
         ];
 

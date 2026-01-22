@@ -3,12 +3,14 @@
 use ratatui::{
     prelude::*,
     symbols::border,
-    widgets::{Block, Borders, Clear, Paragraph},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, Row, Table},
 };
 
 use crate::{
     core::{game::GameState, game_items::GameItemId},
     render::ui::get_centered_rect,
+    util::command_handler::GameCommand,
+    world::coordinate_system::Point,
 };
 
 pub enum ModalInterface {
@@ -16,6 +18,7 @@ pub enum ModalInterface {
     ConfirmChooseItem { item_id: GameItemId },
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
+    HelpDisplay,
 }
 
 impl ModalInterface {
@@ -30,6 +33,7 @@ impl ModalInterface {
             ModalInterface::TextDisplay { title, paragraphs } => {
                 render_text_display(title, paragraphs, rect, buf)
             }
+            ModalInterface::HelpDisplay => render_help(rect, buf),
         }
     }
 }
@@ -126,4 +130,105 @@ fn render_modal_window(
     block_modal.render(area_modal, buf);
 
     block_modal_inner
+}
+
+fn render_help(area: Rect, buf: &mut Buffer) {
+    let center = get_centered_rect(150, 33, area);
+
+    let block =
+        Block::default().borders(Borders::ALL).title(" Help ").padding(Padding::new(1, 1, 1, 1));
+
+    let inner = block.inner(center);
+
+    Clear.render(center, buf);
+    block.render(center, buf);
+
+    // Data
+
+    const CONTROLS_WIDTHS: [Constraint; 4] = [
+        Constraint::Percentage(19),
+        Constraint::Percentage(27),
+        Constraint::Percentage(27),
+        Constraint::Percentage(27),
+    ];
+
+    let controls_rows = [
+        Row::new(vec![""]),
+        Row::new(vec!["Start / Quit:", "ENTER - start game", "Q - quit game", "ESC - close menus"]),
+        Row::new(vec!["Movement:", "w - up, a - left, s - down, d - right", ". - wait one turn"]),
+        Row::new(vec!["Interaction:", "Walk into an NPC or item to interact"]),
+        Row::new(vec![
+            "Inventory:",
+            "i - open inventory",
+            "D - open inventory in drop mode",
+            "a, b, c… - select item",
+        ]),
+        Row::new(vec!["Actions:", "W - unequip weapon", "A - unequip armor"]),
+        Row::new(vec![
+            "Command Input:",
+            ": - open command prompt",
+            "ENTER - run command",
+            "ESC - cancel",
+        ]),
+        Row::new(vec![""]),
+    ];
+
+    const COMMAND_WIDTHS: [Constraint; 2] =
+        [Constraint::Percentage(19), Constraint::Percentage(81)];
+
+    let commands = [
+        GameCommand::Quit,
+        GameCommand::Help,
+        GameCommand::PlayerInfo,
+        GameCommand::MaxStats,
+        GameCommand::MaxEquip,
+        GameCommand::RngTest,
+        GameCommand::Suicide,
+        GameCommand::Teleport(Point::new(0, 0)), // dummy
+        GameCommand::Give { item_def: "".into(), amount: 0 }, // dummy
+        GameCommand::RevealAll,
+    ];
+
+    let mut command_rows = Vec::with_capacity(commands.len() + 3);
+    command_rows.push(Row::new(vec![""]));
+
+    for cmd in commands {
+        command_rows.push(Row::new(vec![cmd.name().to_string(), cmd.description().to_string()]));
+    }
+
+    command_rows.push(Row::new(vec![""]));
+    command_rows.push(Row::new(vec![""]));
+
+    // Layout
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1),                          // controls header
+            Constraint::Length(controls_rows.len() as u16), // controls table
+            Constraint::Length(1),                          // commands header
+            Constraint::Length(command_rows.len() as u16),  // commands table
+            Constraint::Length(1),                          // footer
+        ])
+        .split(inner);
+
+    // Rendering
+
+    Paragraph::new("=== BASIC CONTROLS ==================================================================================================================================")
+        .render(chunks[0], buf);
+
+    let controls_table = Table::new(controls_rows, CONTROLS_WIDTHS).column_spacing(1);
+
+    Widget::render(controls_table, chunks[1], buf);
+
+    Paragraph::new("=== COMMANDS ========================================================================================================================================")
+        .render(chunks[2], buf);
+
+    let command_table = Table::new(command_rows, COMMAND_WIDTHS).column_spacing(1);
+
+    Widget::render(command_table, chunks[3], buf);
+
+    Paragraph::new("Press ESC to close this window")
+        .style(Style::default().add_modifier(Modifier::DIM))
+        .render(chunks[4], buf);
 }

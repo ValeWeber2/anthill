@@ -42,7 +42,7 @@ impl Widget for &App {
                     let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
 
                     let layout_top_bottom =
-                        Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
+                        Layout::vertical([Constraint::Min(0), Constraint::Length(5)]);
                     let [area_game, area_info] = layout_top_bottom.areas(area);
 
                     let layout_left_right = Layout::horizontal([
@@ -181,29 +181,13 @@ pub fn get_centered_rect(width: u16, height: u16, area: Rect) -> Rect {
 }
 
 fn render_start_screen(area: Rect, buf: &mut Buffer) {
-    // let center_rect = get_centered_rect(150, 33, area);
-    // let lines: Vec<String> = STARTSCREEN_ASCII.lines().map(|l| l.to_string()).collect();
-    //
-    // let block = Block::default().borders(Borders::empty()).padding(Padding::new(0, 0, 0, 0));
-    //
-    // let inner = block.inner(area);
-    // block.render(center_rect, buf);
-    //
-    // let text = Text::from(lines.iter().map(|l| Line::from(l.as_str())).collect::<Vec<Line>>());
-    //
-    // Paragraph::new(text).alignment(Alignment::Center).render(inner, buf);
-
     let center_rect = get_centered_rect(150, 33, area);
     let block = Block::default().borders(Borders::NONE);
-
     let block_inner = block.inner(center_rect);
 
     block.render(center_rect, buf);
 
-    // let lines: Vec<String> = STARTSCREEN_ASCII.lines().map(|l| l.to_string()).collect();
-
     Paragraph::new(Text::from(STARTSCREEN_ASCII)).render(block_inner, buf);
-    // render_text_display("WELCOME", &lines, block_inner, buf);
 }
 
 fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {

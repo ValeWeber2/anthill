@@ -4,7 +4,6 @@ use std::io;
 use crate::{
     App, State,
     core::player_actions::PlayerInput,
-    data::ascii_art::HELP_CONTENT,
     render::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::ModalInterface,
@@ -83,10 +82,7 @@ impl App {
             }
             // Control: Open help window
             KeyCode::Char('H') => {
-                self.ui.modal = Some(ModalInterface::TextDisplay {
-                    title: " Help ".into(),
-                    paragraphs: HELP_CONTENT.lines().map(|l| l.to_string()).collect(),
-                });
+                self.ui.modal = Some(ModalInterface::HelpDisplay);
                 true
             }
             _ => false,
@@ -235,6 +231,11 @@ impl App {
                     _ => ModalAction::Idle,
                 },
                 ModalInterface::TextDisplay { .. } => match key_event.code {
+                    KeyCode::Esc => ModalAction::CloseModal,
+                    KeyCode::Enter => ModalAction::CloseModal,
+                    _ => ModalAction::Idle,
+                },
+                ModalInterface::HelpDisplay => match key_event.code {
                     KeyCode::Esc => ModalAction::CloseModal,
                     KeyCode::Enter => ModalAction::CloseModal,
                     _ => ModalAction::Idle,
