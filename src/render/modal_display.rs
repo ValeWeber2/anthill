@@ -22,7 +22,9 @@ pub enum ModalInterface {
 }
 
 impl ModalInterface {
-    // render takes gamestate as argument to have access to item fields
+    /// Central handling for rendering modals.
+    ///
+    /// Switches to the [ModalInterface] kind that is open at the time.
     pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
@@ -38,6 +40,7 @@ impl ModalInterface {
     }
 }
 
+/// Displays a large modal window that can contain multiple text paragraphs.
 pub fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
     // Making the Window
     let modal_area = render_modal_window(150, 33, title.to_string(), rect, buf);
@@ -49,6 +52,7 @@ pub fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: 
     Paragraph::new(page_text).render(modal_area, buf);
 }
 
+/// Displays the dialog where the user has to confirm that they want to quit the game.
 fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
     // Making the Window
     let modal_area = render_modal_window(50, 5, " Confirm Quit ".to_string(), rect, buf);
@@ -66,6 +70,7 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
     paragraph.render(center_of_rect, buf);
 }
 
+/// Displays the dialog where the user has to confirm the item that they selected (e.g. for using or dropping)
 fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
     let modal_area = render_modal_window(50, 5, " Confirm Action ".to_string(), rect, buf);
 
@@ -87,6 +92,7 @@ fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, it
     Paragraph::new(text).alignment(Alignment::Center).render(center_of_rect, buf);
 }
 
+/// Displays the dialog into which you can enter game commands to execute.
 fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {
     // Making the Window
     let modal_area = render_modal_window(50, 5, " Execute a Command ".to_string(), rect, buf);
@@ -108,6 +114,9 @@ fn render_command_input(buffer: &str, rect: Rect, buf: &mut Buffer) {
     paragraph.render(input_block_inner, buf);
 }
 
+/// Helper function that does the setup for a modal window.
+///
+/// It creates a rect that is centered and has its background cleared (so it is "above" the background).
 fn render_modal_window(
     width: u16,
     height: u16,
@@ -132,6 +141,7 @@ fn render_modal_window(
     block_modal_inner
 }
 
+/// Displays the help display, which explains the basics of controls in the game.
 fn render_help(area: Rect, buf: &mut Buffer) {
     let center = get_centered_rect(150, 33, area);
 
