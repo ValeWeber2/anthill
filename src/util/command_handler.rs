@@ -3,6 +3,7 @@ use strum_macros::EnumIter;
 
 use crate::{
     App,
+    core::text_log::LogData,
     util::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
@@ -191,9 +192,7 @@ impl App {
                             .log
                             .print(format!("Added {} {} to player's inventory", item_def, amount)),
                         _ => {
-                            self.game
-                                .log
-                                .print("Inventory full. Cannot add another item.".to_string());
+                            self.game.log.info(LogData::InventoryFull);
                             let _ = self.game.deregister_item(item_id);
                             break;
                         }
@@ -269,7 +268,7 @@ impl App {
     pub fn run_command(&mut self, input: String) {
         match GameCommand::try_from(input) {
             Ok(command) => self.execute_command(command),
-            Err(error) => self.game.log.print(error),
+            Err(error) => self.game.log.debug_print(error),
         }
     }
 }

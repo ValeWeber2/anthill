@@ -9,6 +9,7 @@ use crate::{
     core::{
         entity_logic::{Entity, EntityBase, EntityId, Spawnable},
         game::GameState,
+        text_log::LogData,
     },
     data::item_defs::{GameItemDef, GameItemDefId, item_defs},
     util::errors_results::{DataError, EngineError, GameError},
@@ -80,7 +81,7 @@ impl GameState {
         let id: GameItemId = self.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
 
-        self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
+        self.log.info(LogData::Debug(format!("Registered item {} (ID: {})", def_id, id)));
 
         id
     }

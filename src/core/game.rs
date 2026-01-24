@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use crate::core::entity_logic::{EntityId, Npc};
 use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
+use crate::core::text_log::{Log, LogData};
 use crate::world::world_loader::load_world_from_ron;
 use crate::world::worldspace::World;
 
@@ -66,7 +67,7 @@ impl GameState {
             let pos = Point::new(s.x, s.y);
 
             if !state.is_available(pos) {
-                state.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y));
+                state.log.info(LogData::Debug(format!("Spawn blocked at ({}, {})", s.x, s.y)));
                 continue;
             }
 
@@ -118,34 +119,5 @@ impl Default for GameState {
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
         }
-    }
-}
-
-// ----------------------------------------------
-//                  Game Text Log
-// ----------------------------------------------
-pub struct Log {
-    pub print_debug_info: bool,
-    pub messages: Vec<String>,
-}
-
-impl Log {
-    pub fn new(print_debug_info: bool) -> Self {
-        Self { print_debug_info, messages: Vec::new() }
-    }
-
-    pub fn print(&mut self, message: String) {
-        let lines: Vec<&str> = message.split("\n").collect();
-        for line in lines {
-            self.messages.push(line.to_string());
-        }
-    }
-
-    pub fn debug_print(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
-        }
-
-        self.print(message);
     }
 }

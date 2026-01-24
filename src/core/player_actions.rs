@@ -59,8 +59,8 @@ impl GameState {
             Ok(GameOutcome::Success) => self.next_round(),
             Ok(GameOutcome::Fail(reason)) => {
                 // Log for user only if message is defined for user
-                if let Some(message) = reason.notify_user() {
-                    self.log.print(message.to_string());
+                if let Some(log_data) = reason.notify_user() {
+                    self.log.info(log_data);
                 }
             }
             Err(error) => {

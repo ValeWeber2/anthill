@@ -168,7 +168,7 @@ impl App {
             }
 
             // Debug: Print player pos
-            KeyCode::Char('p') => self.game.log.print(format!(
+            KeyCode::Char('p') => self.game.log.debug_print(format!(
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
@@ -176,7 +176,7 @@ impl App {
             // Debug: Print game iten register
             KeyCode::Char('o') => {
                 for (item_id, item) in self.game.items.iter() {
-                    self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
+                    self.game.log.debug_print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
             // Debug: Open Test Modal
@@ -282,12 +282,12 @@ impl App {
             }
             KeyCode::Char('W') => {
                 if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_print(format!("{}", e));
                 }
             }
             KeyCode::Char('A') => {
                 if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_print(format!("{}", e));
                 }
             }
             KeyCode::Char(c) => {

@@ -1,6 +1,11 @@
 use crate::{
     ai::npc_ai::NpcAiError,
-    core::{entity_logic::EntityId, game::GameState, game_items::GameItemKindDef},
+    core::{
+        entity_logic::{Entity, EntityId},
+        game::GameState,
+        game_items::GameItemKindDef,
+        text_log::LogData,
+    },
     util::{
         errors_results::{DataError, EngineError, GameError, GameOutcome, GameResult},
         rng::{DieSize, Roll},
@@ -11,7 +16,7 @@ impl GameState {
     pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
         // Fetching values
         let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        let npc_name = npc.base.name.clone();
+        let npc_name = npc.name().to_string();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
 
@@ -27,28 +32,27 @@ impl GameState {
             npc_mitigation,
         );
 
-        let mut attack_message: String;
-
-        match attack_result {
-            None => {
-                attack_message = format!("{} dodged the attack!", npc_name);
-            }
+        let attack_message: LogData = match attack_result {
+            None => LogData::PlayerAttackMiss { npc_name },
             Some(damage) => {
                 // Apply Damage
                 let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
-                attack_message = format!("Player hits {} for {} damage!", npc.base.name, damage);
-
-                if !npc.stats.base.is_alive() {
-                    attack_message = format!("{}\n{} died!", attack_message, npc.base.name);
-                    self.despawn(npc_id);
-                    self.player.character.gain_experience(25);
-                }
+                LogData::PlayerAttackHit { npc_name, damage }
             }
-        }
+        };
 
-        self.log.print(attack_message);
+        self.log.info(attack_message);
+
+        // Checks if the npc is dead. Later this will be moved into some central event handler.
+        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc_name = npc.name().to_string();
+        if !npc.stats.base.is_alive() {
+            self.log.info(LogData::NpcDied { npc_name });
+            self.despawn(npc_id);
+            self.player.character.gain_experience(25);
+        }
 
         Ok(GameOutcome::Success)
     }
@@ -68,11 +72,11 @@ impl GameState {
 
         match attack_result {
             None => {
-                self.log.print("Player dodged the attack!".to_string());
+                self.log.info(LogData::NpcAttackMiss { npc_name });
             }
             Some(damage) => {
                 self.player.character.take_damage(damage);
-                self.log.print(format!("{} hits Player for {} damage!", npc_name, damage,));
+                self.log.info(LogData::NpcAttackHit { npc_name, damage });
             }
         }
 

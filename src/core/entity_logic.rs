@@ -7,6 +7,7 @@ use ratatui::style::Style;
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
 use crate::core::game_items::GameItemSprite;
+use crate::core::text_log::LogData;
 use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
 use crate::util::errors_results::{
     DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
@@ -25,20 +26,20 @@ impl GameState {
     ) -> Result<EntityId, GameError> {
         if !self.is_available(pos) {
             let err = GameError::from(EngineError::SpawningError(pos));
-            self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
+            self.log.info(LogData::Debug(format!("Not able to spawn {}: {}", name, err)));
             return Err(err);
         }
 
         let id = self.next_entity_id();
         let entity = T::new(id, name, pos, glyph, style, extra);
 
-        self.log.debug_print(format!(
+        self.log.info(LogData::Debug(format!(
             "Spawned {} (ID: {}) at position ({}, {})",
             entity.name(),
             entity.id(),
             entity.pos().x,
             entity.pos().y,
-        ));
+        )));
 
         T::storage_mut(self).push(entity);
         let index = T::storage_mut(self).len() - 1;
@@ -48,7 +49,7 @@ impl GameState {
     }
 
     pub fn spawn_npc(&mut self, npc_def_id: NpcDefId, pos: Point) -> Result<EntityId, GameError> {
-        self.log.debug_print(format!("Trying to spawn {}", npc_def_id));
+        self.log.info(LogData::Debug(format!("Trying to spawn {}", npc_def_id)));
         let npc_def = self
             .get_npc_def_by_id(npc_def_id.clone())
             .ok_or(DataError::MissingNpcDefinition(npc_def_id))?;

@@ -42,7 +42,6 @@ impl GameState {
                 let _ = self.move_npc(npc_id, delta.x, delta.y);
             }
             NpcActionKind::Attack => {
-                self.log.print("The NPC attacks".to_string());
                 let _ = self.npc_attack_player(npc_id);
             }
         }

@@ -4,6 +4,7 @@ use crate::{
     core::{
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
+        text_log::LogData,
     },
     util::errors_results::{
         DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
@@ -55,7 +56,7 @@ impl GameState {
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.print(format!("Couldn't use item {}: {}", item_id, error));
+            self.log.debug_print(format!("Couldn't use item {}: {}", item_id, error));
             Err(error)
         }
     }
@@ -98,11 +99,11 @@ impl GameState {
             let def = self
                 .get_item_def_by_id(item.def_id.clone())
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
-            def.name
+            def.name.to_string()
         };
-        self.deregister_item(item_id)?;
 
-        self.log.print(format!("You have eaten {}.", item_name));
+        self.log.info(LogData::PlayerEats { item_name });
+        self.deregister_item(item_id)?;
 
         Ok(GameOutcome::Success)
     }
