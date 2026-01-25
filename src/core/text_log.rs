@@ -67,64 +67,51 @@ impl LogData {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),
 
-            LogData::Debug(message) => {
-                Line::styled(message.to_string(), Style::default().fg(Color::DarkGray))
-            }
+            LogData::Debug(message) => Line::styled(message.to_string(), STYLE_DEBUG),
 
             LogData::PlayerAttackHit { npc_name, damage } => Line::from(vec![
-                Span::raw("You attack the "),
-                Span::styled(
-                    npc_name,
-                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" attack the "),
+                Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" and deal "),
-                Span::styled(damage.to_string(), Style::default().fg(Color::Cyan)),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
 
             LogData::PlayerAttackMiss { npc_name } => Line::from(vec![
-                Span::raw("You attack the "),
-                Span::styled(
-                    npc_name,
-                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" attack the "),
+                Span::styled(npc_name, STYLE_NPC),
                 Span::raw(", but miss."),
             ]),
 
             LogData::PlayerEats { item_name } => Line::from(vec![
-                Span::raw("You eat the "),
-                Span::styled(
-                    item_name,
-                    Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
-                ),
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" eat the "),
+                Span::styled(item_name, STYLE_ITEM),
             ]),
 
             LogData::NpcAttackHit { npc_name, damage } => Line::from(vec![
                 Span::raw("The "),
-                Span::styled(
-                    npc_name,
-                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" attacks you and deals "),
-                Span::styled(damage.to_string(), Style::default().fg(Color::Cyan)),
+                Span::styled(npc_name, STYLE_NPC),
+                Span::raw(" attacks "),
+                Span::styled("you", STYLE_YOU),
+                Span::raw(" and deals "),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
 
             LogData::NpcAttackMiss { npc_name } => Line::from(vec![
                 Span::raw("The "),
-                Span::styled(
-                    npc_name,
-                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" attacks you, but misses."),
+                Span::styled(npc_name, STYLE_NPC),
+                Span::raw(" attacks "),
+                Span::styled("you", STYLE_YOU),
+                Span::raw(", but misses."),
             ]),
 
             LogData::NpcDied { npc_name } => Line::from(vec![
                 Span::raw("The "),
-                Span::styled(
-                    npc_name,
-                    Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-                ),
+                Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" died."),
             ]),
 
@@ -138,3 +125,10 @@ impl LogData {
         }
     }
 }
+
+// Pre-defined theme
+const STYLE_DEBUG: Style = Style::new().fg(Color::DarkGray);
+const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
+const STYLE_NPC: Style = Style::new().fg(Color::Red).add_modifier(Modifier::ITALIC);
+const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);
+const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED);
