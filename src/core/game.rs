@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use crate::core::entity_logic::{EntityId, Npc};
 use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
-use crate::world::world_loader::{load_world_from_ron, save_world_to_ron};
+use crate::world::world_loader::save_world_to_ron;
 use crate::world::worldspace::World;
 
 use crate::world::coordinate_system::Point;
@@ -58,11 +58,11 @@ impl GameState {
         if let Err(error) = save_result {
             state.log.debug_print(format!("{}", error));
         }
-        // state.world = new_world.0;
 
         // Loading World from File
-        let data = load_world_from_ron("assets/worlds/rng_world.ron")
-            .expect("Failed to load or parse .ron file");
+        // let data = load_world_from_ron("assets/worlds/rng_world.ron")
+        //     .expect("Failed to load or parse .ron file");
+        let data = new_world.1;
 
         state.world = World::new();
         state.world.apply_world_data(&data).expect("Failed to apply world data");
