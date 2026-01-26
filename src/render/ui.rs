@@ -52,7 +52,7 @@ impl Widget for &App {
                     // | Info Display            |
                     // +-------------------------+
                     let layout_top_bottom =
-                        Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
+                        Layout::vertical([Constraint::Min(0), Constraint::Length(5)]);
                     let [area_game, area_info] = layout_top_bottom.areas(area);
 
                     // +----------------+--------+
