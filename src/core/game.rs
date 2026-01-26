@@ -66,9 +66,7 @@ impl GameState {
         self.npcs.clear();
         self.npc_index.clear();
         self.item_sprites.clear();
-        self.items.clear();
         self.item_sprites_index.clear();
-        self.item_id_counter = 0;
 
         let data = load_world_from_ron(level_paths()[index as usize])?;
         self.world.apply_world_data(&data, index)?;
