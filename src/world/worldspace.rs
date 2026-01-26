@@ -2,10 +2,9 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use ratatui::style::Style;
-
-use crate::util::errors_results::{FailReason, GameOutcome, GameResult};
+use crate::util::errors_results::{DataError, FailReason, GameError, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
+use crate::world::tiles::Collision;
 use crate::{
     core::{
         entity_logic::{Entity, Movable},
@@ -18,15 +17,6 @@ use crate::world::world_data::{TileTypeData, WorldData};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
-
-pub trait Drawable {
-    fn glyph(&self) -> char;
-    fn style(&self) -> Style;
-}
-
-pub trait Collision {
-    fn is_walkable(&self) -> bool;
-}
 
 // ----------------------------------------------
 //                     Rooms
@@ -242,9 +232,9 @@ impl World {
         Ok(GameOutcome::Success)
     }
 
-    pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {
+    pub fn apply_world_data(&mut self, data: &WorldData, index: u8) -> Result<(), GameError> {
         if data.width != self.width || data.height != self.height {
-            return Err("WorldData dimensions do not match current ones");
+            return Err(GameError::from(DataError::InvalidWorldFormat(index)));
         }
 
         for t in self.tiles.iter_mut() {
@@ -258,7 +248,7 @@ impl World {
 
         for td in &data.tiles {
             if td.x >= self.width || td.y >= self.height {
-                return Err("WorldData contains tile out of bounds");
+                return Err(GameError::from(DataError::InvalidWorldFormat(index)));
             }
 
             let idx = self.index(td.x, td.y);

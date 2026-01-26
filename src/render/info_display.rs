@@ -1,6 +1,6 @@
 use ratatui::{prelude::*, widgets::Paragraph};
 
-use crate::core::{game::GameState, game_items::GameItemKindDef};
+use crate::core::{entity_logic::Entity, game::GameState, game_items::GameItemKindDef};
 
 pub struct InfoDisplay;
 
@@ -9,6 +9,21 @@ impl InfoDisplay {
         Self
     }
 
+    /// Renders the Info Display
+    ///
+    /// The info display displays character info and information about the game.
+    /// * Character Info
+    ///     * Character Strength
+    ///     * Character Dexterity
+    ///     * Character Vitality
+    ///     * Character Perception
+    ///     * Character Hit Points
+    ///     * Character equipped armor
+    ///     * Character equipped weapon
+    /// * Game Info
+    ///     * Dungeon Floor the character is currently on
+    ///     * Experience points collected
+    ///     * Current game round
     pub fn render(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
         let player_hp_current = game.player.character.stats.base.hp_current;
         let player_hp_max = game.player.character.stats.base.hp_max;
@@ -17,19 +32,22 @@ impl InfoDisplay {
 
         let lines: Vec<Line> = vec![
             Line::raw(format!(
-                "STR:{} DEX:{}, VIT:{}, PER:{} HP:{}({})    Armor:{} Weapon:{}",
+                "STR:{} DEX:{}, VIT:{}, PER:{} HP:{}({})",
                 game.player.character.stats.strength,
                 game.player.character.stats.dexterity,
                 game.player.character.stats.vitality,
                 game.player.character.stats.perception,
                 player_hp_current,
                 player_hp_max,
-                player_armor,
-                player_weapon
             )),
+            Line::raw(format!("Armor:{} Weapon:{}", player_armor, player_weapon)),
             Line::raw(format!(
-                "Dungeon Floor:{} Exp:{} Round:{}",
-                game.level_nr, game.player.character.stats.experience, game.round_nr,
+                "Dungeon Floor:{} x:{} y:{} Exp:{} Round:{}",
+                game.level_nr,
+                game.player.character.pos().x,
+                game.player.character.pos().y,
+                game.player.character.stats.experience,
+                game.round_nr,
             )),
         ];
 
@@ -37,6 +55,7 @@ impl InfoDisplay {
         paragraph.render(rect, buf);
     }
 
+    // Render the currently equipped weapon into a String, displaying its stats.
     pub fn format_weapon(&self, game: &GameState) -> String {
         match &game.player.character.weapon {
             Some(w) => {
@@ -64,6 +83,7 @@ impl InfoDisplay {
         }
     }
 
+    // Render the currently equipped armor into a String, displaying its stats.
     pub fn format_armor(&self, game: &GameState) -> String {
         match &game.player.character.armor {
             Some(a) => {

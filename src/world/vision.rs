@@ -7,7 +7,8 @@ use crate::{
     core::{entity_logic::Entity, game::GameState},
     world::{
         coordinate_system::{Direction, Point},
-        worldspace::{WORLD_HEIGHT, WORLD_WIDTH, World},
+        tiles::Opacity,
+        worldspace::World,
     },
 };
 
@@ -44,10 +45,8 @@ pub fn compute_fov(origin: Point, world: &mut World) {
     world.mark_explored(origin);
 
     // Make all tiles invisible
-    for i in 0..WORLD_WIDTH {
-        for j in 0..WORLD_HEIGHT {
-            world.tiles[world.index(i, j)].visible = false;
-        }
+    for tile in world.tiles.iter_mut() {
+        tile.make_invisible();
     }
 
     // Determine which tiles to make visible
@@ -67,13 +66,13 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
     let row_tiles: Vec<_> = row.tiles().collect(); // Cloning was required since I change values.
 
     for tile in row_tiles {
-        let tile_is_wall = world.is_blocking(quadrant.transform(tile).into());
+        let tile_is_wall = world.is_opaque(quadrant.transform(tile).into());
         let tile_is_floor = !tile_is_wall;
 
         let prev_tile_is_wall =
-            prev_tile.is_some_and(|prev| world.is_blocking(quadrant.transform(prev).into()));
+            prev_tile.is_some_and(|prev| world.is_opaque(quadrant.transform(prev).into()));
         let prev_tile_is_floor =
-            prev_tile.is_some_and(|prev| !world.is_blocking(quadrant.transform(prev).into()));
+            prev_tile.is_some_and(|prev| !world.is_opaque(quadrant.transform(prev).into()));
 
         // Vision Range = 30 tiles (commented out, so now vision range is infinite)
         // if (Point::from(quadrant.transform(tile)).distance_squared_from(origin) as f32).sqrt()
@@ -102,23 +101,23 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
         }
         prev_tile = Some(tile);
     }
-    if prev_tile.is_some_and(|tile| !world.is_blocking(quadrant.transform(tile).into())) {
+    if prev_tile.is_some_and(|tile| !world.is_opaque(quadrant.transform(tile).into())) {
         scan(_origin, row.next(), quadrant, world);
     }
 }
 
 trait FieldOfView {
-    fn is_blocking(&self, point: Point) -> bool;
+    fn is_opaque(&self, point: Point) -> bool;
     fn mark_visible(&mut self, point: Point);
 }
 
 impl FieldOfView for World {
-    fn is_blocking(&self, point: Point) -> bool {
+    fn is_opaque(&self, point: Point) -> bool {
         let tile = self.get_tile(point);
         tile.tile_type.is_opaque()
     }
     fn mark_visible(&mut self, point: Point) {
-        self.get_tile_mut(point).visible = true;
+        self.get_tile_mut(point).make_visible();
     }
 }
 
@@ -128,7 +127,7 @@ trait FogOfWar {
 
 impl FogOfWar for World {
     fn mark_explored(&mut self, point: Point) {
-        self.get_tile_mut(point).explored = true;
+        self.get_tile_mut(point).make_explored();
     }
 }
 
@@ -205,8 +204,8 @@ impl Row {
 }
 
 /// Calculates new start and end slopes. It’s used in two situations:
-/// [1], if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
-/// [2], if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
+/// (1), if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
+/// (2), if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
 /// In both situations, the line is tangent to the left edge of the current tile, so we can use a single slope function for both start and end slopes.
 fn slope(tile: ViewPoint) -> Rational {
     let ViewPoint { x: row_depth, y: col } = tile;

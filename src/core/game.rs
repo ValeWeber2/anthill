@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use crate::core::entity_logic::{EntityId, Npc};
 use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
+use crate::data::levels::level_paths;
+use crate::util::errors_results::{DataError, GameError};
 use crate::world::{
     coordinate_system::Point, world_data::SpawnKind, world_loader::load_world_from_ron,
     worldspace::World,
@@ -28,8 +30,6 @@ pub struct GameState {
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
     pub rng: StdRng,
-    pub current_level: usize,
-    pub level_paths: Vec<&'static str>,
 }
 
 impl GameState {
@@ -39,7 +39,7 @@ impl GameState {
             player: Player::new(0),
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
+            level_nr: 0,
             entity_id_counter: 0,
             npcs: Vec::new(),
             npc_index: HashMap::new(),
@@ -48,12 +48,6 @@ impl GameState {
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
-            current_level: 0,
-            level_paths: vec![
-                "assets/worlds/level_01.ron",
-                "assets/worlds/level_02.ron",
-                "assets/worlds/level_03.ron",
-            ],
         };
 
         let player_id = state.next_entity_id();
@@ -63,9 +57,9 @@ impl GameState {
         state
     }
 
-    pub fn load_level(&mut self, index: usize) -> Result<(), &'static str> {
-        if index >= self.level_paths.len() {
-            return Err("The level index is out of bounds");
+    pub fn load_level(&mut self, index: u8) -> Result<(), GameError> {
+        if index as usize > level_paths().len() {
+            return Err(GameError::from(DataError::StaticWorldNotFound(index)));
         }
 
         self.world = World::new(self);
@@ -76,9 +70,8 @@ impl GameState {
         self.item_sprites_index.clear();
         self.item_id_counter = 0;
 
-        let data = load_world_from_ron(self.level_paths[index])
-            .map_err(|_| "Failed to apply world data")?;
-        self.world.apply_world_data(&data)?;
+        let data = load_world_from_ron(level_paths()[index as usize])?;
+        self.world.apply_world_data(&data, index)?;
 
         if let Some(room) = data.rooms.first() {
             self.player.character.base.pos = Point::new(room.x + 1, room.y + 1);
@@ -104,8 +97,6 @@ impl GameState {
         }
 
         self.compute_fov();
-        self.current_level = index;
-        self.level_nr = (index + 1) as u8;
 
         Ok(())
     }
@@ -132,7 +123,7 @@ impl Default for GameState {
             player: Player::default(),
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
+            level_nr: 0,
             entity_id_counter: 0,
             npcs: Vec::new(),
             npc_index: HashMap::new(),
@@ -141,8 +132,6 @@ impl Default for GameState {
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
-            current_level: 0,
-            level_paths: Vec::new(),
         }
     }
 }
