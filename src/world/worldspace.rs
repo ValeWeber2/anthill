@@ -13,7 +13,7 @@ use crate::{
     world::tiles::{DoorType, Tile, TileType},
 };
 
-use crate::world::world_data::{TileTypeData, WorldData};
+use crate::world::world_data::{DoorTypeData, TileTypeData, WorldData};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -258,15 +258,15 @@ impl World {
                 TileTypeData::Wall => TileType::Wall,
                 TileTypeData::Hallway => TileType::Hallway,
                 TileTypeData::Stair => TileType::Stair,
-                TileTypeData::Door { open } => {
-                    TileType::Door(if open { DoorType::Open } else { DoorType::Closed })
-                }
+                TileTypeData::Door(DoorTypeData::Archway) => TileType::Door(DoorType::Archway),
+                TileTypeData::Door(DoorTypeData::Open) => TileType::Door(DoorType::Open),
+                TileTypeData::Door(DoorTypeData::Closed) => TileType::Door(DoorType::Closed),
             };
 
             self.tiles[idx] = Tile::new(tile_type);
         }
 
-        self.open_room_for_hallway();
+        // self.open_room_for_hallway();
         self.add_walls_around_walkables();
 
         Ok(())

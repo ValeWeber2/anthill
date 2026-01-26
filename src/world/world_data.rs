@@ -35,8 +35,15 @@ pub enum TileTypeData {
     Floor,
     Wall,
     Hallway,
-    Door { open: bool },
+    Door(DoorTypeData),
     Stair,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DoorTypeData {
+    Open,
+    Closed,
+    Archway,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
