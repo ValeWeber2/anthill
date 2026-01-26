@@ -123,38 +123,40 @@ impl World {
         points
     }
 
-    pub fn carve_corridor(&mut self, from: Point, to: Point) {
-        let mut x = from.x;
-        let mut y = from.y;
+    pub fn open_room_for_hallway(&mut self) {
+        let dirs: [(isize, isize); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
-        while x != to.x {
-            self.carve_corridor_step(Point::new(x, y));
-            if to.x > x {
-                x += 1
-            } else {
-                x -= 1
-            };
-        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let hall = Point::new(x, y);
+                if self.get_tile(hall).tile_type != TileType::Hallway {
+                    continue;
+                }
 
-        while y != to.y {
-            self.carve_corridor_step(Point::new(x, y));
-            if to.y > y {
-                y += 1
-            } else {
-                y -= 1
-            };
-        }
+                for (dx, dy) in dirs {
+                    let wx = x as isize + dx;
+                    let wy = y as isize + dy;
+                    if !self.is_in_bounds(wx, wy) {
+                        continue;
+                    }
+                    let wall_p = Point::new(wx as usize, wy as usize);
 
-        self.carve_corridor_step(Point::new(x, y));
-    }
+                    if self.get_tile(wall_p).tile_type != TileType::Wall {
+                        continue;
+                    }
 
-    fn carve_corridor_step(&mut self, pos: Point) {
-        let tile = self.get_tile_mut(pos);
+                    let bx = wx + dx;
+                    let by = wy + dy;
+                    if !self.is_in_bounds(bx, by) {
+                        continue;
+                    }
+                    let behind = Point::new(bx as usize, by as usize);
 
-        tile.tile_type = match tile.tile_type {
-            TileType::Wall => TileType::Door(DoorType::Archway),
-            TileType::Door(DoorType::Closed) => TileType::Door(DoorType::Archway),
-            _ => TileType::Floor,
+                    if self.get_tile(behind).tile_type == TileType::Floor {
+                        self.get_tile_mut(wall_p).tile_type = TileType::Door(DoorType::Archway);
+                    }
+                }
+            }
         }
     }
 
@@ -165,7 +167,7 @@ impl World {
             for x in 0..self.width {
                 let tt = self.get_tile(Point::new(x, y)).tile_type;
 
-                if matches!(tt, TileType::Floor | TileType::Hallway | TileType::Door(_)) {
+                if matches!(tt, TileType::Floor | TileType::Door(_)) {
                     let y0 = y.saturating_sub(1);
                     let y1 = (y + 1).min(self.height - 1);
                     let x0 = x.saturating_sub(1);
@@ -254,16 +256,6 @@ impl World {
             self.carve_room(&room);
         }
 
-        for w in data.rooms.windows(2) {
-            let a = &w[0];
-            let b = &w[1];
-
-            let start = Point::new(a.x + a.width / 2, a.y + a.height / 2);
-            let end = Point::new(b.x + b.width / 2, b.y + b.height / 2);
-
-            self.carve_corridor(start, end);
-        }
-
         for td in &data.tiles {
             if td.x >= self.width || td.y >= self.height {
                 return Err("WorldData contains tile out of bounds");
@@ -274,6 +266,8 @@ impl World {
             let tile_type = match td.tile_type {
                 TileTypeData::Floor => TileType::Floor,
                 TileTypeData::Wall => TileType::Wall,
+                TileTypeData::Hallway => TileType::Hallway,
+                TileTypeData::Stair => TileType::Stair,
                 TileTypeData::Door { open } => {
                     TileType::Door(if open { DoorType::Open } else { DoorType::Closed })
                 }
@@ -282,6 +276,7 @@ impl World {
             self.tiles[idx] = Tile::new(tile_type);
         }
 
+        self.open_room_for_hallway();
         self.add_walls_around_walkables();
 
         Ok(())

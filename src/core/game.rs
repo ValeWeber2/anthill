@@ -6,11 +6,10 @@ use std::collections::HashMap;
 use crate::core::entity_logic::{EntityId, Npc};
 use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
-use crate::world::world_loader::load_world_from_ron;
-use crate::world::worldspace::World;
-
-use crate::world::coordinate_system::Point;
-use crate::world::world_data::SpawnKind;
+use crate::world::{
+    coordinate_system::Point, world_data::SpawnKind, world_loader::load_world_from_ron,
+    worldspace::World,
+};
 
 // ----------------------------------------------
 //                Game State Struct
@@ -29,6 +28,8 @@ pub struct GameState {
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
     pub item_id_counter: GameItemId,
     pub rng: StdRng,
+    pub current_level: usize,
+    pub level_paths: Vec<&'static str>,
 }
 
 impl GameState {
@@ -47,43 +48,66 @@ impl GameState {
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
+            current_level: 0,
+            level_paths: vec![
+                "assets/worlds/level_01.ron",
+                "assets/worlds/level_02.ron",
+                "assets/worlds/level_03.ron",
+            ],
         };
 
         let player_id = state.next_entity_id();
         state.player = Player::new(player_id);
 
-        let data = load_world_from_ron("assets/worlds/test_world.ron")
-            .expect("Failed to load or parse .ron file");
+        state.load_level(0).expect("Failed to load the first level");
+        state
+    }
 
-        state.world = World::new(&mut state);
-        state.world.apply_world_data(&data).expect("Failed to apply world data");
+    pub fn load_level(&mut self, index: usize) -> Result<(), &'static str> {
+        if index >= self.level_paths.len() {
+            return Err("The level index is out of bounds");
+        }
 
-        if let Some(r) = data.rooms.first() {
-            state.player.character.base.pos = Point::new(r.x + 1, r.y + 1);
+        self.world = World::new(self);
+        self.npcs.clear();
+        self.npc_index.clear();
+        self.item_sprites.clear();
+        self.items.clear();
+        self.item_sprites_index.clear();
+        self.item_id_counter = 0;
+
+        let data = load_world_from_ron(self.level_paths[index])
+            .map_err(|_| "Failed to apply world data")?;
+        self.world.apply_world_data(&data)?;
+
+        if let Some(room) = data.rooms.first() {
+            self.player.character.base.pos = Point::new(room.x + 1, room.y + 1);
         }
 
         for s in &data.spawns {
             let pos = Point::new(s.x, s.y);
 
-            if !state.is_available(pos) {
-                state.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y));
+            if !self.is_available(pos) {
+                self.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y)); // debugging purposes only
                 continue;
             }
 
             match &s.kind {
                 SpawnKind::Npc { def_id } => {
-                    let _ = state.spawn_npc(def_id.clone(), pos);
+                    let _ = self.spawn_npc(def_id.clone(), pos);
                 }
                 SpawnKind::Item { def_id } => {
-                    let item_id = state.register_item(def_id.clone());
-                    let _ = state.spawn_item(item_id, pos);
+                    let item_id = self.register_item(def_id.clone());
+                    let _ = self.spawn_item(item_id, pos);
                 }
             }
         }
 
-        state.compute_fov();
+        self.compute_fov();
+        self.current_level = index;
+        self.level_nr = (index + 1) as u8;
 
-        state
+        Ok(())
     }
 
     // This is the routine of operations that need to be called every round.
@@ -117,6 +141,8 @@ impl Default for GameState {
             items: HashMap::new(),
             item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
+            current_level: 0,
+            level_paths: Vec::new(),
         }
     }
 }

@@ -137,7 +137,11 @@ fn wall_glyph(mask: u8) -> char {
         '┬' // 1110 -> 14
     } else if mask == NORTH | SOUTH | EAST | WEST {
         '┼' // 1111-> 15
+    } else if mask == NORTH || mask == SOUTH {
+        '│'
+    } else if mask == EAST || mask == WEST {
+        '─'
     } else {
-        '#' // otherwise
+        '│'
     }
 }

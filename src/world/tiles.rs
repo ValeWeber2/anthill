@@ -38,6 +38,7 @@ pub enum TileType {
     Wall,
     Hallway,
     Door(DoorType),
+    Stair,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -57,6 +58,7 @@ impl Collision for TileType {
             TileType::Door(DoorType::Open) => true,
             TileType::Door(DoorType::Closed) => false,
             TileType::Door(DoorType::Archway) => true,
+            TileType::Stair => true,
         }
     }
 }
@@ -68,9 +70,10 @@ impl Drawable for TileType {
             TileType::Floor => '·',
             TileType::Wall => '#', // Will not be displayed Is replaced with a directional wall character instead.
             TileType::Hallway => '░',
+            TileType::Door(DoorType::Archway) => '░',
             TileType::Door(DoorType::Open) => '_',
             TileType::Door(DoorType::Closed) => '+',
-            TileType::Door(DoorType::Archway) => '·',
+            TileType::Stair => '>',
         }
     }
     fn style(&self) -> Style {
@@ -81,6 +84,7 @@ impl Drawable for TileType {
             TileType::Hallway => Style::default().fg(Color::DarkGray),
             TileType::Door(DoorType::Archway) => Style::default().fg(Color::Gray),
             TileType::Door(_) => Style::default().fg(Color::Yellow),
+            TileType::Stair => Style::default().fg(Color::White),
         }
     }
 }
@@ -95,6 +99,7 @@ impl TileType {
             TileType::Door(DoorType::Open) => false,
             TileType::Door(DoorType::Closed) => true,
             TileType::Door(DoorType::Archway) => false,
+            TileType::Stair => false,
         }
     }
 }

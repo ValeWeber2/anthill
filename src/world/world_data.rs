@@ -34,7 +34,9 @@ pub struct TileData {
 pub enum TileTypeData {
     Floor,
     Wall,
+    Hallway,
     Door { open: bool },
+    Stair,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
