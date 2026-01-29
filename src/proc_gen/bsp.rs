@@ -9,7 +9,7 @@ use crate::{
     proc_gen::bsp_nodes::{MapNode, NodeId},
     world::{
         coordinate_system::Point,
-        world_data::{RoomData, WorldData},
+        world_data::{RoomData, SpawnData, WorldData},
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH, World},
     },
 };
@@ -56,7 +56,7 @@ pub const DIVIDER_RANGE: std::ops::Range<f32> = 0.4..0.6;
 
 /// Data structure representing a hallway connecting two rooms.
 #[derive(Clone, Debug)]
-struct MapHall {
+pub struct MapHall {
     /// Point of origin for the hallway (often in the middle of a room)
     point_a: Point,
     /// Target point for the hallway (often in the middle of a room)
@@ -71,28 +71,31 @@ impl MapHall {
 
 /// Central Data Structure that contains the vector of nodes for the binary search partition tree structure.
 #[derive(Clone)]
-struct MapBSP {
+pub struct MapBSP {
     /// All nodes of the tree structure in a linear vector. Ids in the tree structure reference indices of this vector.
-    nodes: Vec<MapNode>,
+    pub nodes: Vec<MapNode>,
 
     /// NodeId of the root MapNode of the tree structure. (Usually 0)
-    root: NodeId,
+    pub root: NodeId,
 
     /// Vector of all hallways on the map.
-    halls: Vec<MapHall>,
+    pub halls: Vec<MapHall>,
 
     /// Used to track how many rooms a map has. The BSP alorithm recurses until a certain number of rooms is reached.
-    num_rooms: usize,
+    pub num_rooms: usize,
+
+    /// Contains the lots of `SpawnData` for the entire world. (Items and Npcs)
+    pub spawns: Vec<SpawnData>,
 }
 
 impl MapBSP {
     /// Getter for a `MapNode` of a given `id`
-    fn get_node(&self, id: usize) -> &MapNode {
+    pub fn get_node(&self, id: usize) -> &MapNode {
         &self.nodes[id]
     }
 
     /// Getter for a mutable `MapNode` of a given `id`
-    fn get_node_mut(&mut self, id: usize) -> &mut MapNode {
+    pub fn get_node_mut(&mut self, id: usize) -> &mut MapNode {
         &mut self.nodes[id]
     }
 
@@ -180,7 +183,7 @@ impl MapBSP {
     /// # Returns
     /// Nothing. Instead collects the leaves in the mutable vector that has been passed as an argument.
     /// This is done non-tail-recursively, because tail recursion caused problems with borrowing. However, this should contain fewer allocations than using tail recursion.
-    fn get_leaves(&self, node_id: NodeId, leaves: &mut Vec<NodeId>) {
+    pub fn get_leaves(&self, node_id: NodeId, leaves: &mut Vec<NodeId>) {
         let node = self.get_node(node_id);
 
         if node.is_leaf() {
@@ -365,7 +368,7 @@ impl From<MapBSP> for WorldData {
             height: WORLD_HEIGHT,
             tiles: Vec::new(),
             rooms: room_data,
-            spawns: Vec::new(),
+            spawns: value.spawns,
         }
     }
 }
@@ -376,7 +379,7 @@ impl Default for MapBSP {
         let root = nodes.len();
         nodes.push(MapNode::default());
 
-        Self { nodes, root, halls: Vec::new(), num_rooms: ROOM_NUMBER }
+        Self { nodes, root, halls: Vec::new(), num_rooms: ROOM_NUMBER, spawns: Vec::new() }
     }
 }
 
@@ -388,6 +391,7 @@ pub fn generate_map() -> (World, WorldData) {
     map.shrink_leaves(&mut rng);
     map.find_neighbors();
     map.add_halls(&mut rng);
+    map.populate_rooms(&mut rng);
 
     (World::from(map.clone()), WorldData::from(map))
 }

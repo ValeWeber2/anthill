@@ -64,5 +64,146 @@
             height: 11,
         ),
     ],
-    spawns: [],
+    spawns: [
+        (
+            kind: Item(
+                def_id: "food_cake",
+            ),
+            x: 12,
+            y: 6,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 9,
+            y: 18,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 8,
+            y: 18,
+        ),
+        (
+            kind: Item(
+                def_id: "armor_leather",
+            ),
+            x: 14,
+            y: 19,
+        ),
+        (
+            kind: Npc(
+                def_id: "orc",
+            ),
+            x: 28,
+            y: 17,
+        ),
+        (
+            kind: Item(
+                def_id: "food_cake",
+            ),
+            x: 42,
+            y: 10,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 53,
+            y: 11,
+        ),
+        (
+            kind: Npc(
+                def_id: "funny_frog",
+            ),
+            x: 54,
+            y: 12,
+        ),
+        (
+            kind: Npc(
+                def_id: "orc",
+            ),
+            x: 55,
+            y: 11,
+        ),
+        (
+            kind: Npc(
+                def_id: "orc",
+            ),
+            x: 55,
+            y: 13,
+        ),
+        (
+            kind: Item(
+                def_id: "armor_leather",
+            ),
+            x: 65,
+            y: 5,
+        ),
+        (
+            kind: Npc(
+                def_id: "orc",
+            ),
+            x: 64,
+            y: 15,
+        ),
+        (
+            kind: Npc(
+                def_id: "funny_frog",
+            ),
+            x: 64,
+            y: 16,
+        ),
+        (
+            kind: Item(
+                def_id: "food_cake",
+            ),
+            x: 70,
+            y: 17,
+        ),
+        (
+            kind: Npc(
+                def_id: "orc",
+            ),
+            x: 90,
+            y: 9,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 92,
+            y: 11,
+        ),
+        (
+            kind: Npc(
+                def_id: "funny_frog",
+            ),
+            x: 91,
+            y: 8,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 90,
+            y: 10,
+        ),
+        (
+            kind: Npc(
+                def_id: "goblin",
+            ),
+            x: 93,
+            y: 9,
+        ),
+        (
+            kind: Item(
+                def_id: "weapon_sword_rusty",
+            ),
+            x: 92,
+            y: 16,
+        ),
+    ],
 )
