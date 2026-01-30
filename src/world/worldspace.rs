@@ -91,7 +91,6 @@ impl World {
         in_lower_bounds && in_upper_bounds
     }
 
-    // could be used in combat system or graphics
     pub fn get_points_in_radius(&self, pos: Point, radius: isize) -> Vec<Point> {
         let mut points = Vec::new();
         let x = pos.x as isize;
@@ -186,6 +185,10 @@ impl World {
         }
     }
 
+    /// Carves a rectangular room into the map.
+    ///
+    /// Fills the interior with `Floor` tiles and surrounds it with `Wall` tiles
+    /// based on the room’s origin, width, and height.
     pub fn carve_room(&mut self, room: &Room) {
         let ox = room.origin.x;
         let oy = room.origin.y;
