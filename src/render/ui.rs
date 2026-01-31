@@ -7,8 +7,11 @@ use ratatui::{
 
 use crate::{
     App, KeyboardFocus, State,
-    core::{entity_logic::Entity, game::GameState},
-    data::ascii_art::{GRAVESTONE, STARTSCREEN_ASCII},
+    core::{entity_logic::Entity, game::GameState, game_items::GameItemKindDef},
+    data::{
+        ascii_art::{GRAVESTONE, STARTSCREEN_ASCII},
+        item_defs::GameItemDef,
+    },
     render::{menu_display::Menu, modal_display::ModalInterface, world_display::WorldDisplay},
 };
 use crate::{
@@ -52,7 +55,7 @@ impl Widget for &App {
                     // | Info Display            |
                     // +-------------------------+
                     let layout_top_bottom =
-                        Layout::vertical([Constraint::Min(0), Constraint::Length(5)]);
+                        Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
                     let [area_game, area_info] = layout_top_bottom.areas(area);
 
                     // +----------------+--------+
@@ -266,4 +269,35 @@ fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {
         .split(right);
 
     Paragraph::new(text).alignment(Alignment::Left).render(right_vertical[1], buf);
+}
+
+pub fn format_item(def: &GameItemDef) -> Line<'static> {
+    let mut spans = vec![
+        Span::raw("["),
+        Span::styled(def.glyph.to_string(), def.style),
+        Span::raw("] "),
+        Span::raw(def.name),
+    ];
+
+    match &def.kind {
+        GameItemKindDef::Armor { mitigation } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} MIT", mitigation)));
+            spans.push(Span::raw(">"));
+        }
+        GameItemKindDef::Weapon { damage, crit_chance } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} DMG", damage)));
+            spans.push(Span::raw(", "));
+            spans.push(Span::raw(format!("{:.0}% CRIT", crit_chance * 10)));
+            spans.push(Span::raw(">"));
+        }
+        GameItemKindDef::Food { nutrition } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} NUT", nutrition)));
+            spans.push(Span::raw(">"));
+        }
+    }
+
+    Line::from(spans)
 }

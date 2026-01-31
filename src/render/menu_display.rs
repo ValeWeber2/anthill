@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Paragraph, Wrap},
 };
 
-use crate::core::game::GameState;
+use crate::{core::game::GameState, render::ui::format_item};
 
 /// Different display modes for the menu
 #[derive(Debug, Clone, Copy)]
@@ -80,34 +80,27 @@ impl Menu {
         let height = rect.height as usize;
         let start = inventory.len().saturating_sub(height);
 
-        let item_list_def_ids: Vec<String> = inventory
-            .iter()
-            .map(|item_id| {
-                if let Some(game_item) = game_state.get_item_by_id(*item_id) {
-                    game_item.def_id.clone()
-                } else {
-                    "Unregistered Item".to_string()
-                }
-            })
-            .collect();
-
-        let item_list_names: Vec<&'static str> = item_list_def_ids
-            .iter()
-            .map(|item_id| {
-                if let Some(item_def) = game_state.get_item_def_by_id(item_id.to_string()) {
-                    item_def.name
-                } else {
-                    "Unknown Item"
-                }
-            })
-            .collect();
-
-        let lines: Vec<Line> = item_list_names[start..]
+        let lines: Vec<Line> = inventory[start..]
             .iter()
             .enumerate()
-            .map(|(i, item)| {
+            .map(|(i, item_id)| {
                 let list_letter = (b'a' + i as u8) as char;
-                Line::raw(format!("{list_letter} - {}", item))
+
+                let instance = match game_state.get_item_by_id(*item_id) {
+                    Some(inst) => inst,
+                    None => return Line::raw(format!("{list_letter} - <Invalid Item>")),
+                };
+
+                let def = match game_state.get_item_def_by_id(instance.def_id.clone()) {
+                    Some(d) => d,
+                    None => return Line::raw(format!("{list_letter} - <Invalid Item>")),
+                };
+
+                let mut styled = format_item(&def);
+
+                styled.spans.insert(0, Span::raw(format!("{list_letter} - ")));
+
+                styled
             })
             .collect();
 
