@@ -2,12 +2,10 @@ use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
 use crate::{
-    App,
-    util::{
+    App, data::{item_defs::item_defs, npc_defs::npc_defs}, util::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
-    },
-    world::{coordinate_system::Point, tiles::Collision},
+    }, world::{coordinate_system::Point, tiles::Collision}
 };
 
 /// Different available commands in the game.
@@ -67,15 +65,21 @@ pub enum GameCommand {
     /// Reduces player to 0 HP, resulting in the Game Over screen.
     ///
     /// # GameCommand Syntax
-    /// suicide
+    /// `suicide`
     Suicide,
 
     /// Reveals all tiles on the map for 1 round.
     /// This also sets the exploration status of all tiles to `true`.
     ///
     /// # GameCommand Syntax
-    /// revealall
+    /// `revealall`
     RevealAll,
+
+    /// Displays a legend for every glyph in the log
+    ///
+    /// # GameCommand Syntax
+    /// `legend`
+    Legend,
 }
 
 impl GameCommand {
@@ -94,6 +98,7 @@ impl GameCommand {
             }
             GameCommand::RevealAll => "Get vision over the entire map for 1 round",
             GameCommand::Suicide => "Set HP to zero to test game over state",
+            GameCommand::Legend => "Show list of all map symbols."
         }
     }
 
@@ -110,6 +115,7 @@ impl GameCommand {
             GameCommand::Teleport(_) => "teleport",
             GameCommand::Suicide => "suicide",
             GameCommand::RevealAll => "revealall",
+            GameCommand::Legend => "legend"
         }
     }
 }
@@ -159,6 +165,7 @@ impl TryFrom<String> for GameCommand {
             }
             "suicide" => Ok(GameCommand::Suicide),
             "revealall" => Ok(GameCommand::RevealAll),
+            "legend" => Ok(GameCommand::Legend),
             _ => Err(format!("Unknown Command {}", command)),
         }
     }
@@ -258,6 +265,18 @@ impl App {
                 for tile in self.game.world.tiles.iter_mut() {
                     tile.make_visible();
                     tile.make_explored();
+                }
+            }
+
+            GameCommand::Legend => {
+                self.game.log.print("@ - Player Character (you)".to_string());
+                self.game.log.print("+ - Door (closed)".to_string());
+                self.game.log.print("_ - Door (open)".to_string());
+                for item in item_defs().values() {
+                    self.game.log.print(format!("{} - {}", item.glyph, item.name));
+                }
+                for npc in npc_defs().values() {
+                    self.game.log.print(format!("{} - {}", npc.glyph, npc.name));
                 }
             }
         }
