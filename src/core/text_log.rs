@@ -129,6 +129,6 @@ impl LogData {
 // Pre-defined theme
 const STYLE_DEBUG: Style = Style::new().fg(Color::DarkGray);
 const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
-const STYLE_NPC: Style = Style::new().fg(Color::Red).add_modifier(Modifier::ITALIC);
+const STYLE_NPC: Style = Style::new().fg(Color::Yellow).add_modifier(Modifier::ITALIC);
 const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);
-const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan).add_modifier(Modifier::UNDERLINED);
+const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan);
