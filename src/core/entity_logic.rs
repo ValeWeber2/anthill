@@ -16,6 +16,10 @@ use crate::world::coordinate_system::Point;
 use crate::world::tiles::{Collision, Drawable};
 
 impl GameState {
+    /// Creates and registers a new entity of type `T`.
+    ///
+    /// Fails if the target position is unavailable. On success, constructs the
+    /// entity, stores it, updates its index, and returns its [`EntityId`].
     pub fn spawn<T: Spawnable + Entity>(
         &mut self,
         name: String,
@@ -63,6 +67,10 @@ impl GameState {
         id
     }
 
+    /// Removes an entity from the world if it exists.
+    ///
+    /// Looks up the ID in NPCs first, then item sprites. Uses `swap_remove`
+    /// and fixes the moved entity’s index if needed.
     pub fn despawn(&mut self, id: EntityId) {
         if let Some(&index) = self.npc_index.get(&id) {
             self.npcs.swap_remove(index);

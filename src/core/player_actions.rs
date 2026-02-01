@@ -4,8 +4,12 @@ use crate::{
         game::GameState,
         game_items::GameItemId,
     },
+    data::levels::level_paths,
     util::errors_results::{EngineError, GameOutcome, GameResult},
-    world::coordinate_system::{Direction, Point},
+    world::{
+        coordinate_system::{Direction, Point},
+        tiles::TileType,
+    },
 };
 
 pub enum PlayerInput {
@@ -56,7 +60,25 @@ impl GameState {
         };
 
         match action_result {
-            Ok(GameOutcome::Success) => self.next_round(),
+            Ok(GameOutcome::Success) => {
+                let pos = self.player.character.pos();
+                let tile = self.world.get_tile(pos).tile_type;
+
+                if let TileType::Stair = tile {
+                    let next = self.level_nr as usize + 1;
+
+                    if next <= level_paths().len() {
+                        self.log.print("You go down the stairs...".to_string());
+                        let _ = self.load_level(next as u8);
+                    } else {
+                        self.log.print("This stair leads nowhere...".to_string()); //test later
+                        self.log.print(format!("{} {}", next, level_paths().len()))
+                    }
+                }
+
+                self.next_round();
+            }
+
             Ok(GameOutcome::Fail(reason)) => {
                 // Log for user only if message is defined for user
                 if let Some(log_data) = reason.notify_user() {

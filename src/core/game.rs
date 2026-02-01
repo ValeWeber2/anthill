@@ -6,12 +6,13 @@ use std::collections::HashMap;
 use crate::core::entity_logic::{EntityId, Npc};
 use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
 use crate::core::player::Player;
-use crate::core::text_log::{Log, LogData};
-use crate::world::world_loader::load_world_from_ron;
-use crate::world::worldspace::World;
-
-use crate::world::coordinate_system::Point;
-use crate::world::world_data::SpawnKind;
+use crate::core::text_log::Log;
+use crate::data::levels::level_paths;
+use crate::util::errors_results::{DataError, GameError};
+use crate::world::{
+    coordinate_system::Point, world_data::SpawnKind, world_loader::load_world_from_ron,
+    worldspace::World,
+};
 
 // ----------------------------------------------
 //                Game State Struct
@@ -39,7 +40,7 @@ impl GameState {
             player: Player::new(0),
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
+            level_nr: 0,
             entity_id_counter: 0,
             npcs: Vec::new(),
             npc_index: HashMap::new(),
@@ -53,38 +54,50 @@ impl GameState {
         let player_id = state.next_entity_id();
         state.player = Player::new(player_id);
 
-        let data = load_world_from_ron("assets/worlds/test_world.ron")
-            .expect("Failed to load or parse .ron file");
+        state.load_level(0).expect("Failed to load the first level");
+        state
+    }
 
-        state.world = World::new(&mut state);
-        state.world.apply_world_data(&data).expect("Failed to apply world data");
+    pub fn load_level(&mut self, index: u8) -> Result<(), GameError> {
+        if index as usize > level_paths().len() {
+            return Err(GameError::from(DataError::StaticWorldNotFound(index)));
+        }
 
-        if let Some(r) = data.rooms.first() {
-            state.player.character.base.pos = Point::new(r.x + 1, r.y + 1);
+        self.world = World::new(self);
+        self.npcs.clear();
+        self.npc_index.clear();
+        self.item_sprites.clear();
+        self.item_sprites_index.clear();
+
+        let data = load_world_from_ron(level_paths()[index as usize])?;
+        self.world.apply_world_data(&data, index)?;
+
+        if let Some(room) = data.rooms.first() {
+            self.player.character.base.pos = Point::new(room.x + 1, room.y + 1);
         }
 
         for s in &data.spawns {
             let pos = Point::new(s.x, s.y);
 
-            if !state.is_available(pos) {
-                state.log.info(LogData::Debug(format!("Spawn blocked at ({}, {})", s.x, s.y)));
+            if !self.is_available(pos) {
+                self.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y)); // debugging purposes only
                 continue;
             }
 
             match &s.kind {
                 SpawnKind::Npc { def_id } => {
-                    let _ = state.spawn_npc(def_id.clone(), pos);
+                    let _ = self.spawn_npc(def_id.clone(), pos);
                 }
                 SpawnKind::Item { def_id } => {
-                    let item_id = state.register_item(def_id.clone());
-                    let _ = state.spawn_item(item_id, pos);
+                    let item_id = self.register_item(def_id.clone());
+                    let _ = self.spawn_item(item_id, pos);
                 }
             }
         }
 
-        state.compute_fov();
+        self.compute_fov();
 
-        state
+        Ok(())
     }
 
     // This is the routine of operations that need to be called every round.
@@ -109,7 +122,7 @@ impl Default for GameState {
             player: Player::default(),
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
+            level_nr: 0,
             entity_id_counter: 0,
             npcs: Vec::new(),
             npc_index: HashMap::new(),

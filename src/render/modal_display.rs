@@ -3,7 +3,7 @@
 use ratatui::{
     prelude::*,
     symbols::border,
-    widgets::{Block, Borders, Clear, Padding, Paragraph, Row, Table},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, Row, Table, Wrap},
 };
 
 use crate::{
@@ -19,6 +19,7 @@ pub enum ModalInterface {
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
     HelpDisplay,
+    SelectPrompt { selection_action: SelectionAction, options: Vec<String> },
 }
 
 impl ModalInterface {
@@ -36,6 +37,9 @@ impl ModalInterface {
                 render_text_display(title, paragraphs, rect, buf)
             }
             ModalInterface::HelpDisplay => render_help(rect, buf),
+            ModalInterface::SelectPrompt { selection_action, options } => {
+                render_select_prompt(rect, buf, selection_action, options)
+            }
         }
     }
 }
@@ -241,4 +245,35 @@ fn render_help(area: Rect, buf: &mut Buffer) {
     Paragraph::new("Press ESC to close this window")
         .style(Style::default().add_modifier(Modifier::DIM))
         .render(chunks[4], buf);
+}
+
+pub enum SelectionAction {
+    Debug,
+}
+
+fn render_select_prompt(
+    rect: Rect,
+    buf: &mut Buffer,
+    selection_action: &SelectionAction,
+    options: &[String],
+) {
+    let instruction = match selection_action {
+        SelectionAction::Debug => "Choose a message to be displayed".to_string(),
+    };
+
+    let modal_area_width = instruction.len() as u16 + 4;
+    let modal_area_height = options.len() as u16 + 5;
+    let modal_area =
+        render_modal_window(modal_area_width, modal_area_height, "Select".to_string(), rect, buf);
+    let center_of_rect = get_centered_rect(modal_area_width, modal_area_height, modal_area);
+
+    let mut lines: Vec<Line> = vec![Line::raw(instruction), Line::raw("")];
+    for (i, option) in options.iter().enumerate() {
+        let list_letter = (b'a' + i as u8) as char;
+        lines.push(Line::raw(format!("{} - {}", list_letter, option)));
+    }
+
+    let paragraph =
+        Paragraph::new(Text::from(lines)).alignment(Alignment::Center).wrap(Wrap { trim: true });
+    paragraph.render(center_of_rect, buf);
 }

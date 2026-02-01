@@ -176,6 +176,13 @@ pub enum DataError {
 
     /// The npc of the given [NpcDefId] does not exist in the game.
     MissingNpcDefinition(NpcDefId),
+
+    /// Tried to load static world, but no static world defined for id
+    StaticWorldNotFound(u8),
+
+    /// World needs to fit requirements to be loaded.
+    /// * Cannot be larger than `WORLD_WIDTH`x`WORLD_HEIGHT`
+    InvalidWorldFormat(u8),
 }
 
 impl fmt::Display for DataError {
@@ -186,6 +193,12 @@ impl fmt::Display for DataError {
             }
             DataError::MissingNpcDefinition(npc_def_id) => {
                 write!(f, "Npc of def_id {} not defined", npc_def_id)
+            }
+            DataError::StaticWorldNotFound(static_world_id) => {
+                write!(f, "No static world definied for id {}", static_world_id)
+            }
+            DataError::InvalidWorldFormat(static_world_id) => {
+                write!(f, "WorldData for {} does not fit requirements", static_world_id)
             }
         }
     }

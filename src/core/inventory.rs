@@ -38,6 +38,11 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
+    /// Uses an item from the player's inventory.
+    ///
+    /// Checks whether the item is present, resolves its definition, and
+    /// dispatches to the appropriate handler (armor, weapon, or food).  
+    /// Returns an error if the item is missing or unregistered.
     pub fn use_item(&mut self, item_id: u32) -> GameResult {
         let search_item = self.player.character.inventory.iter().position(|item| *item == item_id);
 

@@ -6,7 +6,7 @@ use crate::{
     core::player_actions::PlayerInput,
     render::{
         menu_display::{InventoryAction, MenuMode},
-        modal_display::ModalInterface,
+        modal_display::{ModalInterface, SelectionAction},
     },
     world::coordinate_system::Direction,
 };
@@ -189,6 +189,12 @@ impl App {
                     ],
                 })
             }
+            KeyCode::Char('8') => {
+                self.ui.modal = Some(ModalInterface::SelectPrompt {
+                    selection_action: SelectionAction::Debug,
+                    options: vec!["Message 1".into(), "Message 2".into(), "Message 3".into()],
+                })
+            }
             _ => {}
         }
     }
@@ -259,6 +265,26 @@ impl App {
                     KeyCode::Enter => ModalAction::CloseModal,
                     _ => ModalAction::Idle,
                 },
+                ModalInterface::SelectPrompt { selection_action, options } => {
+                    match key_event.code {
+                        KeyCode::Esc => ModalAction::CloseModal,
+                        KeyCode::Char(c) => {
+                            // Getting the selected option
+                            if let Some(index) = App::letter_to_index(c) {
+                                if let Some(option) = options.get(index) {
+                                    // Appying the selection action to the selected option
+                                    match selection_action {
+                                        SelectionAction::Debug => {
+                                            self.game.log.debug_print(option.to_string())
+                                        }
+                                    }
+                                }
+                            }
+                            ModalAction::Idle
+                        }
+                        _ => ModalAction::Idle,
+                    }
+                }
             }
         } else {
             return;
