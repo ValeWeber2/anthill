@@ -137,11 +137,11 @@ impl GameState {
             let new_y = npc.pos().y as isize + dy;
             let new_point = Point::new(new_x as usize, new_y as usize);
 
-            if !self.world.is_in_bounds(new_x, new_y) {
+            if !self.current_world().is_in_bounds(new_x, new_y) {
                 return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
             }
 
-            if !self.world.get_tile(new_point).tile_type.is_walkable() {
+            if !self.current_world().get_tile(new_point).tile_type.is_walkable() {
                 return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
             }
 
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_spawn_npc() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let id = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
@@ -314,7 +314,7 @@ mod tests {
     #[test]
     fn test_get_entity_by_id() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let npc_id = game.spawn_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
 
@@ -327,7 +327,7 @@ mod tests {
     #[test]
     fn test_get_entity_by_id_item() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let item_def_id: String = "armor_leather".to_string();
         let item_id = game.register_item(item_def_id);
@@ -342,7 +342,7 @@ mod tests {
     #[test]
     fn test_get_entity_at() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
         let pos = Point { x: 50, y: 7 };
 
         let id = game
@@ -366,7 +366,7 @@ mod tests {
     #[test]
     fn test_despawn_npc_updates_indices() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 
@@ -385,7 +385,7 @@ mod tests {
     #[test]
     fn test_despawn_removes_from_position() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let pos = Point::new(50, 7);
 
@@ -411,7 +411,7 @@ mod tests {
     #[test]
     fn test_multiple_spawns_indices() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        game.current_world_mut().carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
 

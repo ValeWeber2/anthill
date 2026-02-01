@@ -1,4 +1,5 @@
 pub mod coordinate_system;
+pub mod level;
 pub mod tiles;
 pub mod vision;
 pub mod world_data;

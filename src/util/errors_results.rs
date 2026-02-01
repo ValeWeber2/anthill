@@ -181,11 +181,11 @@ pub enum DataError {
     MissingNpcDefinition(NpcDefId),
 
     /// Tried to load static world, but no static world defined for id
-    StaticWorldNotFound(u8),
+    StaticWorldNotFound(usize),
 
     /// World needs to fit requirements to be loaded.
     /// * Cannot be larger than `WORLD_WIDTH`x`WORLD_HEIGHT`
-    InvalidWorldFormat(u8),
+    InvalidWorldFormat(usize),
 }
 
 impl fmt::Display for DataError {

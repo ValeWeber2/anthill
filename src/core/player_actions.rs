@@ -1,14 +1,14 @@
 use crate::{
     core::{
-        entity_logic::{Entity, EntityId},
+        entity_logic::{Entity, EntityId, Movable},
         game::GameState,
         game_items::GameItemId,
     },
     data::levels::level_paths,
-    util::errors_results::{EngineError, GameOutcome, GameResult},
+    util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
     world::{
-        coordinate_system::{Direction, Point},
-        tiles::TileType,
+        coordinate_system::{Direction, Point, PointVector},
+        tiles::{Collision, TileType},
     },
 };
 
@@ -39,18 +39,10 @@ impl GameState {
 
         let action_result: GameResult = match intended_action {
             ActionKind::Wait => Ok(GameOutcome::Success),
-            ActionKind::Move(Direction::Up) => {
-                self.world.move_player_character(&mut self.player.character, 0, -1)
-            }
-            ActionKind::Move(Direction::Right) => {
-                self.world.move_player_character(&mut self.player.character, 1, 0)
-            }
-            ActionKind::Move(Direction::Down) => {
-                self.world.move_player_character(&mut self.player.character, 0, 1)
-            }
-            ActionKind::Move(Direction::Left) => {
-                self.world.move_player_character(&mut self.player.character, -1, 0)
-            }
+            ActionKind::Move(Direction::Up) => self.move_player_character(0, -1),
+            ActionKind::Move(Direction::Right) => self.move_player_character(1, 0),
+            ActionKind::Move(Direction::Down) => self.move_player_character(0, 1),
+            ActionKind::Move(Direction::Left) => self.move_player_character(-1, 0),
             ActionKind::Attack(npc_id) => self.player_attack_npc(npc_id),
             ActionKind::PickUpItem(entity_id) => self.pick_up_item(entity_id),
             ActionKind::DropItem(item_id) => self.drop_item(item_id),
@@ -62,14 +54,15 @@ impl GameState {
         match action_result {
             Ok(GameOutcome::Success) => {
                 let pos = self.player.character.pos();
-                let tile = self.world.get_tile(pos).tile_type;
+                let tile = self.current_world().get_tile(pos).tile_type;
 
                 if let TileType::Stair = tile {
-                    let next = self.level_nr as usize + 1;
+                    let next = self.level_nr + 1;
 
                     if next <= level_paths().len() {
                         self.log.print("You go down the stairs...".to_string());
-                        let _ = self.load_level(next as u8);
+                        // let _ = self.load_static_level(next);
+                        let _ = self.goto_level(self.level_nr + 1);
                     } else {
                         self.log.print("This stair leads nowhere...".to_string()); //test later
                         self.log.print(format!("{} {}", next, level_paths().len()))
@@ -97,7 +90,7 @@ impl GameState {
             PlayerInput::Wait => ActionKind::Wait,
             PlayerInput::Direction(direction) => {
                 let target_point: Point = self.player.character.pos().get_adjacent(direction);
-                // let target_tile = self.world.get_tile(target_point.x, target_point.y);
+                // let target_tile = self.get_current_world().get_tile(target_point.x, target_point.y);
 
                 if let Some(entity_id) = self.get_entity_at(target_point) {
                     if self.get_npc(entity_id).is_some() {
@@ -135,6 +128,23 @@ impl GameState {
 
         let player_pos = self.player.character.pos();
         self.spawn_item(item_id, player_pos)?;
+
+        Ok(GameOutcome::Success)
+    }
+
+    pub fn move_player_character(&mut self, dx: isize, dy: isize) -> GameResult {
+        let point_vector = PointVector::new(dx, dy);
+        let new_pos = self.player.character.pos() + point_vector;
+
+        if !self.current_world().is_in_bounds(new_pos.x as isize, new_pos.y as isize) {
+            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos)));
+        }
+
+        if !self.current_world().get_tile(new_pos).tile_type.is_walkable() {
+            return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_pos)));
+        }
+
+        self.player.character.move_to(new_pos);
 
         Ok(GameOutcome::Success)
     }
