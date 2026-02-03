@@ -112,7 +112,7 @@ impl Level {
         let item_sprite_id = item_sprite.id();
 
         self.item_sprites.push(item_sprite);
-        let index = self.npcs.len() - 1;
+        let index = self.item_sprites.len() - 1;
         self.item_sprites_index.insert(item_sprite_id, index);
 
         Ok(())

@@ -243,6 +243,7 @@ mod tests {
 
         let npc = game.create_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
         let npc_id = npc.id();
+        let _ = level.spawn_npc(npc);
 
         game.levels.insert(0, level);
 
@@ -285,6 +286,9 @@ mod tests {
 
         let npc = game.create_npc("goblin".into(), pos).unwrap();
         let npc_id = npc.id();
+        let _ = level.spawn_npc(npc);
+
+        game.levels.insert(0, level);
 
         assert_eq!(game.current_level().get_entity_at(pos), Some(npc_id));
 
