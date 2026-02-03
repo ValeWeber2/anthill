@@ -1,13 +1,11 @@
 #![allow(dead_code)]
 
 use core::fmt;
-use std::collections::HashMap;
-
 use ratatui::style::Style;
 
 use crate::{
     core::{
-        entity_logic::{Entity, EntityBase, EntityId, Spawnable},
+        entity_logic::{Entity, EntityBase, EntityId},
         game::GameState,
     },
     data::item_defs::{GameItemDef, GameItemDefId, item_defs},
@@ -69,15 +67,8 @@ pub struct GameItem {
 
 // Implementation into Game State
 impl GameState {
-    pub fn next_item_id(&mut self) -> GameItemId {
-        let id = self.item_id_counter;
-        self.item_id_counter += 1;
-
-        id
-    }
-
     pub fn register_item(&mut self, def_id: GameItemDefId) -> GameItemId {
-        let id: GameItemId = self.next_item_id();
+        let id: GameItemId = self.id_system.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
 
         self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
@@ -92,20 +83,40 @@ impl GameState {
         }
     }
 
-    pub fn spawn_item(&mut self, item_id: GameItemId, pos: Point) -> Result<EntityId, GameError> {
+    /// Creates a new entity of type `GameItemSprite`.
+    ///
+    /// # Returns
+    /// The Npcs [EntityId], which can then be used to get access to the newly spawned Npc.
+    ///
+    /// # Errors
+    /// - [EngineError::UnregisteredItem()] if the item is not registered in the game state yet.
+    /// - [DataError::MissingItemDefinition()] if npc is not defined in game data.
+    /// - [EngineError::SpawningError()] if the position is not available.
+    pub fn create_item_sprite(
+        &mut self,
+        item_id: GameItemId,
+        pos: Point,
+    ) -> Result<GameItemSprite, GameError> {
+        // Checking if item is registerd.
         let item = self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
 
+        // Checking if item_def exists.
         let item_def = self
             .get_item_def_by_id(item.def_id.clone())
             .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
-        self.spawn::<GameItemSprite>(
-            item_def.name.into(),
+        // Creating item_sprite and assigning id.
+        let entity_id = self.id_system.next_entity_id();
+        let item_sprite = GameItemSprite::new(
+            entity_id,
+            item_def.name.to_string(),
             pos,
             item_def.glyph,
             item_def.style,
             item_id,
-        )
+        );
+
+        Ok(item_sprite)
     }
 
     pub fn get_item_by_id(&self, item_id: GameItemId) -> Option<GameItem> {
@@ -119,6 +130,7 @@ impl GameState {
 
 // Item Sprite
 // Items lying on the ground in the world as entities.
+#[derive(Clone)]
 pub struct GameItemSprite {
     pub base: EntityBase,
     pub item_id: GameItemId,
@@ -135,29 +147,6 @@ impl Entity for GameItemSprite {
 
     fn pos(&self) -> Point {
         self.base.pos
-    }
-}
-
-impl Spawnable for GameItemSprite {
-    type Extra = GameItemId;
-
-    fn new(
-        id: EntityId,
-        name: String,
-        pos: Point,
-        glyph: char,
-        style: Style,
-        item_id: GameItemId,
-    ) -> Self {
-        GameItemSprite::new(id, name, pos, glyph, style, item_id)
-    }
-
-    fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
-        &mut state.item_sprites
-    }
-
-    fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize> {
-        &mut state.item_sprites_index
     }
 }
 

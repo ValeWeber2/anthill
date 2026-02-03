@@ -92,11 +92,11 @@ impl GameState {
                 let target_point: Point = self.player.character.pos().get_adjacent(direction);
                 // let target_tile = self.get_current_world().get_tile(target_point.x, target_point.y);
 
-                if let Some(entity_id) = self.get_entity_at(target_point) {
-                    if self.get_npc(entity_id).is_some() {
+                if let Some(entity_id) = self.current_level().get_entity_at(target_point) {
+                    if self.current_level().get_npc(entity_id).is_some() {
                         return ActionKind::Attack(entity_id);
                     }
-                    if self.get_item_sprite(entity_id).is_some() {
+                    if self.current_level().get_item_sprite(entity_id).is_some() {
                         return ActionKind::PickUpItem(entity_id);
                     }
                 }
@@ -111,13 +111,15 @@ impl GameState {
     }
 
     fn pick_up_item(&mut self, entity_id: EntityId) -> GameResult {
-        let item_sprite =
-            self.get_item_sprite(entity_id).ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
+        let item_sprite = self
+            .current_level()
+            .get_item_sprite(entity_id)
+            .ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
 
         let result = self.add_item_to_inv(item_sprite.item_id);
 
         if let Ok(GameOutcome::Success) = result {
-            self.despawn(entity_id);
+            self.current_level_mut().despawn(entity_id);
         }
 
         result
@@ -127,7 +129,7 @@ impl GameState {
         self.remove_item_from_inv(item_id)?;
 
         let player_pos = self.player.character.pos();
-        self.spawn_item(item_id, player_pos)?;
+        self.create_item_sprite(item_id, player_pos)?;
 
         Ok(GameOutcome::Success)
     }

@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum NpcAiState {
     #[default]
     Inactive,
@@ -51,7 +51,7 @@ impl GameState {
     }
 
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
-        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
 
         let action = match npc.ai_state {
@@ -80,7 +80,8 @@ impl GameState {
 
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let npc_pos: Point = {
-            let npc: &Npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+            let npc: &Npc =
+                self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
             npc.pos()
         };
 
@@ -88,7 +89,8 @@ impl GameState {
 
         let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 10);
 
-        let npc: &mut Npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc: &mut Npc =
+            self.current_level_mut().get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
         if detectable_area.contains(&player_pos) {
             npc.ai_state = NpcAiState::Aggressive;

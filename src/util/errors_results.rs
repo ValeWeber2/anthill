@@ -130,6 +130,9 @@ pub enum EngineError {
 
     /// Spawning an entity at the given point failed.
     SpawningError(Point),
+
+    /// No level with the given index exists.
+    LevelNotFound(usize),
 }
 
 impl fmt::Display for EngineError {
@@ -160,6 +163,9 @@ impl fmt::Display for EngineError {
                     "Could not spawn entity, because point (x: {}, y: {}) is not available",
                     point.x, point.y
                 )
+            }
+            EngineError::LevelNotFound(level_nr) => {
+                write!(f, "Could not find a level with id {}", level_nr)
             }
         }
     }

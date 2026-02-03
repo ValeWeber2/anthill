@@ -4,11 +4,7 @@ use std::fmt::{self, Display, Formatter};
 
 use crate::util::errors_results::{DataError, GameError};
 use crate::world::coordinate_system::Point;
-use crate::world::tiles::Collision;
-use crate::{
-    core::game::GameState,
-    world::tiles::{DoorType, Tile, TileType},
-};
+use crate::world::tiles::{DoorType, Tile, TileType};
 
 use crate::world::world_data::{DoorTypeData, TileTypeData, WorldData};
 
@@ -258,15 +254,6 @@ impl Default for World {
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
         }
-    }
-}
-
-impl GameState {
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.current_world().is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.current_world().get_tile(pos).tile_type.is_walkable()
     }
 }
 

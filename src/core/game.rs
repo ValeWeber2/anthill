@@ -3,8 +3,8 @@
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
-use crate::core::entity_logic::{EntityId, Npc};
-use crate::core::game_items::{GameItem, GameItemId, GameItemSprite};
+use crate::core::entity_logic::EntityId;
+use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
 use crate::world::level::Level;
 
@@ -21,13 +21,10 @@ pub struct GameState {
     pub player: Player,
     pub log: Log,
     pub round_nr: u64,
-    pub entity_id_counter: u32,
-    pub npcs: Vec<Npc>,
-    pub npc_index: HashMap<EntityId, usize>,
-    pub item_sprites: Vec<GameItemSprite>,
-    pub item_sprites_index: HashMap<EntityId, usize>,
+
+    pub id_system: IdSystem,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
-    pub item_id_counter: GameItemId,
+
     pub rng: StdRng,
 }
 
@@ -39,27 +36,21 @@ impl GameState {
             log: Log::new(true),
             round_nr: 0,
             level_nr: 0,
-            entity_id_counter: 0,
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
+            id_system: IdSystem::default(),
             items: HashMap::new(),
-            item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
         };
 
-        let player_id = state.next_entity_id();
+        let player_id = state.id_system.next_entity_id();
         state.player = Player::new(player_id);
 
         let _ = state.goto_level(state.level_nr);
-        // state.load_static_level(0).expect("Failed to load the first level");
         state
     }
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
-        let npc_ids: Vec<EntityId> = self.npc_index.keys().copied().collect();
+        let npc_ids: Vec<EntityId> = self.current_level().npc_index.keys().copied().collect();
 
         for npc_id in npc_ids {
             let _ = self.npc_take_turn(npc_id);
@@ -80,13 +71,8 @@ impl Default for GameState {
             player: Player::default(),
             log: Log::new(true),
             round_nr: 0,
-            entity_id_counter: 0,
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
+            id_system: IdSystem::default(),
             items: HashMap::new(),
-            item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
         }
     }
@@ -118,5 +104,31 @@ impl Log {
         }
 
         self.print(message);
+    }
+}
+
+// ----------------------------------------------
+//                  ID System
+// ----------------------------------------------
+
+#[derive(Default)]
+pub struct IdSystem {
+    entity_id_counter: EntityId,
+    item_id_counter: GameItemId,
+}
+
+impl IdSystem {
+    pub fn next_entity_id(&mut self) -> EntityId {
+        let id = self.entity_id_counter;
+        self.entity_id_counter += 1;
+
+        id
+    }
+
+    pub fn next_item_id(&mut self) -> GameItemId {
+        let id = self.item_id_counter;
+        self.item_id_counter += 1;
+
+        id
     }
 }

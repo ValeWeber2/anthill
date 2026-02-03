@@ -66,7 +66,7 @@ impl WorldDisplay {
 
     /// Renders all Npcs at their position in the world.
     pub fn render_npcs(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for npc in &game.npcs {
+        for npc in &game.current_level().npcs {
             if game.current_world().get_tile(npc.pos()).visible {
                 self.render_sprite(&npc.base, rect, buf);
             }
@@ -75,7 +75,7 @@ impl WorldDisplay {
 
     /// Renders all Items at their position in the world.
     pub fn render_items(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for item_sprite in &game.item_sprites {
+        for item_sprite in &game.current_level().item_sprites {
             if game.current_world().get_tile(item_sprite.pos()).visible {
                 self.render_sprite(&item_sprite.base, rect, buf);
             }

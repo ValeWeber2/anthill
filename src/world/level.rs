@@ -2,12 +2,13 @@
 
 use std::collections::HashMap;
 
-use crate::core::entity_logic::Npc;
+use crate::core::entity_logic::{Entity, Npc};
 use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
-use crate::util::errors_results::DataError;
+use crate::util::errors_results::{DataError, EngineError};
 use crate::world::coordinate_system::Point;
-use crate::world::world_data::WorldData;
+use crate::world::tiles::Collision;
+use crate::world::world_data::SpawnKind;
 use crate::world::world_loader::load_world_from_ron;
 use crate::{
     core::{entity_logic::EntityId, game::GameState},
@@ -34,24 +35,114 @@ pub struct Level {
 }
 
 impl Level {
-    pub fn builder(level_nr: usize) -> LevelBuilder {
-        LevelBuilder::new(level_nr)
+    pub fn new() -> Self {
+        Self {
+            world: World::new(),
+
+            entry: Point::default(),
+
+            npcs: Vec::new(),
+            npc_index: HashMap::new(),
+
+            item_sprites: Vec::new(),
+            item_sprites_index: HashMap::new(),
+        }
     }
 
-    pub fn load_static_level(index: usize) -> Result<Self, GameError> {
-        if index > level_paths().len() {
-            return Err(GameError::from(DataError::StaticWorldNotFound(index)));
+    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
+        self.npc_index.get(&id).map(|&index| &self.npcs[index])
+    }
+
+    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
+        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
+    }
+
+    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
+    }
+
+    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
+        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
+    }
+
+    pub fn get_entity_at(&self, pos: Point) -> Option<EntityId> {
+        for npc in &self.npcs {
+            if npc.pos() == pos {
+                return Some(npc.id());
+            }
         }
 
-        let data = load_world_from_ron(level_paths()[index])?;
+        for item in &self.item_sprites {
+            if item.pos() == pos {
+                return Some(item.id());
+            }
+        }
 
-        let level = Level::builder(index)
-            .world(&data)
-            .set_entry_point(data.entry)
-            // .set_spawns(&data)
-            .build();
+        None
+    }
 
-        Ok(level)
+    pub fn is_available(&self, pos: Point) -> bool {
+        self.world.is_in_bounds(pos.x as isize, pos.y as isize)
+            && self.npcs.iter().all(|npc| npc.base.pos != pos)
+            && self.item_sprites.iter().all(|item| item.base.pos != pos)
+            && self.world.get_tile(pos).tile_type.is_walkable()
+    }
+
+    pub fn spawn_npc(&mut self, npc: Npc) -> Result<(), GameError> {
+        if !self.is_available(npc.pos()) {
+            let err = GameError::from(EngineError::SpawningError(npc.pos()));
+            return Err(err);
+        }
+
+        let npc_id = npc.id();
+
+        self.npcs.push(npc);
+        let index = self.npcs.len() - 1;
+        self.npc_index.insert(npc_id, index);
+
+        Ok(())
+    }
+
+    pub fn spawn_item_sprite(&mut self, item_sprite: GameItemSprite) -> Result<(), GameError> {
+        if !self.is_available(item_sprite.pos()) {
+            let err = GameError::from(EngineError::SpawningError(item_sprite.pos()));
+            return Err(err);
+        }
+
+        let item_sprite_id = item_sprite.id();
+
+        self.item_sprites.push(item_sprite);
+        let index = self.npcs.len() - 1;
+        self.item_sprites_index.insert(item_sprite_id, index);
+
+        Ok(())
+    }
+
+    /// Removes an entity from the level if it exists.
+    ///
+    /// Looks up the ID in NPCs first, then item sprites. Uses `swap_remove`
+    /// and fixes the moved entity’s index if needed.
+    pub fn despawn(&mut self, id: EntityId) {
+        if let Some(&index) = self.npc_index.get(&id) {
+            self.npcs.swap_remove(index);
+
+            if let Some(moved) = self.npcs.get(index) {
+                self.npc_index.insert(moved.id(), index);
+            }
+
+            self.npc_index.remove(&id);
+            return;
+        }
+
+        if let Some(&index) = self.item_sprites_index.get(&id) {
+            self.item_sprites.swap_remove(index);
+
+            if let Some(moved) = self.item_sprites.get(index) {
+                self.item_sprites_index.insert(moved.id(), index);
+            }
+
+            self.item_sprites_index.remove(&id);
+        }
     }
 }
 
@@ -85,8 +176,7 @@ impl GameState {
             }
         }
 
-        let new_level = self.current_level();
-        self.player.character.base.pos = new_level.entry;
+        self.player.character.base.pos = self.current_level().entry;
         self.compute_fov();
 
         Ok(())
@@ -96,7 +186,10 @@ impl GameState {
         // If current level is a static level
         // if index % STATIC_LEVEL_INTERVAL == 2 {
         let new_level: Level = if index == 0 || index == 1 {
-            Level::load_static_level(index)?
+            self.load_static_level(index).map_err(|error| {
+                self.log.debug_print(format!("Couldn't load level {}", error));
+                error
+            })?
         } else {
             todo!("Generate Level using Procedural Generation");
         };
@@ -105,86 +198,40 @@ impl GameState {
 
         Ok(())
     }
-}
 
-#[derive(Default)]
-pub struct LevelBuilder {
-    pub level_nr: usize,
-
-    pub world: World,
-
-    pub entry: Point,
-
-    pub npcs: Vec<Npc>,
-    pub npc_index: HashMap<EntityId, usize>,
-
-    pub item_sprites: Vec<GameItemSprite>,
-    pub item_sprites_index: HashMap<EntityId, usize>,
-}
-
-impl LevelBuilder {
-    pub fn new(level_nr: usize) -> Self {
-        Self {
-            level_nr,
-            world: World::new(),
-            entry: Point::default(),
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
+    pub fn load_static_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
+        if level_nr > level_paths().len() {
+            return Err(GameError::from(DataError::StaticWorldNotFound(level_nr)));
         }
-    }
 
-    /// Builder method that applies [WorldData] to self, which creates the worldspace.
-    pub fn world(mut self, world_data: &WorldData) -> Self {
-        let mut world = World::new();
-        let _ = world.apply_world_data(world_data, self.level_nr);
-        // TODO: Handle Errors
+        let data = load_world_from_ron(level_paths()[level_nr])?;
 
-        self.world = world;
-        self
-    }
+        let mut level = Level::new();
 
-    pub fn set_entry_point(mut self, point: Point) -> Self {
-        self.entry = point;
-        self
-    }
+        level.world.apply_world_data(&data, level_nr)?;
+        level.entry = data.entry;
 
-    // Builder method that applies [SpawnData] to self, which spawns all npcs and item_sprites.
-    // pub fn set_spawns(mut self, world_data: &WorldData) -> Self {
-    //     for spawn in &world_data.spawns {
-    //         let pos = Point::new(spawn.x, spawn.y);
-    //
-    //         if !self.world.is_in_bounds(pos.x as isize, pos.y as isize) || !self.world.get_tile(pos).tile_type.is_walkable() {
-    //             // self.log.debug_print(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
-    //             continue;
-    //         }
-    //
-    //         match &spawn.kind {
-    //             SpawnKind::Npc { def_id } => {
-    //                 let _ = self.spawn_npc(def_id.clone(), pos);
-    //             }
-    //             SpawnKind::Item { def_id } => {
-    //                 let item_id = self.register_item(def_id.clone());
-    //                 let _ = self.spawn_item(item_id, pos);
-    //             }
-    //         }
-    //     }
-    //
-    //     self
-    // }
+        for spawn in &data.spawns {
+            let pos = Point::new(spawn.x, spawn.y);
 
-    pub fn build(self) -> Level {
-        Level {
-            world: self.world,
+            if !level.is_available(pos) {
+                self.log.debug_print(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
+                continue;
+            }
 
-            entry: self.entry,
-
-            npcs: self.npcs,
-            npc_index: self.npc_index,
-
-            item_sprites: self.item_sprites,
-            item_sprites_index: self.item_sprites_index,
+            match &spawn.kind {
+                SpawnKind::Npc { def_id } => {
+                    let npc = self.create_npc(def_id.clone(), pos)?;
+                    level.spawn_npc(npc)?;
+                }
+                SpawnKind::Item { def_id } => {
+                    let item_id = self.register_item(def_id.clone());
+                    let item_sprite = self.create_item_sprite(item_id, pos)?;
+                    level.spawn_item_sprite(item_sprite)?;
+                }
+            }
         }
+
+        Ok(level)
     }
 }
