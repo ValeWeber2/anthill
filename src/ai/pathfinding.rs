@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
-use crate::world::worldspace::Collision;
+use crate::world::tiles::Collision;
 use crate::world::{
     coordinate_system::{Direction, Point},
     worldspace::World,

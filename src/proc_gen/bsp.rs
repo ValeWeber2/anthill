@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::cmp;
 
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 /// Binary Space Partitioning to procedurally generate rooms
 /// Inspired by: https://www.youtube.com/watch?v=Pj4owFPH1Hw (Java)
@@ -9,7 +9,7 @@ use crate::{
     proc_gen::bsp_nodes::{MapNode, NodeId},
     world::{
         coordinate_system::Point,
-        world_data::{RoomData, SpawnData, WorldData},
+        world_data::{RoomData, SpawnData, TileData, TileTypeData, WorldData},
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH, World},
     },
 };
@@ -83,6 +83,12 @@ pub struct MapBSP {
 
     /// Used to track how many rooms a map has. The BSP alorithm recurses until a certain number of rooms is reached.
     pub num_rooms: usize,
+
+    /// Contains the entry point, where the player appears upon reaching the level.
+    pub entry: Point,
+
+    /// Contains the exit point, where stairs that lead to the next level will be placed.
+    pub exit: Point,
 
     /// Contains the lots of `SpawnData` for the entire world. (Items and Npcs)
     pub spawns: Vec<SpawnData>,
@@ -331,6 +337,30 @@ impl MapBSP {
             }
         }
     }
+
+    fn add_entry_exit<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+        let mut leaves = Vec::new();
+        self.get_leaves(self.root, &mut leaves);
+
+        // Define rooms that need to exist on every level.
+        let mandatory_rooms: Vec<usize> = leaves.choose_multiple(rng, 2).cloned().collect();
+        let entry_node_id = mandatory_rooms[0];
+        let exit_node_id = mandatory_rooms[1];
+
+        // Determine entry
+        let entry_node = self.get_node_mut(entry_node_id);
+        let entry_node_floor = entry_node.get_floor_points();
+        let entry_point =
+            entry_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
+        self.entry = *entry_point;
+
+        // Determine exit
+        let exit_node = self.get_node_mut(exit_node_id);
+        let exit_node_floor = exit_node.get_floor_points();
+        let exit_point =
+            exit_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
+        self.exit = *exit_point;
+    }
 }
 
 impl From<MapBSP> for World {
@@ -357,17 +387,25 @@ impl From<MapBSP> for WorldData {
         let mut leaves = Vec::new();
         value.get_leaves(value.root, &mut leaves);
 
-        let room_data = leaves
+        let room_data: Vec<RoomData> = leaves
             .clone()
             .into_iter()
             .map(|leaf_id| RoomData::from(value.get_node(leaf_id).clone()))
             .collect();
 
+        let tiles: Vec<TileData> = vec![
+            // Entry
+            TileData { x: value.entry.x, y: value.entry.y, tile_type: TileTypeData::StairsUp },
+            // Exit
+            TileData { x: value.exit.x, y: value.exit.y, tile_type: TileTypeData::StairsDown },
+        ];
+
         WorldData {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
-            tiles: Vec::new(),
+            tiles,
             rooms: room_data,
+            entry: value.entry,
             spawns: value.spawns,
         }
     }
@@ -379,7 +417,15 @@ impl Default for MapBSP {
         let root = nodes.len();
         nodes.push(MapNode::default());
 
-        Self { nodes, root, halls: Vec::new(), num_rooms: ROOM_NUMBER, spawns: Vec::new() }
+        Self {
+            nodes,
+            root,
+            halls: Vec::new(),
+            num_rooms: ROOM_NUMBER,
+            entry: Point::new(5, 5),
+            exit: Point::new(6, 6),
+            spawns: Vec::new(),
+        }
     }
 }
 
@@ -392,6 +438,7 @@ pub fn generate_map() -> (World, WorldData) {
     map.find_neighbors();
     map.add_halls(&mut rng);
     map.populate_rooms(&mut rng);
+    map.add_entry_exit(&mut rng);
 
     (World::from(map.clone()), WorldData::from(map))
 }

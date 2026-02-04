@@ -16,20 +16,41 @@ use crate::{
 /// Game Outcome is its own data type to be used for outcomes within the rules of the game.
 /// When the rules of the game check if something is allowed, this should be used.
 ///
-/// Example: A player tries to move into a wall. The game returns GameResultFail(_), stating that this movement is illegal.
+/// Example: A player tries to move into a wall. The game returns `GameOutcome::Fail(FailReason::TileNotWalkable)`, stating that this movement is illegal.
 pub enum GameOutcome {
+    /// The action is successful and can be completed.
     Success,
+
+    /// The action was unsuccessful for the given reason.
+    /// The action will not be completed.
     Fail(FailReason),
 }
 
+/// Reasons for which a [GameOutcome] returns a `GameOutcome::Fail`.
+///
+/// Any thing forbidden by the game rules are implemented here.
 pub enum FailReason {
+    /// Action cannot be completed because the specified points is out of bounds.
+    /// (e.g. teleporting to negative coordinates like x: -1, y: 1)
     PointOutOfBounds(Point),
+
+    /// Action cannot be completed because the target tile is not walkable.
+    /// (e.g. walking against a wall)
     TileNotWalkable(Point),
+
+    /// Action cannot be completed the inventory cannot take in any more items.
+    /// (e.g. picking up an item while the inventory is full)
     InventoryFull,
+
+    /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
+    /// (e.g. trying to unequip armor while not wearing armor)
     CannotUnequipEmptySlot,
 }
 
 impl FailReason {
+    /// This is a function that defines how (if at all) a user should be notified of the `GameOutcome::Fail(_)`.
+    /// Some things should be told to the player (like the inventory being full).
+    /// Other things go without saying (lik enot being able to walk into a wall).
     pub fn notify_user(&self) -> Option<String> {
         match self {
             FailReason::PointOutOfBounds(_) => None,
@@ -44,13 +65,30 @@ impl FailReason {
     }
 }
 
-/// Generally used for actions where both a GameOutcome is tested and a GameError can be thrown.
+/// Result type, which is used for cases where both [GameOutcome] is tested and a [GameError] can occur.
+///
+/// The cases are ternary:
+/// * Program fails: `Err(...)`
+/// * Program succeeds + game rule is violated: `Ok(GameOutcome::Fail(...))`
+/// * Program succeeds + game succeeds: `Ok(GameOutcome::Success)`
 pub type GameResult = Result<GameOutcome, GameError>;
 
+/// Central errors that can occur in the game, wrapped by this type.
 #[derive(Debug)]
 pub enum GameError {
+    /// Wrapper for [EngineError]
+    ///
+    /// Failure of the game's central engine representing the player, npcs, world and more.
     Engine(EngineError),
+
+    /// Wrapper for [DataError]
+    ///
+    /// Failure of the game's data. Like if game objects with invalid ids or non-existent static data is accessed.
     Data(DataError),
+
+    /// Wrapper for [IoError]
+    ///
+    /// Failure of the game's IO. (Loading, saving, parsing save files)
     Io(IoError),
 }
 
@@ -70,14 +108,31 @@ impl fmt::Display for GameError {
     }
 }
 
+/// Failure of the game's central engine representing the player, npcs, world and more.
 #[derive(Debug)]
 pub enum EngineError {
+    /// An item of the given id is not regstered in `GameState::items`, meaning it doesn't exist.
     UnregisteredItem(GameItemId),
+
+    /// An item of the given kind is not of a valid kind for an action.
+    ///
+    /// Example: A sword cannot be put into the armor slot.
     InvalidItem(GameItemKindDef),
+
+    /// An Npc of the given id is not registered in `GameState::npcs`, meaning it doesn't exist.
     NpcNotFound(EntityId),
+
+    /// An ItemSprite of the given id is not registered in `GameState::item_sprites`, meaning it doesn't exist.
     ItemSpriteNotFound(EntityId),
+
+    /// An Item that is being used by the player is not in their inventory.
     ItemNotInInventory(GameItemId),
+
+    /// Spawning an entity at the given point failed.
     SpawningError(Point),
+
+    /// No level with the given index exists.
+    LevelNotFound(usize),
 }
 
 impl fmt::Display for EngineError {
@@ -109,6 +164,9 @@ impl fmt::Display for EngineError {
                     point.x, point.y
                 )
             }
+            EngineError::LevelNotFound(level_nr) => {
+                write!(f, "Could not find a level with id {}", level_nr)
+            }
         }
     }
 }
@@ -119,10 +177,21 @@ impl From<EngineError> for GameError {
     }
 }
 
+/// Failure of the game's data. Like if game objects with invalid ids or non-existent static data is accessed.
 #[derive(Debug)]
 pub enum DataError {
+    /// The item of the given [GameItemDefId] does not exist in the game.
     MissingItemDefinition(GameItemDefId),
+
+    /// The npc of the given [NpcDefId] does not exist in the game.
     MissingNpcDefinition(NpcDefId),
+
+    /// Tried to load static world, but no static world defined for id
+    StaticWorldNotFound(usize),
+
+    /// World needs to fit requirements to be loaded.
+    /// * Cannot be larger than `WORLD_WIDTH`x`WORLD_HEIGHT`
+    InvalidWorldFormat(usize),
 }
 
 impl fmt::Display for DataError {
@@ -134,6 +203,12 @@ impl fmt::Display for DataError {
             DataError::MissingNpcDefinition(npc_def_id) => {
                 write!(f, "Npc of def_id {} not defined", npc_def_id)
             }
+            DataError::StaticWorldNotFound(static_world_id) => {
+                write!(f, "No static world definied for id {}", static_world_id)
+            }
+            DataError::InvalidWorldFormat(static_world_id) => {
+                write!(f, "WorldData for {} does not fit requirements", static_world_id)
+            }
         }
     }
 }
@@ -144,11 +219,19 @@ impl From<DataError> for GameError {
     }
 }
 
+/// Failure of the game's IO. (Loading, saving, parsing save files)
 #[derive(Debug)]
 pub enum IoError {
+    /// Reading the map file from the assets has failed.
     FileReading(io::Error),
+
+    /// Parsing the map file from the assets for its .ron structure failed.
     MapParsing(SpannedError),
+
+    /// Creating a new file failed.
     FileCreation(io::Error),
+
+    /// Writing the app state to the file failed.
     MapWriting(ron::Error),
 }
 

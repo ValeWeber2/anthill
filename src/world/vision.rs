@@ -7,6 +7,7 @@ use crate::{
     core::{entity_logic::Entity, game::GameState},
     world::{
         coordinate_system::{Direction, Point},
+        tiles::Opacity,
         worldspace::World,
     },
 };
@@ -132,7 +133,7 @@ impl FogOfWar for World {
 
 impl GameState {
     pub fn compute_fov(&mut self) {
-        compute_fov(self.player.character.pos(), &mut self.world);
+        compute_fov(self.player.character.pos(), self.current_world_mut());
     }
 }
 
@@ -203,8 +204,8 @@ impl Row {
 }
 
 /// Calculates new start and end slopes. It’s used in two situations:
-/// [1], if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
-/// [2], if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
+/// (1), if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
+/// (2), if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
 /// In both situations, the line is tangent to the left edge of the current tile, so we can use a single slope function for both start and end slopes.
 fn slope(tile: ViewPoint) -> Rational {
     let ViewPoint { x: row_depth, y: col } = tile;

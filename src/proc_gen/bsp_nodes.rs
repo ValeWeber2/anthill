@@ -3,7 +3,7 @@ use std::cmp;
 use rand::Rng;
 
 use crate::{
-    proc_gen::bsp::{MIN_NODE_DIM_SHRUNK, PADDING, SHRINK_FACTOR_RANGE},
+    proc_gen::bsp::{GRID_SIZE, MIN_NODE_DIM_SHRUNK, PADDING, SHRINK_FACTOR_RANGE},
     world::{
         coordinate_system::Point,
         world_data::RoomData,
@@ -84,6 +84,21 @@ impl MapNode {
         self.point_b.x -= (width.saturating_sub(new_width)) / 2;
         self.point_a.y += (height.saturating_sub(new_height)) / 2;
         self.point_b.y -= (height.saturating_sub(new_height)) / 2;
+    }
+
+    pub fn get_floor_points(&mut self) -> Vec<Point> {
+        let mut points: Vec<Point> = Vec::new();
+
+        let x_range = (self.point_a.x + GRID_SIZE)..self.point_b.x;
+        let y_range = (self.point_a.y + GRID_SIZE)..self.point_b.y;
+
+        for x in x_range {
+            for y in y_range.clone() {
+                points.push(Point::new(x, y));
+            }
+        }
+
+        points
     }
 }
 

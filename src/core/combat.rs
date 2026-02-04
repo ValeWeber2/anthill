@@ -10,7 +10,7 @@ use crate::{
 impl GameState {
     pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
         // Fetching values
-        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.base.name.clone();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
@@ -35,14 +35,17 @@ impl GameState {
             }
             Some(damage) => {
                 // Apply Damage
-                let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+                let npc = self
+                    .current_level_mut()
+                    .get_npc_mut(npc_id)
+                    .ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
                 attack_message = format!("Player hits {} for {} damage!", npc.base.name, damage);
 
                 if !npc.stats.base.is_alive() {
                     attack_message = format!("{}\n{} died!", attack_message, npc.base.name);
-                    self.despawn(npc_id);
+                    self.current_level_mut().despawn(npc_id);
                     self.player.character.gain_experience(25);
                 }
             }
@@ -55,7 +58,7 @@ impl GameState {
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
         let (npc_name, npc_damage) = {
-            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            let npc = self.current_level().get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
             (npc.base.name.to_string(), npc.stats.damage)
         };
 

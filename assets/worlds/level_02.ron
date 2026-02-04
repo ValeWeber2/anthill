@@ -1,0 +1,142 @@
+WorldData(
+  width: 100,
+  height: 25,
+
+  // NOTIZEN NUR FÜR MICH
+  // Schloss bei x: 29, y: 15, Schlüssel bei x: 21, y: 7
+  //
+
+
+  rooms: [
+    RoomData(x: 2,  y: 3,  width: 5,  height: 6),  // Raum 1
+    RoomData(x: 9,  y: 2,  width: 8,  height: 5),  // Raum 2
+    RoomData(x: 4,  y: 10, width: 28, height: 5),  // Raum 3
+    RoomData(x: 33, y: 1,  width: 8,  height: 18), // Raum 4
+    RoomData(x: 18, y: 4,  width: 10, height: 5),  // Raum 5
+    RoomData(x: 1,  y: 17, width: 7,  height: 7),  // Raum 6
+    RoomData(x: 10, y: 16, width: 7,  height: 4),  // Raum 7
+    RoomData(x: 18, y: 17, width: 9,  height: 4),  // Raum 8
+    RoomData(x: 36, y: 20, width: 20, height: 4),  // Raum 9
+    RoomData(x: 54, y: 13, width: 40, height: 4),  // Raum 10
+    RoomData(x: 62, y: 18, width: 5,  height: 6),  // Raum 11
+
+
+    RoomData(x: 43, y: 1,  width: 8,  height: 18), // Raum x
+  ],
+
+  tiles: [
+    TileData(x: 7,  y: 5,   tile_type: Hallway),
+    TileData(x: 8,  y: 5,   tile_type: Hallway),
+
+    TileData(x: 14, y: 7,   tile_type: Hallway),
+    TileData(x: 14, y: 8,   tile_type: Hallway),
+    TileData(x: 14, y: 9,   tile_type: Hallway),
+
+    TileData(x: 32, y: 12,  tile_type: Hallway),
+    TileData(x: 33, y: 12,  tile_type: Hallway),
+
+    TileData(x: 32, y: 5,   tile_type: Hallway),
+    TileData(x: 31, y: 5,   tile_type: Hallway),
+    TileData(x: 30, y: 5,   tile_type: Hallway),
+    TileData(x: 29, y: 5,   tile_type: Hallway),
+    TileData(x: 28, y: 5,   tile_type: Hallway),
+
+    TileData(x: 5,  y: 15,  tile_type: Hallway),
+    TileData(x: 5,  y: 16,  tile_type: Hallway),
+
+    TileData(x: 8,  y: 22,  tile_type: Hallway),
+    TileData(x: 9,  y: 22,  tile_type: Hallway),
+    TileData(x: 10, y: 22,  tile_type: Hallway),
+    TileData(x: 11, y: 22,  tile_type: Hallway),
+    TileData(x: 11, y: 21,  tile_type: Hallway),
+    TileData(x: 11, y: 20,  tile_type: Hallway),
+
+    TileData(x: 12, y: 22,  tile_type: Hallway),
+    TileData(x: 13, y: 22,  tile_type: Hallway),
+    TileData(x: 14, y: 22,  tile_type: Hallway),
+    TileData(x: 15, y: 22,  tile_type: Hallway),
+    TileData(x: 15, y: 23,  tile_type: Hallway),
+    TileData(x: 16, y: 23,  tile_type: Hallway),
+    TileData(x: 17, y: 23,  tile_type: Hallway),
+    TileData(x: 18, y: 23,  tile_type: Hallway),
+    TileData(x: 18, y: 22,  tile_type: Hallway),
+    TileData(x: 19, y: 22,  tile_type: Hallway),
+    TileData(x: 20, y: 22,  tile_type: Hallway),
+    TileData(x: 21, y: 22,  tile_type: Hallway),
+    TileData(x: 22, y: 22,  tile_type: Hallway),
+    TileData(x: 23, y: 22,  tile_type: Hallway),
+    TileData(x: 23, y: 21,  tile_type: Hallway),
+
+    TileData(x: 24, y: 22,  tile_type: Hallway),
+    TileData(x: 25, y: 22,  tile_type: Hallway),
+    TileData(x: 26, y: 22,  tile_type: Hallway),
+    TileData(x: 27, y: 22,  tile_type: Hallway),
+    TileData(x: 28, y: 22,  tile_type: Hallway),
+    TileData(x: 28, y: 21,  tile_type: Hallway),
+    TileData(x: 28, y: 20,  tile_type: Hallway),
+    TileData(x: 29, y: 20,  tile_type: Hallway),
+    TileData(x: 30, y: 20,  tile_type: Hallway),
+    TileData(x: 30, y: 21,  tile_type: Hallway),
+    TileData(x: 30, y: 22,  tile_type: Hallway),
+    TileData(x: 31, y: 22,  tile_type: Hallway),
+    TileData(x: 32, y: 22,  tile_type: Hallway),
+    TileData(x: 33, y: 22,  tile_type: Hallway),
+    TileData(x: 34, y: 22,  tile_type: Hallway),
+    TileData(x: 35, y: 22,  tile_type: Hallway),
+
+    TileData(x: 56, y: 21,  tile_type: Hallway),
+    TileData(x: 57, y: 21,  tile_type: Hallway),
+    TileData(x: 58, y: 21,  tile_type: Hallway),
+    TileData(x: 59, y: 21,  tile_type: Hallway),
+    TileData(x: 59, y: 20,  tile_type: Hallway),
+    TileData(x: 59, y: 19,  tile_type: Hallway),
+    TileData(x: 59, y: 18,  tile_type: Hallway),
+    TileData(x: 59, y: 17,  tile_type: Hallway),
+
+    TileData(x: 60, y: 19,  tile_type: Hallway),
+    TileData(x: 61, y: 19,  tile_type: Hallway),
+
+    TileData(x: 29, y: 19,  tile_type: Hallway),
+    TileData(x: 29, y: 18,  tile_type: Hallway),
+    TileData(x: 29, y: 17,  tile_type: Hallway),
+    TileData(x: 29, y: 16,  tile_type: Hallway),
+    TileData(x: 29, y: 15,  tile_type: Hallway),
+
+
+    // Maze
+    TileData(x: 67, y: 22,  tile_type: Hallway),
+    TileData(x: 68, y: 22,  tile_type: Hallway),
+    TileData(x: 69, y: 22,  tile_type: Hallway),
+    TileData(x: 69, y: 21,  tile_type: Hallway),
+    TileData(x: 69, y: 23,  tile_type: Hallway),
+    TileData(x: 70, y: 23,  tile_type: Hallway),
+    TileData(x: 71, y: 23,  tile_type: Hallway),
+    TileData(x: 72, y: 23,  tile_type: Hallway),
+    TileData(x: 72, y: 22,  tile_type: Hallway),
+    TileData(x: 73, y: 22,  tile_type: Hallway),
+    TileData(x: 69, y: 20,  tile_type: Hallway),
+    TileData(x: 69, y: 19,  tile_type: Hallway),
+    TileData(x: 69, y: 18,  tile_type: Hallway),
+    TileData(x: 70, y: 18,  tile_type: Hallway),
+    TileData(x: 71, y: 18,  tile_type: Hallway),
+    TileData(x: 71, y: 19,  tile_type: Hallway),
+    TileData(x: 71, y: 20,  tile_type: Hallway),
+    TileData(x: 72, y: 19,  tile_type: Hallway),
+    TileData(x: 73, y: 19,  tile_type: Hallway),
+    TileData(x: 74, y: 19,  tile_type: Hallway),
+    TileData(x: 75, y: 19,  tile_type: Hallway),
+
+
+
+  ],
+
+  entry: Point(x: 3, y: 4),
+
+  spawns: [
+    //NPCs
+
+
+    //Items on ground
+
+  ],
+)

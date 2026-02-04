@@ -2,31 +2,14 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use ratatui::style::Style;
-
-use crate::util::errors_results::{FailReason, GameOutcome, GameResult};
+use crate::util::errors_results::{DataError, GameError};
 use crate::world::coordinate_system::Point;
-use crate::{
-    core::{
-        entity_logic::{Entity, Movable},
-        game::GameState,
-    },
-    world::tiles::{DoorType, Tile, TileType},
-};
+use crate::world::tiles::{DoorType, Tile, TileType};
 
-use crate::world::world_data::{TileTypeData, WorldData};
+use crate::world::world_data::{DoorTypeData, TileTypeData, WorldData};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
-
-pub trait Drawable {
-    fn glyph(&self) -> char;
-    fn style(&self) -> Style;
-}
-
-pub trait Collision {
-    fn is_walkable(&self) -> bool;
-}
 
 // ----------------------------------------------
 //                     Rooms
@@ -101,7 +84,6 @@ impl World {
         in_lower_bounds && in_upper_bounds
     }
 
-    // could be used in combat system or graphics
     pub fn get_points_in_radius(&self, pos: Point, radius: isize) -> Vec<Point> {
         let mut points = Vec::new();
         let x = pos.x as isize;
@@ -123,40 +105,40 @@ impl World {
         points
     }
 
-    pub fn carve_corridor(&mut self, from: Point, to: Point) {
-        let mut x = from.x;
-        let mut y = from.y;
+    pub fn open_room_for_hallway(&mut self) {
+        let dirs: [(isize, isize); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
-        while x != to.x {
-            self.carve_corridor_step(Point::new(x, y));
-            if to.x > x {
-                x += 1
-            } else {
-                x -= 1
-            };
-        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let hall = Point::new(x, y);
+                if self.get_tile(hall).tile_type != TileType::Hallway {
+                    continue;
+                }
 
-        while y != to.y {
-            self.carve_corridor_step(Point::new(x, y));
-            if to.y > y {
-                y += 1
-            } else {
-                y -= 1
-            };
-        }
+                for (dx, dy) in dirs {
+                    let wx = x as isize + dx;
+                    let wy = y as isize + dy;
+                    if !self.is_in_bounds(wx, wy) {
+                        continue;
+                    }
+                    let wall_p = Point::new(wx as usize, wy as usize);
 
-        self.carve_corridor_step(Point::new(x, y));
-    }
+                    if self.get_tile(wall_p).tile_type != TileType::Wall {
+                        continue;
+                    }
 
-    fn carve_corridor_step(&mut self, pos: Point) {
-        let tile = self.get_tile_mut(pos);
+                    let bx = wx + dx;
+                    let by = wy + dy;
+                    if !self.is_in_bounds(bx, by) {
+                        continue;
+                    }
+                    let behind = Point::new(bx as usize, by as usize);
 
-        tile.tile_type = match tile.tile_type {
-            TileType::Wall => TileType::Door(DoorType::Archway),
-            TileType::Door(DoorType::Closed) => TileType::Door(DoorType::Archway),
-            TileType::Floor => TileType::Floor,
-            TileType::Void => TileType::Hallway,
-            other => other,
+                    if self.get_tile(behind).tile_type == TileType::Floor {
+                        self.get_tile_mut(wall_p).tile_type = TileType::Door(DoorType::Archway);
+                    }
+                }
+            }
         }
     }
 
@@ -167,7 +149,7 @@ impl World {
             for x in 0..self.width {
                 let tt = self.get_tile(Point::new(x, y)).tile_type;
 
-                if matches!(tt, TileType::Floor | TileType::Hallway | TileType::Door(_)) {
+                if matches!(tt, TileType::Floor | TileType::Door(_)) {
                     let y0 = y.saturating_sub(1);
                     let y1 = (y + 1).min(self.height - 1);
                     let x0 = x.saturating_sub(1);
@@ -196,6 +178,10 @@ impl World {
         }
     }
 
+    /// Carves a rectangular room into the map.
+    ///
+    /// Fills the interior with `Floor` tiles and surrounds it with `Wall` tiles
+    /// based on the room’s origin, width, and height.
     pub fn carve_room(&mut self, room: &Room) {
         let ox = room.origin.x;
         let oy = room.origin.y;
@@ -219,32 +205,9 @@ impl World {
         }
     }
 
-    pub fn move_player_character<E: Entity + Movable>(
-        &self,
-        entity: &mut E,
-        dx: i32,
-        dy: i32,
-    ) -> GameResult {
-        let new_x = entity.pos().x as isize + dx as isize;
-        let new_y = entity.pos().y as isize + dy as isize;
-        let new_point = Point::new(new_x as usize, new_y as usize);
-
-        if !self.is_in_bounds(new_x, new_y) {
-            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-        }
-
-        if !self.get_tile(Point::new(new_x as usize, new_y as usize)).tile_type.is_walkable() {
-            return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
-        }
-
-        entity.move_to(new_point);
-
-        Ok(GameOutcome::Success)
-    }
-
-    pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {
+    pub fn apply_world_data(&mut self, data: &WorldData, index: usize) -> Result<(), GameError> {
         if data.width != self.width || data.height != self.height {
-            return Err("WorldData dimensions do not match current ones");
+            return Err(GameError::from(DataError::InvalidWorldFormat(index)));
         }
 
         for t in self.tiles.iter_mut() {
@@ -256,19 +219,9 @@ impl World {
             self.carve_room(&room);
         }
 
-        for w in data.rooms.windows(2) {
-            let a = &w[0];
-            let b = &w[1];
-
-            let start = Point::new(a.x + a.width / 2, a.y + a.height / 2);
-            let end = Point::new(b.x + b.width / 2, b.y + b.height / 2);
-
-            self.carve_corridor(start, end);
-        }
-
         for td in &data.tiles {
             if td.x >= self.width || td.y >= self.height {
-                return Err("WorldData contains tile out of bounds");
+                return Err(GameError::from(DataError::InvalidWorldFormat(index)));
             }
 
             let idx = self.index(td.x, td.y);
@@ -276,15 +229,19 @@ impl World {
             let tile_type = match td.tile_type {
                 TileTypeData::Floor => TileType::Floor,
                 TileTypeData::Wall => TileType::Wall,
-                TileTypeData::Door { open } => {
-                    TileType::Door(if open { DoorType::Open } else { DoorType::Closed })
-                }
+                TileTypeData::Hallway => TileType::Hallway,
+                TileTypeData::StairsDown => TileType::StairsDown,
+                TileTypeData::StairsUp => TileType::StairsUp,
+                TileTypeData::Door(DoorTypeData::Archway) => TileType::Door(DoorType::Archway),
+                TileTypeData::Door(DoorTypeData::Open) => TileType::Door(DoorType::Open),
+                TileTypeData::Door(DoorTypeData::Closed) => TileType::Door(DoorType::Closed),
             };
 
             self.tiles[idx] = Tile::new(tile_type);
         }
 
-        // self.add_walls_around_walkables();
+        // self.open_room_for_hallway();
+        self.add_walls_around_walkables();
 
         Ok(())
     }
@@ -298,15 +255,6 @@ impl Default for World {
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
         }
-    }
-}
-
-impl GameState {
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.world.is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.world.get_tile(pos).tile_type.is_walkable()
     }
 }
 

@@ -9,15 +9,27 @@ use ratatui::{
 
 use crate::core::game::GameState;
 
+/// Different display modes for the menu
 #[derive(Debug, Clone, Copy)]
 pub enum MenuMode {
+    /// Displaying the game log
+    ///
+    /// In this mode, the menu cannot be focused and there are no interactions with the log.
     Log,
+
+    /// Displaying the player character's inventory.
+    ///
+    /// The inventory can be opened in different modes ([InventoryAction]), which are passed as an argument.
     Inventory(InventoryAction),
 }
 
+/// Different modes to use the inventory (Use or Drop)
 #[derive(Debug, Clone, Copy)]
 pub enum InventoryAction {
+    /// The inventory is open with the intention of using an item.
     Use,
+
+    /// The inventory is open with the intention of dropping an item.
     Drop,
 }
 
@@ -31,6 +43,7 @@ impl fmt::Display for MenuMode {
     }
 }
 
+/// Menu struct containing the state of the menu in the app.
 pub struct Menu {
     pub mode: MenuMode,
 }
@@ -39,6 +52,8 @@ impl Menu {
     pub fn new() -> Self {
         Self { mode: MenuMode::Log }
     }
+
+    /// Renders the menu. Switches between log display and inventory display depending on state.
     pub fn render(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         match self.mode {
             MenuMode::Log => self.render_log(&game_state.log.messages, rect, buf),
@@ -46,6 +61,7 @@ impl Menu {
         }
     }
 
+    /// Renders the menu in log mode.
     pub fn render_log(&self, messages: &[String], rect: Rect, buf: &mut Buffer) {
         let height = rect.height as usize;
         let start = messages.len().saturating_sub(height);
@@ -57,6 +73,7 @@ impl Menu {
         paragraph.render(rect, buf);
     }
 
+    /// Renders the menu in inventory mode.
     pub fn render_inventory(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         let inventory = &game_state.player.character.inventory;
 
