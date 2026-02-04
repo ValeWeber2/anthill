@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::world::coordinate_system::Point;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorldData {
     pub width: usize,
@@ -10,6 +12,9 @@ pub struct WorldData {
 
     #[serde(default)]
     pub rooms: Vec<RoomData>,
+
+    #[serde(default)]
+    pub entry: Point,
 
     #[serde(default)]
     pub spawns: Vec<SpawnData>,

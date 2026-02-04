@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum NpcAiState {
     #[default]
     Inactive,
@@ -51,8 +51,8 @@ impl GameState {
     }
 
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
-        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        let melee_area = self.world.get_points_in_radius(npc.pos(), 1);
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
 
         let action = match npc.ai_state {
             NpcAiState::Inactive => NpcActionKind::Wait,
@@ -66,7 +66,7 @@ impl GameState {
                 if melee_area.contains(&self.player.character.pos()) {
                     NpcActionKind::Attack
                 } else if let Some(next_step) =
-                    self.world.next_step_toward(npc.pos(), self.player.character.pos())
+                    self.current_world().next_step_toward(npc.pos(), self.player.character.pos())
                 {
                     NpcActionKind::Move(next_step)
                 } else {
@@ -80,15 +80,17 @@ impl GameState {
 
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let npc_pos: Point = {
-            let npc: &Npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+            let npc: &Npc =
+                self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
             npc.pos()
         };
 
         let player_pos: Point = { self.player.character.pos() };
 
-        let detectable_area: Vec<Point> = self.world.get_points_in_radius(npc_pos, 10);
+        let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 10);
 
-        let npc: &mut Npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc: &mut Npc =
+            self.current_level_mut().get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
         if detectable_area.contains(&player_pos) {
             npc.ai_state = NpcAiState::Aggressive;

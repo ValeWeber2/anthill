@@ -1,6 +1,7 @@
 use std::fmt;
 use std::ops::{Add, Sub};
 
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
 /// Basic coordinate point in the coordinate system.
@@ -10,7 +11,7 @@ use strum_macros::EnumIter;
 /// Forms a whole number vector space together with [PointVector], which allows basic algebraic operations:
 /// - Addition: ([Add]): `(Point, PointVector) -> Point`
 /// - Subtraction: ([Sub]): `(Point, Point) -> PointVector`
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -90,7 +91,7 @@ pub struct PointVector {
 }
 
 impl PointVector {
-    fn new(x: isize, y: isize) -> Self {
+    pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 

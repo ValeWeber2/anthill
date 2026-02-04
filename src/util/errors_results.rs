@@ -130,6 +130,9 @@ pub enum EngineError {
 
     /// Spawning an entity at the given point failed.
     SpawningError(Point),
+
+    /// No level with the given index exists.
+    LevelNotFound(usize),
 }
 
 impl fmt::Display for EngineError {
@@ -161,6 +164,9 @@ impl fmt::Display for EngineError {
                     point.x, point.y
                 )
             }
+            EngineError::LevelNotFound(level_nr) => {
+                write!(f, "Could not find a level with id {}", level_nr)
+            }
         }
     }
 }
@@ -181,11 +187,11 @@ pub enum DataError {
     MissingNpcDefinition(NpcDefId),
 
     /// Tried to load static world, but no static world defined for id
-    StaticWorldNotFound(u8),
+    StaticWorldNotFound(usize),
 
     /// World needs to fit requirements to be loaded.
     /// * Cannot be larger than `WORLD_WIDTH`x`WORLD_HEIGHT`
-    InvalidWorldFormat(u8),
+    InvalidWorldFormat(usize),
 }
 
 impl fmt::Display for DataError {
