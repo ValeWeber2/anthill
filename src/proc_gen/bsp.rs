@@ -14,12 +14,6 @@ use crate::{
     },
 };
 
-/// Constant seed, from which the world is generated.
-///
-/// # TO DO
-/// Have it be generated and injected by the caller of this module.
-pub const RNG_SEED: u64 = 44;
-
 /// Size of the grid with which distances are calculated. Here, the grid is just 1:1.
 pub const GRID_SIZE: usize = 1;
 
@@ -429,8 +423,8 @@ impl Default for MapBSP {
     }
 }
 
-pub fn generate_map() -> (World, WorldData) {
-    let mut rng = StdRng::seed_from_u64(RNG_SEED);
+pub fn generate_map(map_seed: u64) -> (World, WorldData) {
+    let mut rng = StdRng::seed_from_u64(map_seed);
 
     let mut map = MapBSP::default();
     map.divide(&mut rng);

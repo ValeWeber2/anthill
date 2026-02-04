@@ -4,7 +4,6 @@ use crate::{
         game::GameState,
         game_items::GameItemId,
     },
-    data::levels::level_paths,
     util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
     world::{
         coordinate_system::{Direction, Point, PointVector},
@@ -57,16 +56,8 @@ impl GameState {
                 let tile = self.current_world().get_tile(pos).tile_type;
 
                 if let TileType::StairsDown = tile {
-                    let next = self.level_nr + 1;
-
-                    if next <= level_paths().len() {
-                        self.log.print("You go down the stairs...".to_string());
-                        // let _ = self.load_static_level(next);
-                        let _ = self.goto_level(self.level_nr + 1);
-                    } else {
-                        self.log.print("This stair leads nowhere...".to_string()); //test later
-                        self.log.print(format!("{} {}", next, level_paths().len()))
-                    }
+                    self.log.print("You go down the stairs...".to_string());
+                    let _ = self.goto_level(self.level_nr + 1);
                 }
 
                 self.next_round();

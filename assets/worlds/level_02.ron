@@ -127,6 +127,8 @@ WorldData(
     TileData(x: 75, y: 19,  tile_type: Hallway),
 
 
+    // Way down
+    TileData(x: 4, y: 7, tile_type: StairsDown),
 
   ],
 

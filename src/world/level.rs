@@ -2,6 +2,8 @@
 
 use std::collections::HashMap;
 
+use rand::RngCore;
+
 use crate::core::entity_logic::{Entity, Npc};
 use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
@@ -234,7 +236,7 @@ impl GameState {
     }
 
     pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
-        let (_, data) = generate_map();
+        let (_, data) = generate_map(self.proc_gen.next_u64());
 
         let mut level = Level::new();
 

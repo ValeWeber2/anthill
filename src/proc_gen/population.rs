@@ -86,7 +86,7 @@ fn random_npcs<R: Rng + ?Sized>(
     available_y: Range<usize>,
     rng: &mut R,
 ) -> Vec<SpawnData> {
-    let spawns_amount = rng.random_range(1..6);
+    let spawns_amount = rng.random_range(1..3);
 
     let mut spawns: Vec<SpawnData> = Vec::new();
     for _ in 0..spawns_amount {
