@@ -1,13 +1,9 @@
 use ratatui::{
     prelude::*,
-    text::Line,
     widgets::{Cell, Row, Table},
 };
 
-use crate::{
-    core::{entity_logic::Entity, game::GameState, game_items::AsItemId},
-    render::ui::format_item,
-};
+use crate::core::{entity_logic::Entity, game::GameState, game_items::GameItemKindDef};
 
 pub struct InfoDisplay;
 
@@ -34,21 +30,13 @@ impl InfoDisplay {
     pub fn render(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
         let player_hp_current = game.player.character.stats.base.hp_current;
         let player_hp_max = game.player.character.stats.base.hp_max;
-        let weapon_line = {
-            let mut line = Line::from("Weapon:");
-            line.spans.extend(self.format_weapon(game).spans);
-            line
-        };
-        let armor_line = {
-            let mut line = Line::from("Armor:");
-            line.spans.extend(self.format_armor(game).spans);
-            line
-        };
+        let weapon = self.format_weapon(game);
+        let armor = self.format_armor(game);
 
         let info_rows = [
             Row::new(vec![
                 Cell::from(format!("HP:{}({})", player_hp_current, player_hp_max)),
-                Cell::from(weapon_line),
+                Cell::from(format!("Weapon: {}", weapon)),
                 Cell::from(format!(
                     "Exp:{} Round:{}",
                     game.player.character.stats.experience, game.round_nr
@@ -67,7 +55,7 @@ impl InfoDisplay {
                     game.player.character.stats.vitality,
                     game.player.character.stats.perception
                 )),
-                Cell::from(armor_line),
+                Cell::from(format!("Armor: {}", armor)),
                 Cell::from(format!("Dungeon Floor:{}", game.level_nr)),
             ]),
         ];
@@ -84,35 +72,59 @@ impl InfoDisplay {
         Widget::render(info_table, rect, buf);
     }
 
-    fn format_armor(&self, game: &GameState) -> Line<'static> {
-        self.format_equipped_item(game, &game.player.character.armor, "Invalid armor")
-    }
-
-    fn format_weapon(&self, game: &GameState) -> Line<'static> {
-        self.format_equipped_item(game, &game.player.character.weapon, "Invalid weapon")
-    }
-
-    fn format_equipped_item<T: AsItemId>(
-        &self,
-        game: &GameState,
-        slot: &Option<T>,
-        invalid_label: &str,
-    ) -> Line<'static> {
-        match slot {
-            Some(wrapper) => {
-                let instance = match game.items.get(wrapper.id()) {
+    // Render the currently equipped armor into a String, displaying its stats.
+    fn format_armor(&self, game: &GameState) -> String {
+        match &game.player.character.armor {
+            Some(w) => {
+                // look up the instance by GameItemId
+                let instance = match game.items.get(&w.0) {
                     Some(i) => i,
-                    None => return Line::raw(invalid_label.to_string()),
+                    None => return "Invalid armor".to_string(),
                 };
 
+                // look up the definition by def_id
                 let def = match game.get_item_def_by_id(instance.def_id.clone()) {
                     Some(d) => d,
-                    None => return Line::raw(invalid_label.to_string()),
+                    None => return "Invalid armor".to_string(),
                 };
 
-                format_item(&def)
+                // extract stats from GameItemKindDef
+                match def.kind {
+                    GameItemKindDef::Armor { mitigation } => {
+                        format!("{} <{} MIT>", def.name, mitigation)
+                    }
+                    _ => "Invalid armor".to_string(),
+                }
             }
-            None => Line::raw("None"),
+            None => "None".to_string(),
+        }
+    }
+
+    // Render the currently equipped weapon into a String, displaying its stats.
+    pub fn format_weapon(&self, game: &GameState) -> String {
+        match &game.player.character.weapon {
+            Some(w) => {
+                // look up the instance by GameItemId
+                let instance = match game.items.get(&w.0) {
+                    Some(i) => i,
+                    None => return "Invalid weapon".to_string(),
+                };
+
+                // look up the definition by def_id
+                let def = match game.get_item_def_by_id(instance.def_id.clone()) {
+                    Some(d) => d,
+                    None => return "Invalid weapon".to_string(),
+                };
+
+                // extract stats from GameItemKindDef
+                match def.kind {
+                    GameItemKindDef::Weapon { damage, crit_chance } => {
+                        format!("{} <{} DMG, {:.0}% CRIT>", def.name, damage, crit_chance * 10)
+                    }
+                    _ => "Invalid weapon".to_string(),
+                }
+            }
+            None => "None".to_string(),
         }
     }
 }

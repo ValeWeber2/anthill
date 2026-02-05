@@ -58,22 +58,6 @@ impl fmt::Display for WeaponItem {
     }
 }
 
-pub trait AsItemId {
-    fn id(&self) -> &GameItemId;
-}
-
-impl AsItemId for ArmorItem {
-    fn id(&self) -> &GameItemId {
-        &self.0
-    }
-}
-
-impl AsItemId for WeaponItem {
-    fn id(&self) -> &GameItemId {
-        &self.0
-    }
-}
-
 // Item Proper
 // Item instances as registered in the GameState.items.
 pub type GameItemId = u32;

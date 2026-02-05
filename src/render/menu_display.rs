@@ -7,7 +7,10 @@ use ratatui::{
     widgets::{Paragraph, Wrap},
 };
 
-use crate::{core::game::GameState, render::ui::format_item};
+use crate::{
+    core::{game::GameState, game_items::GameItemKindDef},
+    data::item_defs::GameItemDef,
+};
 
 /// Different display modes for the menu
 #[derive(Debug, Clone, Copy)]
@@ -96,7 +99,7 @@ impl Menu {
                     None => return Line::raw(format!("{list_letter} - <Invalid Item>")),
                 };
 
-                let mut styled = format_item(&def);
+                let mut styled = format_item_inventory(&def);
 
                 styled.spans.insert(0, Span::raw(format!("{list_letter} - ")));
 
@@ -107,4 +110,35 @@ impl Menu {
         let paragraph = Paragraph::new(Text::from(lines)).wrap(Wrap { trim: true });
         paragraph.render(rect, buf);
     }
+}
+
+pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
+    let mut spans = vec![
+        Span::raw("["),
+        Span::styled(def.glyph.to_string(), def.style),
+        Span::raw("] "),
+        Span::raw(def.name),
+    ];
+
+    match &def.kind {
+        GameItemKindDef::Armor { mitigation } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} MIT", mitigation)));
+            spans.push(Span::raw(">"));
+        }
+        GameItemKindDef::Weapon { damage, crit_chance } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} DMG", damage)));
+            spans.push(Span::raw(", "));
+            spans.push(Span::raw(format!("{:.0}% CRIT", crit_chance * 10)));
+            spans.push(Span::raw(">"));
+        }
+        GameItemKindDef::Food { nutrition } => {
+            spans.push(Span::raw(" <"));
+            spans.push(Span::raw(format!("{} NUT", nutrition)));
+            spans.push(Span::raw(">"));
+        }
+    }
+
+    Line::from(spans)
 }
