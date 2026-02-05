@@ -70,8 +70,7 @@ impl GameState {
     pub fn register_item(&mut self, def_id: GameItemDefId) -> GameItemId {
         let id: GameItemId = self.id_system.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
-
-        self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
+        self.log.debug_info(format!("Registered item {} (ID: {})", def_id, id));
 
         id
     }

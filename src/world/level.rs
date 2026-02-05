@@ -187,7 +187,7 @@ impl GameState {
         // if index % STATIC_LEVEL_INTERVAL == 2 {
         let new_level: Level = if index == 0 || index == 1 {
             self.load_static_level(index).map_err(|error| {
-                self.log.debug_print(format!("Couldn't load level {}", error));
+                self.log.debug_warn(format!("Couldn't load level {}", error));
                 error
             })?
         } else {
@@ -215,7 +215,7 @@ impl GameState {
             let pos = Point::new(spawn.x, spawn.y);
 
             if !level.is_available(pos) {
-                self.log.debug_print(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
+                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
                 continue;
             }
 

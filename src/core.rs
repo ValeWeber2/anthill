@@ -5,3 +5,4 @@ pub mod game_items;
 pub mod inventory;
 pub mod player;
 pub mod player_actions;
+pub mod text_log;

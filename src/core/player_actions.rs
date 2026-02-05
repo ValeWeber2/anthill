@@ -3,6 +3,7 @@ use crate::{
         entity_logic::{Entity, EntityId, Movable},
         game::{GameRules, GameState},
         game_items::GameItemId,
+        text_log::LogData,
     },
     data::levels::level_paths,
     util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
@@ -60,12 +61,12 @@ impl GameState {
                     let next = self.level_nr + 1;
 
                     if next <= level_paths().len() {
-                        self.log.print("You go down the stairs...".to_string());
+                        self.log.info(LogData::UseStairs);
                         // let _ = self.load_static_level(next);
                         let _ = self.goto_level(self.level_nr + 1);
                     } else {
-                        self.log.print("This stair leads nowhere...".to_string()); //test later
-                        self.log.print(format!("{} {}", next, level_paths().len()))
+                        self.log.debug_warn("These stairs lead nowhere...".to_string()); //test later
+                        self.log.debug_warn(format!("{} {}", next, level_paths().len()))
                     }
                 }
 
@@ -74,13 +75,13 @@ impl GameState {
 
             Ok(GameOutcome::Fail(reason)) => {
                 // Log for user only if message is defined for user
-                if let Some(message) = reason.notify_user() {
-                    self.log.print(message.to_string());
+                if let Some(log_data) = reason.notify_user() {
+                    self.log.info(log_data);
                 }
             }
             Err(error) => {
                 // Log for Debugging
-                self.log.debug_print(error.to_string());
+                self.log.debug_warn(error.to_string());
             }
         }
     }

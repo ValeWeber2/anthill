@@ -4,6 +4,7 @@ use strum_macros::EnumIter;
 use crate::{
     App,
     core::game::GameRules,
+    core::text_log::LogData,
     data::{item_defs::item_defs, npc_defs::npc_defs},
     util::{
         errors_results::GameOutcome,
@@ -211,9 +212,7 @@ impl App {
                             .log
                             .print(format!("Added {} {} to player's inventory", item_def, amount)),
                         _ => {
-                            self.game
-                                .log
-                                .print("Inventory full. Cannot add another item.".to_string());
+                            self.game.log.info(LogData::InventoryFull);
                             let _ = self.game.deregister_item(item_id);
                             break;
                         }
