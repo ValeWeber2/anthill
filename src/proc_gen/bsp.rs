@@ -55,6 +55,9 @@ pub struct MapBSP {
     /// NodeId of the root MapNode of the tree structure. (Usually 0)
     pub root: NodeId,
 
+    /// All final rooms of the map (these are the leaves of the tree).
+    pub rooms: Vec<NodeId>,
+
     /// Vector of all the tiles that will become hallways on the map.
     pub corridors: Vec<Point>,
 
@@ -161,45 +164,37 @@ impl MapBSP {
         false
     }
 
-    /// Collects all leaves of the tree structure in a vector that has been passed as an argument.
-    ///
-    /// # Returns
-    /// Nothing. Instead collects the leaves in the mutable vector that has been passed as an argument.
-    /// This is done non-tail-recursively, because tail recursion caused problems with borrowing. However, this should contain fewer allocations than using tail recursion.
-    pub fn get_leaves(&self, node_id: NodeId, leaves: &mut Vec<NodeId>) {
-        let node = self.get_node(node_id);
+    /// Collects all leaves of the tree structure into `MapBSP`. This is done once, since the leaves are what are needed to proceed witht he generation.
+    pub fn leaves_to_rooms(&mut self, node_id: NodeId) {
+        let (is_leaf, left, right) = {
+            let node = self.get_node(node_id);
+            (node.is_leaf(), node.left, node.right)
+        };
 
-        if node.is_leaf() {
-            leaves.push(node_id);
+        if is_leaf {
+            self.rooms.push(node_id);
             return;
         }
 
-        if let Some(left) = node.left {
-            self.get_leaves(left, leaves);
+        if let Some(left) = left {
+            self.leaves_to_rooms(left);
         }
-        if let Some(right) = node.right {
-            self.get_leaves(right, leaves);
+        if let Some(right) = right {
+            self.leaves_to_rooms(right);
         }
     }
 
     /// Takes all leaves of the BSP tree structure and shrinks their dimensions. This is done to make the map appear more natural and to create space between nodes.
     fn shrink_leaves<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let mut leaves = Vec::new();
-        self.get_leaves(self.root, &mut leaves);
-
-        for node_id in leaves {
-            let node = self.get_node_mut(node_id);
-            node.shrink(rng);
+        for node_id in self.rooms.clone() {
+            self.get_node_mut(node_id).shrink(rng);
         }
     }
 
     /// Adds entry points and exit points for the Map (which will be turned into stairs)
     fn add_entry_exit<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let mut leaves = Vec::new();
-        self.get_leaves(self.root, &mut leaves);
-
         // Define rooms that need to exist on every level.
-        let mandatory_rooms: Vec<usize> = leaves.choose_multiple(rng, 2).cloned().collect();
+        let mandatory_rooms: Vec<usize> = self.rooms.choose_multiple(rng, 2).cloned().collect();
         let entry_node_id = mandatory_rooms[0];
         let exit_node_id = mandatory_rooms[1];
 
@@ -223,9 +218,7 @@ impl From<MapBSP> for World {
     fn from(value: MapBSP) -> Self {
         let mut world = World::new();
 
-        let mut leaves = Vec::new();
-        value.get_leaves(value.root, &mut leaves);
-        for node_id in leaves.clone().into_iter() {
+        for node_id in value.rooms.clone().into_iter() {
             let node = value.get_node(node_id).clone();
             world.carve_room(&Room::from(node));
         }
@@ -240,10 +233,8 @@ impl From<MapBSP> for World {
 
 impl From<MapBSP> for WorldData {
     fn from(value: MapBSP) -> Self {
-        let mut leaves = Vec::new();
-        value.get_leaves(value.root, &mut leaves);
-
-        let room_data: Vec<RoomData> = leaves
+        let room_data: Vec<RoomData> = value
+            .rooms
             .clone()
             .into_iter()
             .map(|leaf_id| RoomData::from(value.get_node(leaf_id).clone()))
@@ -277,6 +268,7 @@ impl Default for MapBSP {
         Self {
             nodes,
             root,
+            rooms: Vec::new(),
             corridors: Vec::new(),
             num_rooms: ROOM_NUMBER,
             entry: Point::new(5, 5),
@@ -291,6 +283,7 @@ pub fn generate_map(map_seed: u64) -> (World, WorldData) {
 
     let mut map = MapBSP::default();
     map.divide(&mut rng);
+    map.leaves_to_rooms(map.root);
     map.shrink_leaves(&mut rng);
     map.find_node_connections(&mut rng);
     map.a_star_corridors(&mut rng);

@@ -36,10 +36,7 @@ impl Distribution<RoomEncounter> for StandardUniform {
 
 impl MapBSP {
     pub fn populate_rooms<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let mut leaves = Vec::new();
-        self.get_leaves(self.root, &mut leaves);
-
-        for node_id in leaves {
+        for node_id in self.rooms.clone() {
             let node = self.get_node_mut(node_id);
 
             let encounter: RoomEncounter = rng.random();

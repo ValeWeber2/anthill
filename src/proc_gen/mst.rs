@@ -52,7 +52,10 @@ pub struct UnionFindNode {
 
 /// Create a minimum spanning tree using the Kruskal algorithm.
 /// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/minimum_spanning_tree.rs
-pub fn kruskal(mut edges: Vec<MapEdge>, num_vertices: usize) -> Option<(usize, Vec<MapEdge>)> {
+pub fn kruskal(
+    mut edges: Vec<MapEdge>,
+    num_vertices: usize,
+) -> Result<(usize, Vec<MapEdge>), &'static str> {
     let mut union_find = UnionFind::new(num_vertices);
     let mut minimum_spanning_tree_weight: usize = 0;
     let mut minimum_spanning_tree_edges: Vec<MapEdge> = Vec::with_capacity(num_vertices - 1);
@@ -71,9 +74,8 @@ pub fn kruskal(mut edges: Vec<MapEdge>, num_vertices: usize) -> Option<(usize, V
     }
 
     if minimum_spanning_tree_edges.len() == num_vertices - 1 {
-        Some((minimum_spanning_tree_weight, minimum_spanning_tree_edges))
+        Ok((minimum_spanning_tree_weight, minimum_spanning_tree_edges))
     } else {
-        // None
-        Some((minimum_spanning_tree_weight, minimum_spanning_tree_edges))
+        Err("Not all rooms connected")
     }
 }
