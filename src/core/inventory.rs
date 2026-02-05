@@ -31,7 +31,7 @@ impl GameState {
             self.player.character.inventory.swap_remove(found_item);
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.debug_print(format!("Couldn't remove item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't remove item {}: {}", item_id, error));
             return Err(error);
         }
 
@@ -61,7 +61,7 @@ impl GameState {
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.debug_print(format!("Couldn't use item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't use item {}: {}", item_id, error));
             Err(error)
         }
     }

@@ -304,7 +304,7 @@ impl App {
     pub fn run_command(&mut self, input: String) {
         match GameCommand::try_from(input) {
             Ok(command) => self.execute_command(command),
-            Err(error) => self.game.log.debug_print(error),
+            Err(error) => self.game.log.print(error),
         }
     }
 }

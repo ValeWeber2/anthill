@@ -37,20 +37,32 @@ impl Log {
     /// Add plain text to the log as long as [Log::print_debug_info] is true.
     ///
     /// Use this for printing debug and development information to the log.
-    pub fn debug_print(&mut self, message: String) {
+    pub fn debug_info(&mut self, message: String) {
         if !self.print_debug_info {
             return;
         }
 
         let lines: Vec<&str> = message.split("\n").collect();
         for line in lines {
-            self.info(LogData::Plain(line.to_string()));
+            self.info(LogData::DebugInfo(line.to_string()));
+        }
+    }
+
+    pub fn debug_warn(&mut self, message: String) {
+        if !self.print_debug_info {
+            return;
+        }
+
+        let lines: Vec<&str> = message.split("\n").collect();
+        for line in lines {
+            self.info(LogData::DebugWarn(line.to_string()));
         }
     }
 }
 
 pub enum LogData {
-    Debug(String),
+    DebugInfo(String),
+    DebugWarn(String),
     Plain(String),
     PlayerAttackHit { npc_name: String, damage: u16 },
     PlayerAttackMiss { npc_name: String },
@@ -68,7 +80,9 @@ impl LogData {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),
 
-            LogData::Debug(message) => Line::styled(message.to_string(), STYLE_DEBUG),
+            LogData::DebugInfo(message) => Line::styled(message.to_string(), STYLE_DEBUG_INFO),
+
+            LogData::DebugWarn(message) => Line::styled(message.to_string(), STYLE_DEBUG_WARN),
 
             LogData::PlayerAttackHit { npc_name, damage } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
@@ -130,7 +144,8 @@ impl LogData {
 }
 
 // Pre-defined theme
-const STYLE_DEBUG: Style = Style::new().fg(Color::DarkGray);
+const STYLE_DEBUG_INFO: Style = Style::new().fg(Color::DarkGray);
+const STYLE_DEBUG_WARN: Style = Style::new().fg(Color::Red);
 const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
 const STYLE_NPC: Style = Style::new().fg(Color::Yellow).add_modifier(Modifier::ITALIC);
 const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);

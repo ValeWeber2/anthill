@@ -65,8 +65,8 @@ impl GameState {
                         // let _ = self.load_static_level(next);
                         let _ = self.goto_level(self.level_nr + 1);
                     } else {
-                        self.log.debug_print("These stairs leads nowhere...".to_string()); //test later
-                        self.log.debug_print(format!("{} {}", next, level_paths().len()))
+                        self.log.debug_warn("These stairs lead nowhere...".to_string()); //test later
+                        self.log.debug_warn(format!("{} {}", next, level_paths().len()))
                     }
                 }
 
@@ -81,7 +81,7 @@ impl GameState {
             }
             Err(error) => {
                 // Log for Debugging
-                self.log.debug_print(error.to_string());
+                self.log.debug_warn(error.to_string());
             }
         }
     }
