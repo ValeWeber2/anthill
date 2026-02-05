@@ -23,10 +23,10 @@ impl WorldDisplay {
     /// * Applies conditional rendering to walls so they connect
     /// * Renders invisible explored tiles in gray
     pub fn render(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for y in 0..game.world.height {
-            for x in 0..game.world.width {
+        for y in 0..game.current_world().height {
+            for x in 0..game.current_world().width {
                 let point: Point = Point { x, y };
-                let tile: &Tile = game.world.get_tile(point);
+                let tile: &Tile = game.current_world().get_tile(point);
 
                 // Skip invisible and unexplored tiles
                 if !tile.visible && !tile.explored {
@@ -42,7 +42,7 @@ impl WorldDisplay {
                 if let Some(cell_content) = cell {
                     // Walls are a special case due to their conditional rendering (wall mask)
                     if tile.tile_type == TileType::Wall {
-                        let mask = wall_mask(&game.world, point);
+                        let mask = wall_mask(game.current_world(), point);
                         cell_content.set_char(wall_glyph(mask));
                     } else {
                         cell_content.set_char(tile.tile_type.glyph());
@@ -66,8 +66,8 @@ impl WorldDisplay {
 
     /// Renders all Npcs at their position in the world.
     pub fn render_npcs(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for npc in &game.npcs {
-            if game.world.get_tile(npc.pos()).visible {
+        for npc in &game.current_level().npcs {
+            if game.current_world().get_tile(npc.pos()).visible {
                 self.render_sprite(&npc.base, rect, buf);
             }
         }
@@ -75,8 +75,8 @@ impl WorldDisplay {
 
     /// Renders all Items at their position in the world.
     pub fn render_items(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for item_sprite in &game.item_sprites {
-            if game.world.get_tile(item_sprite.pos()).visible {
+        for item_sprite in &game.current_level().item_sprites {
+            if game.current_world().get_tile(item_sprite.pos()).visible {
                 self.render_sprite(&item_sprite.base, rect, buf);
             }
         }

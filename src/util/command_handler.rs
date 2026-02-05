@@ -3,11 +3,14 @@ use strum_macros::EnumIter;
 
 use crate::{
     App,
+    core::game::GameRules,
     core::text_log::LogData,
-    data::{item_defs::item_defs, npc_defs::npc_defs}, util::{
+    data::{item_defs::item_defs, npc_defs::npc_defs},
+    util::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
-    }, world::{coordinate_system::Point, tiles::Collision}
+    },
+    world::{coordinate_system::Point, tiles::Collision},
 };
 
 /// Different available commands in the game.
@@ -82,6 +85,12 @@ pub enum GameCommand {
     /// # GameCommand Syntax
     /// `legend`
     Legend,
+
+    /// Toggles tile collision for the player character, allowing them to walk through walls.
+    ///
+    /// # GameCommand Syntax
+    /// `noclip`
+    NoClip,
 }
 
 impl GameCommand {
@@ -100,7 +109,8 @@ impl GameCommand {
             }
             GameCommand::RevealAll => "Get vision over the entire map for 1 round",
             GameCommand::Suicide => "Set HP to zero to test game over state",
-            GameCommand::Legend => "Show list of all map symbols."
+            GameCommand::Legend => "Show list of all map symbols.",
+            GameCommand::NoClip => "Toggle to walk through impassible terrain.",
         }
     }
 
@@ -117,7 +127,8 @@ impl GameCommand {
             GameCommand::Teleport(_) => "teleport",
             GameCommand::Suicide => "suicide",
             GameCommand::RevealAll => "revealall",
-            GameCommand::Legend => "legend"
+            GameCommand::Legend => "legend",
+            GameCommand::NoClip => "noclip",
         }
     }
 }
@@ -168,6 +179,7 @@ impl TryFrom<String> for GameCommand {
             "suicide" => Ok(GameCommand::Suicide),
             "revealall" => Ok(GameCommand::RevealAll),
             "legend" => Ok(GameCommand::Legend),
+            "noclip" => Ok(GameCommand::NoClip),
             _ => Err(format!("Unknown Command {}", command)),
         }
     }
@@ -242,12 +254,12 @@ impl App {
             }
 
             GameCommand::Teleport(pos) => {
-                if !self.game.world.get_tile(pos).tile_type.is_walkable() {
+                if !self.game.current_world().get_tile(pos).tile_type.is_walkable() {
                     self.game.log.print(format!("Position {} cannot be occupied by player", pos));
                     return;
                 }
 
-                if !self.game.world.is_in_bounds(pos.x as isize, pos.y as isize) {
+                if !self.game.current_world().is_in_bounds(pos.x as isize, pos.y as isize) {
                     self.game.log.print(format!("Position {} is out of bounds", pos));
                     return;
                 }
@@ -262,7 +274,7 @@ impl App {
             GameCommand::RevealAll => {
                 self.game.log.print("Revealing all Tiles".to_string());
 
-                for tile in self.game.world.tiles.iter_mut() {
+                for tile in self.game.current_world_mut().tiles.iter_mut() {
                     tile.make_visible();
                     tile.make_explored();
                 }
@@ -278,6 +290,10 @@ impl App {
                 for npc in npc_defs().values() {
                     self.game.log.print(format!("{} - {}", npc.glyph, npc.name));
                 }
+            }
+
+            GameCommand::NoClip => {
+                self.game.game_rules.toggle(GameRules::NO_CLIP);
             }
         }
     }

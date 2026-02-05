@@ -15,7 +15,7 @@ use crate::{
 impl GameState {
     pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
         // Fetching values
-        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.name().to_string();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
@@ -36,7 +36,10 @@ impl GameState {
             None => LogData::PlayerAttackMiss { npc_name },
             Some(damage) => {
                 // Apply Damage
-                let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+                let npc = self
+                    .current_level_mut()
+                    .get_npc_mut(npc_id)
+                    .ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
                 LogData::PlayerAttackHit { npc_name, damage }
@@ -46,11 +49,11 @@ impl GameState {
         self.log.info(attack_message);
 
         // Checks if the npc is dead. Later this will be moved into some central event handler.
-        let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.name().to_string();
         if !npc.stats.base.is_alive() {
             self.log.info(LogData::NpcDied { npc_name });
-            self.despawn(npc_id);
+            self.current_level_mut().despawn(npc_id);
             self.player.character.gain_experience(25);
         }
 
@@ -59,7 +62,7 @@ impl GameState {
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
         let (npc_name, npc_damage) = {
-            let npc = self.get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            let npc = self.current_level().get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
             (npc.base.name.to_string(), npc.stats.damage)
         };
 

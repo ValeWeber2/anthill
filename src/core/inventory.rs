@@ -16,7 +16,7 @@ pub const INVENTORY_LIMIT: usize = 26;
 impl GameState {
     pub fn add_item_to_inv(&mut self, item_id: u32) -> GameResult {
         if self.player.character.inventory.len() >= INVENTORY_LIMIT {
-            self.log.debug_print(format!("Inventory full. Couldn't add item {}", item_id));
+            self.log.info(LogData::InventoryFull);
             return Ok(GameOutcome::Fail(FailReason::InventoryFull));
         }
 

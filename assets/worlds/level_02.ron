@@ -130,6 +130,8 @@ WorldData(
 
   ],
 
+  entry: Point(x: 3, y: 4),
+
   spawns: [
     //NPCs
 

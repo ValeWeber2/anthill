@@ -78,6 +78,8 @@ WorldData(
     TileData(x: 12, y: 6, tile_type: Stair),
   ],
 
+  entry: Point(x: 11, y: 6),
+
   spawns: [
     //NPCs
 

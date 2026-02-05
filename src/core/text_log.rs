@@ -60,6 +60,7 @@ pub enum LogData {
     NpcDied { npc_name: String },
     InventoryFull,
     CannotUnequipEmptySlot,
+    UseStairs,
 }
 
 impl LogData {
@@ -122,6 +123,8 @@ impl LogData {
             LogData::CannotUnequipEmptySlot => {
                 Line::from("The equipment slot is already empty. Cannot unequip.")
             }
+
+            LogData::UseStairs => Line::from("You go down the stairs..."),
         }
     }
 }
