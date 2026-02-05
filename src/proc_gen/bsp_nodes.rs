@@ -5,7 +5,7 @@ use rand::Rng;
 use crate::{
     proc_gen::bsp::{GRID_SIZE, MIN_NODE_DIM_SHRUNK, PADDING, SHRINK_FACTOR_RANGE},
     world::{
-        coordinate_system::Point,
+        coordinate_system::{Point, PointVector},
         world_data::RoomData,
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH},
     },
@@ -35,32 +35,11 @@ pub struct MapNode {
 
     /// Contains the id of the child node (if any). Due to the nature of binary search partition, a given node always has either 0 or 2 child nodes, never 1.
     pub right: Option<NodeId>,
-
-    /// For every leaf node, neighbouring nodes are stored. This contains all horizontal neighbours.
-    pub h_neighbors: Vec<usize>,
-
-    /// For every leaf node, neighbouring nodes are stored. This contains all vertical neighbours.
-    pub v_neighbors: Vec<usize>,
-
-    /// For every leaf node, connecting hallways are stored. This contains all horizontal hallways.
-    pub h_halls: Vec<usize>,
-
-    /// For every leaf node, connecting hallways are stored. This contains all vertical hallways.
-    pub v_halls: Vec<usize>,
 }
 
 impl MapNode {
     pub fn new(point_a: Point, point_b: Point) -> Self {
-        Self {
-            point_a,
-            point_b,
-            left: None,
-            right: None,
-            h_neighbors: Vec::new(),
-            v_neighbors: Vec::new(),
-            h_halls: Vec::new(),
-            v_halls: Vec::new(),
-        }
+        Self { point_a, point_b, left: None, right: None }
     }
 
     /// Helper function to determine whether a given node is a leaf.
@@ -100,6 +79,11 @@ impl MapNode {
 
         points
     }
+
+    pub fn center(&self) -> Point {
+        let dimensions: PointVector = self.point_b - self.point_a;
+        self.point_a + dimensions.map(|n| n / 2)
+    }
 }
 
 /// Helper function to shrink dimensions of a room (height or width).
@@ -120,10 +104,6 @@ impl Default for MapNode {
             point_b: Point::new(WORLD_WIDTH - PADDING, WORLD_HEIGHT - PADDING),
             left: None,
             right: None,
-            h_neighbors: Vec::new(),
-            v_neighbors: Vec::new(),
-            h_halls: Vec::new(),
-            v_halls: Vec::new(),
         }
     }
 }

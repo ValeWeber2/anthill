@@ -1,6 +1,4 @@
 #![allow(dead_code)]
-use std::cmp;
-
 use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 /// Binary Space Partitioning to procedurally generate rooms
@@ -48,21 +46,6 @@ pub const SHRINK_FACTOR_RANGE: std::ops::Range<f32> = 0.5..0.9;
 /// From this range, a random value is pulled which represents at which fraction the division is made.
 pub const DIVIDER_RANGE: std::ops::Range<f32> = 0.4..0.6;
 
-/// Data structure representing a hallway connecting two rooms.
-#[derive(Clone, Debug)]
-pub struct MapHall {
-    /// Point of origin for the hallway (often in the middle of a room)
-    point_a: Point,
-    /// Target point for the hallway (often in the middle of a room)
-    point_b: Point,
-}
-
-impl MapHall {
-    fn new(point_a: Point, point_b: Point) -> Self {
-        Self { point_a, point_b }
-    }
-}
-
 /// Central Data Structure that contains the vector of nodes for the binary search partition tree structure.
 #[derive(Clone)]
 pub struct MapBSP {
@@ -72,8 +55,8 @@ pub struct MapBSP {
     /// NodeId of the root MapNode of the tree structure. (Usually 0)
     pub root: NodeId,
 
-    /// Vector of all hallways on the map.
-    pub halls: Vec<MapHall>,
+    /// Vector of all the tiles that will become hallways on the map.
+    pub corridors: Vec<Point>,
 
     /// Used to track how many rooms a map has. The BSP alorithm recurses until a certain number of rooms is reached.
     pub num_rooms: usize,
@@ -199,55 +182,6 @@ impl MapBSP {
         }
     }
 
-    /// Algorithm that looks for horizontal and vertical neighbors for every node.
-    /// The found adjacency relations are noted in [MapNode::h_neighbors] and [MapNode::v_neighbors] for every [MapNode].
-    fn find_neighbors(&mut self) {
-        let mut leaves = Vec::new();
-        self.get_leaves(self.root, &mut leaves);
-
-        let mut h_neighbor_pairs = Vec::new();
-        let mut v_neighbor_pairs = Vec::new();
-
-        // Iterate through all node, to find their neighbours.
-        for node_a_id in &leaves {
-            // Iterate through all nodes, to find all neighbours for the current node.
-            for node_b_id in &leaves {
-                // Reject. A node is already its own neighbour.
-                if *node_a_id == *node_b_id {
-                    continue;
-                }
-
-                let node_a = self.get_node(*node_a_id);
-                let node_b = self.get_node(*node_b_id);
-
-                if node_a.point_b.x == node_b.point_a.x {
-                    // Checking if nodes' coordinates touch (horizontally)
-                    if node_a.point_a.x.max(node_b.point_a.x)
-                        < node_a.point_b.y.min(node_b.point_b.y)
-                    {
-                        h_neighbor_pairs.push((node_a_id, node_b_id));
-                    }
-                }
-                if node_a.point_b.y == node_b.point_a.y {
-                    // Checking if node's coordinates touch (vertically)
-                    if node_a.point_a.x.max(node_b.point_a.x)
-                        < node_a.point_b.x.min(node_b.point_b.x)
-                    {
-                        v_neighbor_pairs.push((node_a_id, node_b_id));
-                    }
-                }
-            }
-        }
-
-        // For all neighbour-relations found, push them to their respective nodes.
-        for (node_a_id, node_b_id) in h_neighbor_pairs {
-            self.get_node_mut(*node_a_id).h_neighbors.push(*node_b_id);
-        }
-        for (node_a_id, node_b_id) in v_neighbor_pairs {
-            self.get_node_mut(*node_a_id).v_neighbors.push(*node_b_id);
-        }
-    }
-
     /// Takes all leaves of the BSP tree structure and shrinks their dimensions. This is done to make the map appear more natural and to create space between nodes.
     fn shrink_leaves<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         let mut leaves = Vec::new();
@@ -259,79 +193,7 @@ impl MapBSP {
         }
     }
 
-    /// Adds halls between neighboring rooms.
-    fn add_halls<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let mut leaves = Vec::new();
-        self.get_leaves(self.root, &mut leaves);
-
-        for node_id in leaves {
-            let mut h_halls = Vec::new();
-            let mut v_halls = Vec::new();
-
-            let node = self.get_node(node_id);
-
-            // Iterate through all horizontal neighbors to create halls between them.
-            for neighbor_id in node.h_neighbors.clone() {
-                let neighbor = self.get_node(neighbor_id);
-
-                if node.point_b.y.min(neighbor.point_b.y) - node.point_a.y.max(neighbor.point_a.y)
-                    > GRID_SIZE * 3
-                // If there is clear overlap in the y-space
-                {
-                    // Adding double grid size to the room overlap regions, so that hallways don't connect to corners.
-                    let y = rng.random_range(
-                        cmp::max(node.point_a.y, neighbor.point_a.y) + GRID_SIZE * 2
-                            ..cmp::min(node.point_b.y, neighbor.point_b.y)
-                                - GRID_SIZE * 2
-                                - GRID_SIZE,
-                    );
-
-                    let new_hall = MapHall::new(
-                        Point::new(node.point_b.x, y),
-                        Point::new(neighbor.point_a.x, y + GRID_SIZE),
-                    );
-                    h_halls.push((node_id, new_hall));
-                }
-            }
-
-            // Iterate through all vertical neighbors to create halls between them.
-            for neighbor_id in node.v_neighbors.clone() {
-                let neighbor = self.get_node(neighbor_id);
-
-                if node.point_b.x.min(neighbor.point_b.x) - node.point_a.x.max(neighbor.point_a.x)
-                    > GRID_SIZE * 3
-                // If there is clear overlap in the x-space
-                {
-                    // Adding double grid size to the room overlap regions, so that hallways don't connect to corners.
-                    let x = rng.random_range(
-                        cmp::max(node.point_a.x, neighbor.point_a.x) + GRID_SIZE * 2
-                            ..cmp::min(node.point_b.x, neighbor.point_b.x)
-                                - GRID_SIZE * 2
-                                - GRID_SIZE,
-                    );
-
-                    let new_hall = MapHall::new(
-                        Point::new(x, node.point_b.y),
-                        Point::new(x + GRID_SIZE, neighbor.point_a.y),
-                    );
-                    v_halls.push((node_id, new_hall));
-                }
-            }
-
-            // Saving newly created halls to MapBSP::halls
-            for (node_id, hall) in h_halls {
-                let hall_id = self.halls.len();
-                self.halls.push(hall);
-                self.get_node_mut(node_id).h_halls.push(hall_id);
-            }
-            for (node_id, hall) in v_halls {
-                let hall_id = self.halls.len();
-                self.halls.push(hall);
-                self.get_node_mut(node_id).v_halls.push(hall_id);
-            }
-        }
-    }
-
+    /// Adds entry points and exit points for the Map (which will be turned into stairs)
     fn add_entry_exit<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         let mut leaves = Vec::new();
         self.get_leaves(self.root, &mut leaves);
@@ -399,6 +261,7 @@ impl From<MapBSP> for WorldData {
             height: WORLD_HEIGHT,
             tiles,
             rooms: room_data,
+            corridors: value.corridors,
             entry: value.entry,
             spawns: value.spawns,
         }
@@ -414,7 +277,7 @@ impl Default for MapBSP {
         Self {
             nodes,
             root,
-            halls: Vec::new(),
+            corridors: Vec::new(),
             num_rooms: ROOM_NUMBER,
             entry: Point::new(5, 5),
             exit: Point::new(6, 6),
@@ -429,8 +292,8 @@ pub fn generate_map(map_seed: u64) -> (World, WorldData) {
     let mut map = MapBSP::default();
     map.divide(&mut rng);
     map.shrink_leaves(&mut rng);
-    map.find_neighbors();
-    map.add_halls(&mut rng);
+    map.find_node_connections(&mut rng);
+    map.a_star_corridors(&mut rng);
     map.populate_rooms(&mut rng);
     map.add_entry_exit(&mut rng);
 

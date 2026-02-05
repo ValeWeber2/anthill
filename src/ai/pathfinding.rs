@@ -39,68 +39,68 @@ fn heuristic(a: Point, b: Point) -> usize {
 impl World {
     /// Uses the A* algorithm to find the next direction to move in.
     pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
-        let a_star_path: Vec<Point> = self.a_star(start, goal)?;
+        let a_star_path: Vec<Point> =
+            a_star(start, goal, |p| self.get_tile(p).tile_type.is_walkable())?;
         let next = a_star_path.get(1)?;
 
         let delta = *next - start;
 
         Direction::try_from(delta).ok()
     }
+}
 
-    /// A* Algorithm to find the shortest path between two Points on the Map.
-    ///
-    /// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
-    fn a_star(&self, start: Point, goal: Point) -> Option<Vec<Point>> {
-        let mut open_list = BinaryHeap::new();
-        let mut closed_list = HashMap::new();
-        let mut came_from = HashMap::new();
+/// A* Algorithm to find the shortest path between two Points on the Map.
+///
+/// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
+pub fn a_star<F>(start: Point, goal: Point, mut is_passable: F) -> Option<Vec<Point>>
+where
+    F: FnMut(Point) -> bool,
+{
+    let mut open_list = BinaryHeap::new();
+    let mut closed_list = HashMap::new();
+    let mut came_from = HashMap::new();
 
-        open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
+    open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
 
-        while let Some(current) = open_list.pop() {
-            if current.point == goal {
-                let mut path = vec![current.point];
-                let mut current_position = current.point;
-                while let Some(&prev_position) = came_from.get(&current_position) {
-                    path.push(prev_position);
-                    current_position = prev_position;
-                }
-                path.reverse();
-                return Some(path);
+    while let Some(current) = open_list.pop() {
+        if current.point == goal {
+            let mut path = vec![current.point];
+            let mut current_position = current.point;
+            while let Some(&prev_position) = came_from.get(&current_position) {
+                path.push(prev_position);
+                current_position = prev_position;
             }
-
-            closed_list.insert(current.point, current.g);
-
-            for &neighbor in &[
-                Point { x: current.point.x.saturating_sub(1), y: current.point.y },
-                Point { x: current.point.x + 1, y: current.point.y },
-                Point { x: current.point.x, y: current.point.y.saturating_sub(1) },
-                Point { x: current.point.x, y: current.point.y + 1 },
-            ] {
-                if !self.get_tile(neighbor).tile_type.is_walkable() {
-                    continue;
-                }
-                if closed_list.contains_key(&neighbor) {
-                    continue;
-                }
-
-                let tentative_g = current.g + 1;
-
-                if let Some(&existing_g) = closed_list.get(&neighbor) {
-                    if tentative_g >= existing_g {
-                        continue;
-                    }
-                }
-
-                open_list.push(Node {
-                    point: neighbor,
-                    g: tentative_g,
-                    h: heuristic(neighbor, goal),
-                });
-
-                came_from.insert(neighbor, current.point);
-            }
+            path.reverse();
+            return Some(path);
         }
-        None
+
+        closed_list.insert(current.point, current.g);
+
+        for &neighbor in &[
+            Point { x: current.point.x.saturating_sub(1), y: current.point.y },
+            Point { x: current.point.x + 1, y: current.point.y },
+            Point { x: current.point.x, y: current.point.y.saturating_sub(1) },
+            Point { x: current.point.x, y: current.point.y + 1 },
+        ] {
+            if !is_passable(neighbor) {
+                continue;
+            }
+            if closed_list.contains_key(&neighbor) {
+                continue;
+            }
+
+            let tentative_g = current.g + 1;
+
+            if let Some(&existing_g) = closed_list.get(&neighbor) {
+                if tentative_g >= existing_g {
+                    continue;
+                }
+            }
+
+            open_list.push(Node { point: neighbor, g: tentative_g, h: heuristic(neighbor, goal) });
+
+            came_from.insert(neighbor, current.point);
+        }
     }
+    None
 }
