@@ -89,8 +89,8 @@ impl MapNode {
     pub fn get_floor_points(&mut self) -> Vec<Point> {
         let mut points: Vec<Point> = Vec::new();
 
-        let x_range = (self.point_a.x + GRID_SIZE)..self.point_b.x;
-        let y_range = (self.point_a.y + GRID_SIZE)..self.point_b.y;
+        let x_range = (self.point_a.x + GRID_SIZE)..(self.point_b.x - GRID_SIZE);
+        let y_range = (self.point_a.y + GRID_SIZE)..(self.point_b.y - GRID_SIZE);
 
         for x in x_range {
             for y in y_range.clone() {
