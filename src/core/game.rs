@@ -3,6 +3,8 @@
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
+use bitflags::bitflags;
+
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
@@ -26,6 +28,8 @@ pub struct GameState {
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
 
     pub rng: StdRng,
+
+    pub game_rules: GameRules,
 }
 
 impl GameState {
@@ -39,6 +43,7 @@ impl GameState {
             id_system: IdSystem::default(),
             items: HashMap::new(),
             rng: StdRng::seed_from_u64(73),
+            game_rules: GameRules::empty(),
         };
 
         let player_id = state.id_system.next_entity_id();
@@ -74,6 +79,7 @@ impl Default for GameState {
             id_system: IdSystem::default(),
             items: HashMap::new(),
             rng: StdRng::seed_from_u64(73),
+            game_rules: GameRules::empty(),
         }
     }
 }
@@ -130,5 +136,16 @@ impl IdSystem {
         self.item_id_counter += 1;
 
         id
+    }
+}
+
+// ----------------------------------------------
+//                Gamerule System
+// ----------------------------------------------
+
+bitflags! {
+    pub struct GameRules: u8 {
+        // This disables collision detection for the player, allowing them to walk through walls.
+        const NO_CLIP = 0b00000001;
     }
 }

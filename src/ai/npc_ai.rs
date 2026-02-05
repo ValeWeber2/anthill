@@ -8,6 +8,7 @@ use crate::{
     util::errors_results::{EngineError, GameError, GameOutcome, GameResult},
     world::{
         coordinate_system::{Direction, Point, PointVector},
+        tiles::Collision,
         worldspace::MovementError,
     },
 };
@@ -85,18 +86,19 @@ impl GameState {
             npc.pos()
         };
 
-        let player_pos: Point = { self.player.character.pos() };
-
+        let player_pos: Point = self.player.character.pos();
         let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 10);
+
+        let player_reachable = self.current_world().get_tile(player_pos).tile_type.is_walkable();
+        // Only aggressive if player in detection radius and player is on a reachable tile (e.g. not inside walls)
+        let should_be_agressive = detectable_area.contains(&player_pos) && player_reachable;
 
         let npc: &mut Npc =
             self.current_level_mut().get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
-        if detectable_area.contains(&player_pos) {
-            npc.ai_state = NpcAiState::Aggressive;
-        } else {
-            npc.ai_state = NpcAiState::Wandering;
-        }
+        // If the detection radius contains the player AND the player position is reachable.
+        npc.ai_state =
+            if should_be_agressive { NpcAiState::Aggressive } else { NpcAiState::Wandering };
 
         Ok(())
     }

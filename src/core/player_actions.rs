@@ -1,7 +1,7 @@
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable},
-        game::GameState,
+        game::{GameRules, GameState},
         game_items::GameItemId,
     },
     data::levels::level_paths,
@@ -142,7 +142,9 @@ impl GameState {
             return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos)));
         }
 
-        if !self.current_world().get_tile(new_pos).tile_type.is_walkable() {
+        if !self.current_world().get_tile(new_pos).tile_type.is_walkable()
+            && !self.game_rules.contains(GameRules::NO_CLIP)
+        {
             return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_pos)));
         }
 

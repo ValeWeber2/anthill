@@ -7,6 +7,9 @@ use crate::world::{
     worldspace::World,
 };
 
+// Max iterations the A* algorithm is allowed to run with.
+const MAX_ITERS: usize = 200;
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct Node {
     point: Point,
@@ -51,6 +54,7 @@ impl World {
     ///
     /// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
     fn a_star(&self, start: Point, goal: Point) -> Option<Vec<Point>> {
+        let mut iterations = 0;
         let mut open_list = BinaryHeap::new();
         let mut closed_list = HashMap::new();
         let mut came_from = HashMap::new();
@@ -58,6 +62,12 @@ impl World {
         open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
 
         while let Some(current) = open_list.pop() {
+            iterations += 1;
+            // If max iterations overstepped, cancel A*
+            if iterations > MAX_ITERS {
+                return None;
+            }
+
             if current.point == goal {
                 let mut path = vec![current.point];
                 let mut current_position = current.point;
