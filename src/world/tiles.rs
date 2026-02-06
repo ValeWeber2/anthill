@@ -64,6 +64,21 @@ pub enum TileType {
     Stair,
 }
 
+impl std::fmt::Display for TileType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TileType::Void => write!(f, "Nothing"),
+            TileType::Floor => write!(f, "Floor"),
+            TileType::Wall => write!(f, "Wall"),
+            TileType::Hallway => write!(f, "Hallway"),
+            TileType::Door(DoorType::Archway) => write!(f, "Archway"),
+            TileType::Door(DoorType::Closed) => write!(f, "Closed Door"),
+            TileType::Door(DoorType::Open) => write!(f, "Open Door"),
+            TileType::Stair => write!(f, "Stairs"),
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DoorType {
     /// The door is open and cannot be closed again.

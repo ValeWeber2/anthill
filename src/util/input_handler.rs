@@ -3,7 +3,11 @@ use std::io;
 
 use crate::{
     App, State,
-    core::player_actions::PlayerInput,
+    core::{
+        entity_logic::Entity,
+        game::{CursorKind, CursorState},
+        player_actions::PlayerInput,
+    },
     render::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::{ModalInterface, SelectionAction},
@@ -128,6 +132,11 @@ impl App {
 
     /// Handling input while the focus is on the world. This is where the game's main controls for the player character are.
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
+        if self.game.cursor.is_some() {
+            self.handle_cursor_key_event(key_event);
+            return;
+        }
+
         match key_event.code {
             // Action: Move up
             KeyCode::Char('w') => {
@@ -165,6 +174,13 @@ impl App {
             // Control: Open Inventory with intention to Action: Leave Item (shifts focus to menu)
             KeyCode::Char('D') => {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
+            }
+
+            KeyCode::Char('l') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::Look,
+                    point: self.game.player.character.pos(),
+                });
             }
 
             // Debug: Print player pos
@@ -326,6 +342,54 @@ impl App {
             }
 
             _ => {}
+        }
+    }
+
+    fn handle_cursor_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(cursor) = &self.game.cursor {
+            match key_event.code {
+                // Move up
+                KeyCode::Char('w') => {
+                    let _ = self.game.move_cursor(Direction::Up);
+                }
+                // Move down
+                KeyCode::Char('s') => {
+                    let _ = self.game.move_cursor(Direction::Down);
+                }
+                // Move left
+                KeyCode::Char('a') => {
+                    let _ = self.game.move_cursor(Direction::Left);
+                }
+                // Move right
+                KeyCode::Char('d') => {
+                    let _ = self.game.move_cursor(Direction::Right);
+                }
+
+                // Run cursor action
+                KeyCode::Enter => match cursor.kind {
+                    CursorKind::Look => {
+                        if let Some(entity_id) =
+                            self.game.current_level().get_entity_at(cursor.point)
+                        {
+                            if let Some(npc) = self.game.current_level().get_npc(entity_id) {
+                                self.game.log.print(format!("You see: {}", npc.name()));
+                            }
+                            if let Some(item_sprite) =
+                                self.game.current_level().get_item_sprite(entity_id)
+                            {
+                                self.game.log.print(format!("You see: {}", item_sprite.name()));
+                            }
+                            return;
+                        }
+                        let tile = self.game.current_world().get_tile(cursor.point);
+                        self.game.log.print(format!("You see: {}", tile.tile_type));
+                    }
+                    CursorKind::RangedAttack => todo!(),
+                },
+
+                KeyCode::Esc => self.game.cursor = None,
+                _ => {}
+            };
         }
     }
 

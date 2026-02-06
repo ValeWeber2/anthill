@@ -45,6 +45,9 @@ pub enum FailReason {
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
     CannotUnequipEmptySlot,
+
+    /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
+    TileNotVisible(Point),
 }
 
 impl FailReason {
@@ -61,6 +64,7 @@ impl FailReason {
             FailReason::CannotUnequipEmptySlot => {
                 Some("The equipment slot is already empty. Cannot unequip.".to_string())
             }
+            FailReason::TileNotVisible(_) => None,
         }
     }
 }
