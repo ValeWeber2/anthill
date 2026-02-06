@@ -104,6 +104,11 @@ pub trait Opacity {
     fn is_opaque(&self) -> bool;
 }
 
+/// A trait for defining if an object is interactable and what game interaction it creates.
+pub trait Interactable {
+    fn is_interactable(&self) -> bool;
+}
+
 impl Collision for TileType {
     fn is_walkable(&self) -> bool {
         match self {
@@ -162,6 +167,22 @@ impl Opacity for TileType {
             TileType::Door(DoorType::Archway) => false,
             TileType::StairsDown => false,
             TileType::StairsUp => false,
+        }
+    }
+}
+
+impl Interactable for TileType {
+    fn is_interactable(&self) -> bool {
+        match self {
+            TileType::Void => false,
+            TileType::Floor => false,
+            TileType::Wall => false,
+            TileType::Hallway => false,
+            TileType::Door(DoorType::Open) => false,
+            TileType::Door(DoorType::Closed) => true,
+            TileType::Door(DoorType::Archway) => false,
+            TileType::StairsDown => true,
+            TileType::StairsUp => true,
         }
     }
 }

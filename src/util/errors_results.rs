@@ -45,6 +45,10 @@ pub enum FailReason {
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
     CannotUnequipEmptySlot,
+
+    /// An interaction was triggered, but the given object has no defined interaction.
+    /// This should not happen, since interactions are only triggered on defined objects.
+    NoInteraction,
 }
 
 impl FailReason {
@@ -61,6 +65,7 @@ impl FailReason {
             FailReason::CannotUnequipEmptySlot => {
                 Some("The equipment slot is already empty. Cannot unequip.".to_string())
             }
+            FailReason::NoInteraction => Some("Cannot interact with this object".to_string()),
         }
     }
 }

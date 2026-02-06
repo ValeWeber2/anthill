@@ -236,9 +236,8 @@ impl From<MapBSP> for WorldData {
     fn from(value: MapBSP) -> Self {
         let room_data: Vec<RoomData> = value
             .rooms
-            .clone()
-            .into_iter()
-            .map(|leaf_id| RoomData::from(value.get_node(leaf_id).clone()))
+            .iter()
+            .map(|&leaf_id| RoomData::from(value.get_node(leaf_id).clone()))
             .collect();
 
         let tiles: Vec<TileData> = vec![

@@ -7,7 +7,7 @@ use crate::{
     util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
     world::{
         coordinate_system::{Direction, Point, PointVector},
-        tiles::{Collision, TileType},
+        tiles::{Collision, DoorType, Interactable, TileType},
     },
 };
 
@@ -30,9 +30,38 @@ pub enum ActionKind {
     DropItem(GameItemId),
     UnequipWeapon,
     UnequipArmor,
+    TileInteraction(Point),
 }
 
 impl GameState {
+    fn tile_interaction(&mut self, point: Point) -> GameResult {
+        let tile = self.current_world_mut().get_tile_mut(point);
+
+        match tile.tile_type {
+            TileType::Door(DoorType::Closed) => {
+                tile.tile_type = TileType::Door(DoorType::Open);
+                self.log.print("You open the door".to_string());
+                Ok(GameOutcome::Success)
+            }
+
+            TileType::StairsDown => {
+                self.log.print("You go down the stairs...".to_string());
+                self.goto_level(self.level_nr + 1)
+                    .expect("Failed to load/generate level. Game cannot continue.");
+                Ok(GameOutcome::Success)
+            }
+
+            TileType::StairsUp => {
+                self.log.print("You go back up the stairs...".to_string());
+                self.goto_level(self.level_nr - 1)
+                    .expect("Failed to load/generate level, even though previous levels are always generated. Game cannot continue.");
+                Ok(GameOutcome::Success)
+            }
+
+            _ => Ok(GameOutcome::Fail(FailReason::NoInteraction)),
+        }
+    }
+
     pub fn resolve_player_action(&mut self, input: PlayerInput) {
         let intended_action = self.interpret_player_input(input);
 
@@ -48,21 +77,11 @@ impl GameState {
             ActionKind::UseItem(item_id) => self.use_item(item_id),
             ActionKind::UnequipWeapon => self.unequip_weapon(),
             ActionKind::UnequipArmor => self.unequip_armor(),
+            ActionKind::TileInteraction(point) => self.tile_interaction(point),
         };
 
         match action_result {
-            Ok(GameOutcome::Success) => {
-                let pos = self.player.character.pos();
-                let tile = self.current_world().get_tile(pos).tile_type;
-
-                if let TileType::StairsDown = tile {
-                    self.log.print("You go down the stairs...".to_string());
-                    let _ = self.goto_level(self.level_nr + 1);
-                }
-
-                self.next_round();
-            }
-
+            Ok(GameOutcome::Success) => self.next_round(),
             Ok(GameOutcome::Fail(reason)) => {
                 // Log for user only if message is defined for user
                 if let Some(message) = reason.notify_user() {
@@ -81,7 +100,7 @@ impl GameState {
             PlayerInput::Wait => ActionKind::Wait,
             PlayerInput::Direction(direction) => {
                 let target_point: Point = self.player.character.pos().get_adjacent(direction);
-                // let target_tile = self.get_current_world().get_tile(target_point.x, target_point.y);
+                let target_tile = self.current_world().get_tile(target_point);
 
                 if let Some(entity_id) = self.current_level().get_entity_at(target_point) {
                     if self.current_level().get_npc(entity_id).is_some() {
@@ -90,6 +109,10 @@ impl GameState {
                     if self.current_level().get_item_sprite(entity_id).is_some() {
                         return ActionKind::PickUpItem(entity_id);
                     }
+                }
+
+                if target_tile.tile_type.is_interactable() {
+                    return ActionKind::TileInteraction(target_point);
                 }
 
                 ActionKind::Move(direction)
