@@ -39,8 +39,9 @@ fn heuristic(a: Point, b: Point) -> usize {
 impl World {
     /// Uses the A* algorithm to find the next direction to move in.
     pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
-        let a_star_path: Vec<Point> =
-            a_star(start, goal, |p| self.get_tile(p).tile_type.is_walkable())?;
+        let a_star_path: Vec<Point> = a_star(start, goal, |p| {
+            if self.get_tile(p).tile_type.is_walkable() { Some(1) } else { None }
+        })?;
         let next = a_star_path.get(1)?;
 
         let delta = *next - start;
@@ -52,13 +53,22 @@ impl World {
 /// A* Algorithm to find the shortest path between two Points on the Map.
 ///
 /// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
-pub fn a_star<F>(start: Point, goal: Point, mut is_passable: F) -> Option<Vec<Point>>
+pub fn a_star<F>(start: Point, goal: Point, mut cost: F) -> Option<Vec<Point>>
 where
-    F: FnMut(Point) -> bool,
+    F: FnMut(Point) -> Option<usize>,
 {
     let mut open_list = BinaryHeap::new();
+
+    // Best-known cost to reach given tile
+    let mut g_score = HashMap::new();
+
+    // Previously covered nodes.
     let mut closed_list = HashMap::new();
+
+    // Reconstructible path
     let mut came_from = HashMap::new();
+
+    g_score.insert(start, 0);
 
     open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
 
@@ -76,28 +86,42 @@ where
 
         closed_list.insert(current.point, current.g);
 
-        for &neighbor in &[
+        let neighbors = [
             Point { x: current.point.x.saturating_sub(1), y: current.point.y },
             Point { x: current.point.x + 1, y: current.point.y },
             Point { x: current.point.x, y: current.point.y.saturating_sub(1) },
             Point { x: current.point.x, y: current.point.y + 1 },
-        ] {
-            if !is_passable(neighbor) {
-                continue;
-            }
+        ];
+
+        for neighbor in neighbors {
             if closed_list.contains_key(&neighbor) {
                 continue;
             }
 
-            let tentative_g = current.g + 1;
+            let tile_cost = match cost(neighbor) {
+                Some(c) => c,
+                None => continue,
+            };
 
-            if let Some(&existing_g) = closed_list.get(&neighbor) {
-                if tentative_g >= existing_g {
-                    continue;
-                }
+            let tentative_g = current.g + tile_cost;
+
+            let previous_best_known = g_score.get(&neighbor).copied().unwrap_or(usize::MAX);
+
+            let is_better_than_best = tentative_g < previous_best_known;
+
+            if !is_better_than_best {
+                continue;
             }
 
+            // if let Some(&existing_g) = closed_list.get(&neighbor) {
+            //     if tentative_g >= existing_g {
+            //         continue;
+            //     }
+            // }
+
             open_list.push(Node { point: neighbor, g: tentative_g, h: heuristic(neighbor, goal) });
+
+            g_score.insert(neighbor, tentative_g);
 
             came_from.insert(neighbor, current.point);
         }

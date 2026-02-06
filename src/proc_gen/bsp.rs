@@ -8,6 +8,7 @@ use crate::{
     world::{
         coordinate_system::Point,
         world_data::{RoomData, SpawnData, TileData, TileTypeData, WorldData},
+        world_loader::save_world_to_ron,
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH, World},
     },
 };
@@ -200,14 +201,14 @@ impl MapBSP {
 
         // Determine entry
         let entry_node = self.get_node_mut(entry_node_id);
-        let entry_node_floor = entry_node.get_floor_points();
+        let entry_node_floor = entry_node.floor_points();
         let entry_point =
             entry_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
         self.entry = *entry_point;
 
         // Determine exit
         let exit_node = self.get_node_mut(exit_node_id);
-        let exit_node_floor = exit_node.get_floor_points();
+        let exit_node_floor = exit_node.floor_points();
         let exit_point =
             exit_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
         self.exit = *exit_point;
@@ -278,7 +279,7 @@ impl Default for MapBSP {
     }
 }
 
-pub fn generate_map(map_seed: u64) -> (World, WorldData) {
+pub fn generate_map(map_seed: u64) -> WorldData {
     let mut rng = StdRng::seed_from_u64(map_seed);
 
     let mut map = MapBSP::default();
@@ -290,5 +291,8 @@ pub fn generate_map(map_seed: u64) -> (World, WorldData) {
     map.populate_rooms(&mut rng);
     map.add_entry_exit(&mut rng);
 
-    (World::from(map.clone()), WorldData::from(map))
+    let world_data = WorldData::from(map);
+    let _ = save_world_to_ron(&world_data, "assets/worlds/proc_gen.ron");
+
+    world_data
 }

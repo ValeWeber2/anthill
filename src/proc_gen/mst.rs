@@ -52,7 +52,7 @@ pub struct UnionFindNode {
 
 /// Create a minimum spanning tree using the Kruskal algorithm.
 /// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/minimum_spanning_tree.rs
-pub fn kruskal(
+pub fn mst_kruskal(
     mut edges: Vec<MapEdge>,
     num_vertices: usize,
 ) -> Result<(usize, Vec<MapEdge>), &'static str> {

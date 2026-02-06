@@ -59,13 +59,53 @@ impl MapNode {
             (new_width as f32 * 1.5) as usize,
         );
 
-        self.point_a.x += (width.saturating_sub(new_width)) / 2;
-        self.point_b.x -= (width.saturating_sub(new_width)) / 2;
-        self.point_a.y += (height.saturating_sub(new_height)) / 2;
-        self.point_b.y -= (height.saturating_sub(new_height)) / 2;
+        let new_origin_x =
+            rng.random_range((self.point_a.x + 1)..=(self.point_b.x - new_width - 1));
+        let new_origin_y =
+            rng.random_range((self.point_a.y + 1)..=(self.point_b.y - new_height - 1));
+
+        self.point_a.x = new_origin_x;
+        self.point_b.x = new_origin_x + new_width;
+        self.point_a.y = new_origin_y;
+        self.point_b.y = new_origin_y + new_height;
     }
 
-    pub fn get_floor_points(&mut self) -> Vec<Point> {
+    pub fn center(&self) -> Point {
+        let dimensions: PointVector = self.point_b - self.point_a;
+        self.point_a + dimensions.map(|n| n / 2)
+    }
+
+    pub fn corner_points(&self) -> Vec<Point> {
+        vec![
+            self.point_a,
+            Point::new(self.point_b.x, self.point_a.y),
+            self.point_b,
+            Point::new(self.point_a.x, self.point_b.y),
+        ]
+    }
+
+    pub fn wall_points(&self) -> Vec<Point> {
+        let mut points: Vec<Point> = Vec::new();
+
+        let top = self.point_a.y;
+        let right = self.point_b.x;
+        let bottom = self.point_b.y;
+        let left = self.point_a.x;
+
+        for x in left..=right {
+            points.push(Point::new(x, top));
+            points.push(Point::new(x, bottom));
+        }
+
+        for y in top..=bottom {
+            points.push(Point::new(left, y));
+            points.push(Point::new(right, y));
+        }
+
+        points
+    }
+
+    pub fn floor_points(&self) -> Vec<Point> {
         let mut points: Vec<Point> = Vec::new();
 
         let x_range = (self.point_a.x + GRID_SIZE)..(self.point_b.x - GRID_SIZE);
@@ -78,11 +118,6 @@ impl MapNode {
         }
 
         points
-    }
-
-    pub fn center(&self) -> Point {
-        let dimensions: PointVector = self.point_b - self.point_a;
-        self.point_a + dimensions.map(|n| n / 2)
     }
 }
 

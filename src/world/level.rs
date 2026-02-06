@@ -236,7 +236,7 @@ impl GameState {
     }
 
     pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
-        let (_, data) = generate_map(self.proc_gen.next_u64());
+        let data = generate_map(self.proc_gen.next_u64());
 
         let mut level = Level::new();
 

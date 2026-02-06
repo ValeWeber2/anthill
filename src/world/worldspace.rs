@@ -185,20 +185,20 @@ impl World {
         let w = room.width;
         let h = room.height;
 
-        for y in oy + 1..oy + h - 1 {
-            for x in ox + 1..ox + w - 1 {
+        for y in oy + 1..oy + h {
+            for x in ox + 1..ox + w {
                 self.get_tile_mut(Point::new(x, y)).tile_type = TileType::Floor;
             }
         }
 
-        for y in oy..oy + h {
+        for y in oy..=oy + h {
             self.get_tile_mut(Point::new(ox, y)).tile_type = TileType::Wall;
-            self.get_tile_mut(Point::new(ox + w - 1, y)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(ox + w, y)).tile_type = TileType::Wall;
         }
 
-        for x in ox..ox + w {
+        for x in ox..=ox + w {
             self.get_tile_mut(Point::new(x, oy)).tile_type = TileType::Wall;
-            self.get_tile_mut(Point::new(x, oy + h - 1)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(x, oy + h)).tile_type = TileType::Wall;
         }
     }
 }
