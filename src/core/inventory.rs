@@ -118,7 +118,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 
@@ -128,7 +128,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 }

@@ -44,10 +44,13 @@ pub enum FailReason {
 
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
-    CannotUnequipEmptySlot,
+    EquipmentSlotEmpty,
 
     /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
     TileNotVisible(Point),
+
+    /// Action cannot be performed because the target is not the right kind for this action.
+    InvalidTarget(EntityId),
 }
 
 impl FailReason {
@@ -61,10 +64,11 @@ impl FailReason {
             FailReason::InventoryFull => {
                 Some("Your inventory is full. Cannot add another item.".to_string())
             }
-            FailReason::CannotUnequipEmptySlot => {
-                Some("The equipment slot is already empty. Cannot unequip.".to_string())
+            FailReason::EquipmentSlotEmpty => {
+                Some("There is no item in the required equipment slot.".to_string())
             }
             FailReason::TileNotVisible(_) => None,
+            FailReason::InvalidTarget(_) => None,
         }
     }
 }

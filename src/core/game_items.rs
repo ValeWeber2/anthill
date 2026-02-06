@@ -18,12 +18,15 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum GameItemKindDef {
-    Weapon { damage: u16, crit_chance: u8 },
+    Weapon { damage: u16, crit_chance: u8, ranged: bool },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
 }
 
+#[derive(Clone, Copy)]
 pub struct ArmorItem(pub GameItemId);
+
+#[derive(Clone, Copy)]
 pub struct WeaponItem(pub GameItemId);
 
 impl ArmorItem {

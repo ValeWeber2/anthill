@@ -2,13 +2,13 @@ use crate::{
     ai::npc_ai::NpcAiError,
     core::{entity_logic::EntityId, game::GameState, game_items::GameItemKindDef},
     util::{
-        errors_results::{DataError, EngineError, GameError, GameOutcome, GameResult},
+        errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
         rng::{DieSize, Roll},
     },
 };
 
 impl GameState {
-    pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
+    pub fn player_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
         // Fetching values
         let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         let npc_name = npc.base.name.clone();
@@ -54,6 +54,29 @@ impl GameState {
         self.log.print(attack_message);
 
         Ok(GameOutcome::Success)
+    }
+
+    pub fn player_ranged_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
+        if self.current_level().get_npc(npc_id).is_none() {
+            return Ok(GameOutcome::Fail(FailReason::InvalidTarget(npc_id))); // Target entity is not an npc
+        }
+
+        let Some(weapon_id) = self.player.character.weapon else {
+            return Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty)); // No weapon equipped
+        };
+
+        let weapon_item =
+            self.get_item_by_id(weapon_id.0).ok_or(EngineError::UnregisteredItem(weapon_id.0))?; // Weapon not a registered item
+
+        let weapon_def = self
+            .get_item_def_by_id(weapon_item.def_id.clone())
+            .ok_or(DataError::MissingItemDefinition(weapon_item.def_id))?; // Weapon is not defined
+
+        let GameItemKindDef::Weapon { ranged: true, .. } = weapon_def.kind else {
+            return Err(GameError::from(EngineError::InvalidItem(weapon_def.kind))); // Weapon is not ranged
+        };
+
+        self.player_attack_npc(npc_id)
     }
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
@@ -124,7 +147,9 @@ impl GameState {
                 .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
 
             match item_def.kind {
-                GameItemKindDef::Weapon { damage, crit_chance } => Ok((damage, crit_chance)),
+                GameItemKindDef::Weapon { damage, crit_chance, ranged: _ranged } => {
+                    Ok((damage, crit_chance))
+                }
                 _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {

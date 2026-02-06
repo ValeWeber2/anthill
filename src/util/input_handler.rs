@@ -176,9 +176,18 @@ impl App {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
             }
 
+            // Control: Start Look mode
             KeyCode::Char('l') => {
                 self.game.cursor = Some(CursorState {
                     kind: CursorKind::Look,
+                    point: self.game.player.character.pos(),
+                });
+            }
+
+            // Control: Start Ranged Attack modej
+            KeyCode::Char('r') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::RangedAttack,
                     point: self.game.player.character.pos(),
                 });
             }
@@ -384,7 +393,14 @@ impl App {
                         let tile = self.game.current_world().get_tile(cursor.point);
                         self.game.log.print(format!("You see: {}", tile.tile_type));
                     }
-                    CursorKind::RangedAttack => todo!(),
+                    CursorKind::RangedAttack => {
+                        let Some(entity_id) = self.game.current_level().get_entity_at(cursor.point)
+                        else {
+                            return; // Target point has no entity
+                        };
+
+                        self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                    }
                 },
 
                 KeyCode::Esc => self.game.cursor = None,
