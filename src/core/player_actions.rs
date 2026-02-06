@@ -130,7 +130,8 @@ impl GameState {
         self.remove_item_from_inv(item_id)?;
 
         let player_pos = self.player.character.pos();
-        self.create_item_sprite(item_id, player_pos)?;
+        let item_sprite = self.create_item_sprite(item_id, player_pos)?;
+        self.current_level_mut().spawn_item_sprite(item_sprite)?;
 
         Ok(GameOutcome::Success)
     }
