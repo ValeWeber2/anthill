@@ -21,6 +21,7 @@ pub enum PlayerInput {
     DropItem(GameItemId),
     UnequipWeapon,
     UnequipArmor,
+    RangedAttack(EntityId),
 }
 
 pub enum ActionKind {
@@ -32,6 +33,7 @@ pub enum ActionKind {
     DropItem(GameItemId),
     UnequipWeapon,
     UnequipArmor,
+    RangedAttack(EntityId),
 }
 
 impl GameState {
@@ -50,6 +52,7 @@ impl GameState {
             ActionKind::UseItem(item_id) => self.use_item(item_id),
             ActionKind::UnequipWeapon => self.unequip_weapon(),
             ActionKind::UnequipArmor => self.unequip_armor(),
+            ActionKind::RangedAttack(npc_id) => self.player_ranged_attack_npc(npc_id),
         };
 
         match action_result {
@@ -108,6 +111,7 @@ impl GameState {
             PlayerInput::DropItem(item_id) => ActionKind::DropItem(item_id),
             PlayerInput::UnequipWeapon => ActionKind::UnequipWeapon,
             PlayerInput::UnequipArmor => ActionKind::UnequipArmor,
+            PlayerInput::RangedAttack(entity_id) => ActionKind::RangedAttack(entity_id),
         }
     }
 

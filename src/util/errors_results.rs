@@ -45,7 +45,13 @@ pub enum FailReason {
 
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
-    CannotUnequipEmptySlot,
+    EquipmentSlotEmpty,
+
+    /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
+    TileNotVisible(Point),
+
+    /// Action cannot be performed because the target is not the right kind for this action.
+    InvalidTarget(EntityId),
 }
 
 impl FailReason {
@@ -57,7 +63,9 @@ impl FailReason {
             FailReason::PointOutOfBounds(_) => None,
             FailReason::TileNotWalkable(_) => None,
             FailReason::InventoryFull => Some(LogData::InventoryFull),
-            FailReason::CannotUnequipEmptySlot => Some(LogData::CannotUnequipEmptySlot),
+            FailReason::EquipmentSlotEmpty => Some(LogData::EquipmentSlotEmpty),
+            FailReason::TileNotVisible(_) => None,
+            FailReason::InvalidTarget(_) => None,
         }
     }
 }

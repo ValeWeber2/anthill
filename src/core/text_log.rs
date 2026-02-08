@@ -71,7 +71,7 @@ pub enum LogData {
     NpcAttackMiss { npc_name: String },
     NpcDied { npc_name: String },
     InventoryFull,
-    CannotUnequipEmptySlot,
+    EquipmentSlotEmpty,
     UseStairs,
 }
 
@@ -134,7 +134,7 @@ impl LogData {
                 Line::from("Your inventory is full. Cannot add another item.")
             }
 
-            LogData::CannotUnequipEmptySlot => {
+            LogData::EquipmentSlotEmpty => {
                 Line::from("The equipment slot is already empty. Cannot unequip.")
             }
 
