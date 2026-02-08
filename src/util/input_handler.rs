@@ -3,7 +3,11 @@ use std::io;
 
 use crate::{
     App, State,
-    core::player_actions::PlayerInput,
+    core::{
+        entity_logic::Entity,
+        game::{CursorKind, CursorState},
+        player_actions::PlayerInput,
+    },
     render::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::{ModalInterface, SelectionAction},
@@ -128,6 +132,11 @@ impl App {
 
     /// Handling input while the focus is on the world. This is where the game's main controls for the player character are.
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
+        if self.game.cursor.is_some() {
+            self.handle_cursor_key_event(key_event);
+            return;
+        }
+
         match key_event.code {
             // Action: Move up
             KeyCode::Char('w') => {
@@ -167,8 +176,24 @@ impl App {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
             }
 
+            // Control: Start Look mode
+            KeyCode::Char('l') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::Look,
+                    point: self.game.player.character.pos(),
+                });
+            }
+
+            // Control: Start Ranged Attack modej
+            KeyCode::Char('r') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::RangedAttack,
+                    point: self.game.player.character.pos(),
+                });
+            }
+
             // Debug: Print player pos
-            KeyCode::Char('p') => self.game.log.print(format!(
+            KeyCode::Char('p') => self.game.log.debug_info(format!(
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
@@ -176,7 +201,7 @@ impl App {
             // Debug: Print game iten register
             KeyCode::Char('o') => {
                 for (item_id, item) in self.game.items.iter() {
-                    self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
+                    self.game.log.debug_info(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
             // Debug: Open Test Modal
@@ -275,7 +300,7 @@ impl App {
                                     // Appying the selection action to the selected option
                                     match selection_action {
                                         SelectionAction::Debug => {
-                                            self.game.log.debug_print(option.to_string())
+                                            self.game.log.debug_info(option.to_string())
                                         }
                                     }
                                 }
@@ -308,12 +333,12 @@ impl App {
             }
             KeyCode::Char('W') => {
                 if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_warn(format!("{}", e));
                 }
             }
             KeyCode::Char('A') => {
                 if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_warn(format!("{}", e));
                 }
             }
             KeyCode::Char(c) => {
@@ -326,6 +351,61 @@ impl App {
             }
 
             _ => {}
+        }
+    }
+
+    fn handle_cursor_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(cursor) = &self.game.cursor {
+            match key_event.code {
+                // Move up
+                KeyCode::Char('w') => {
+                    let _ = self.game.move_cursor(Direction::Up);
+                }
+                // Move down
+                KeyCode::Char('s') => {
+                    let _ = self.game.move_cursor(Direction::Down);
+                }
+                // Move left
+                KeyCode::Char('a') => {
+                    let _ = self.game.move_cursor(Direction::Left);
+                }
+                // Move right
+                KeyCode::Char('d') => {
+                    let _ = self.game.move_cursor(Direction::Right);
+                }
+
+                // Run cursor action
+                KeyCode::Enter => match cursor.kind {
+                    CursorKind::Look => {
+                        if let Some(entity_id) =
+                            self.game.current_level().get_entity_at(cursor.point)
+                        {
+                            if let Some(npc) = self.game.current_level().get_npc(entity_id) {
+                                self.game.log.print(format!("You see: {}", npc.name()));
+                            }
+                            if let Some(item_sprite) =
+                                self.game.current_level().get_item_sprite(entity_id)
+                            {
+                                self.game.log.print(format!("You see: {}", item_sprite.name()));
+                            }
+                            return;
+                        }
+                        let tile = self.game.current_world().get_tile(cursor.point);
+                        self.game.log.print(format!("You see: {}", tile.tile_type));
+                    }
+                    CursorKind::RangedAttack => {
+                        let Some(entity_id) = self.game.current_level().get_entity_at(cursor.point)
+                        else {
+                            return; // Target point has no entity
+                        };
+
+                        self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                    }
+                },
+
+                KeyCode::Esc => self.game.cursor = None,
+                _ => {}
+            };
         }
     }
 

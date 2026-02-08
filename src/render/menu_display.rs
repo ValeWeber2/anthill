@@ -59,20 +59,42 @@ impl Menu {
     /// Renders the menu. Switches between log display and inventory display depending on state.
     pub fn render(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         match self.mode {
-            MenuMode::Log => self.render_log(&game_state.log.messages, rect, buf),
+            MenuMode::Log => self.render_log(game_state, rect, buf),
             MenuMode::Inventory(_) => self.render_inventory(game_state, rect, buf),
         }
     }
 
     /// Renders the menu in log mode.
-    pub fn render_log(&self, messages: &[String], rect: Rect, buf: &mut Buffer) {
+    pub fn render_log(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         let height = rect.height as usize;
-        let start = messages.len().saturating_sub(height);
+        let width = rect.width as usize;
+        let start = game_state.log.messages.len().saturating_sub(height);
 
+        // Fetch only as many lines as can be displayed (rough estimation, not accurate if lines wrap)
         let lines: Vec<Line> =
-            messages[start..].iter().map(|msg| Line::raw(msg.as_str())).collect();
+            game_state.log.messages[start..].iter().map(|msg| msg.display()).collect();
 
-        let paragraph = Paragraph::new(Text::from(lines)).wrap(Wrap { trim: true });
+        // Use a heuristic to count how many lines the texts actually take up.
+        let mut used_height = 0;
+        let mut first_line = 0;
+        for (i, line) in lines.iter().enumerate().rev() {
+            let line_length: usize =
+                line.spans.iter().map(|span| span.content.to_string().len()).sum();
+            let estimated_nr_of_lines: usize = line_length.div_ceil(width).max(1);
+
+            if used_height + estimated_nr_of_lines >= height {
+                first_line = i;
+                break;
+            }
+
+            used_height += estimated_nr_of_lines;
+            first_line = i;
+        }
+
+        let lines_to_display: &[Line] = &lines[first_line..];
+
+        let paragraph =
+            Paragraph::new(Text::from(lines_to_display.to_vec())).wrap(Wrap { trim: true });
         paragraph.render(rect, buf);
     }
 
@@ -126,7 +148,7 @@ pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
             spans.push(Span::raw(format!("{} MIT", mitigation)));
             spans.push(Span::raw(">"));
         }
-        GameItemKindDef::Weapon { damage, crit_chance } => {
+        GameItemKindDef::Weapon { damage, crit_chance, .. } => {
             spans.push(Span::raw(" <"));
             spans.push(Span::raw(format!("{} DMG", damage)));
             spans.push(Span::raw(", "));

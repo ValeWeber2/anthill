@@ -112,6 +112,8 @@ impl Widget for &App {
                         block_world_inner,
                         buf,
                     );
+                    // Z-layer 4
+                    self.ui.world_display.render_cursor(&self.game, block_world_inner, buf);
 
                     // AREA: Menu (Log, menus, tables)
                     let block_menu = Block::default()

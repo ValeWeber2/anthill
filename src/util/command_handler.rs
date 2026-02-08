@@ -3,6 +3,9 @@ use strum_macros::EnumIter;
 
 use crate::{
     App,
+    core::game::GameRules,
+    core::text_log::LogData,
+    data::{item_defs::item_defs, npc_defs::npc_defs},
     util::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
@@ -67,15 +70,27 @@ pub enum GameCommand {
     /// Reduces player to 0 HP, resulting in the Game Over screen.
     ///
     /// # GameCommand Syntax
-    /// suicide
+    /// `suicide`
     Suicide,
 
     /// Reveals all tiles on the map for 1 round.
     /// This also sets the exploration status of all tiles to `true`.
     ///
     /// # GameCommand Syntax
-    /// revealall
+    /// `revealall`
     RevealAll,
+
+    /// Displays a legend for every glyph in the log
+    ///
+    /// # GameCommand Syntax
+    /// `legend`
+    Legend,
+
+    /// Toggles tile collision for the player character, allowing them to walk through walls.
+    ///
+    /// # GameCommand Syntax
+    /// `noclip`
+    NoClip,
 }
 
 impl GameCommand {
@@ -94,6 +109,8 @@ impl GameCommand {
             }
             GameCommand::RevealAll => "Get vision over the entire map for 1 round",
             GameCommand::Suicide => "Set HP to zero to test game over state",
+            GameCommand::Legend => "Show list of all map symbols.",
+            GameCommand::NoClip => "Toggle to walk through impassible terrain.",
         }
     }
 
@@ -110,6 +127,8 @@ impl GameCommand {
             GameCommand::Teleport(_) => "teleport",
             GameCommand::Suicide => "suicide",
             GameCommand::RevealAll => "revealall",
+            GameCommand::Legend => "legend",
+            GameCommand::NoClip => "noclip",
         }
     }
 }
@@ -159,6 +178,8 @@ impl TryFrom<String> for GameCommand {
             }
             "suicide" => Ok(GameCommand::Suicide),
             "revealall" => Ok(GameCommand::RevealAll),
+            "legend" => Ok(GameCommand::Legend),
+            "noclip" => Ok(GameCommand::NoClip),
             _ => Err(format!("Unknown Command {}", command)),
         }
     }
@@ -191,9 +212,7 @@ impl App {
                             .log
                             .print(format!("Added {} {} to player's inventory", item_def, amount)),
                         _ => {
-                            self.game
-                                .log
-                                .print("Inventory full. Cannot add another item.".to_string());
+                            self.game.log.info(LogData::InventoryFull);
                             let _ = self.game.deregister_item(item_id);
                             break;
                         }
@@ -235,12 +254,12 @@ impl App {
             }
 
             GameCommand::Teleport(pos) => {
-                if !self.game.world.get_tile(pos).tile_type.is_walkable() {
+                if !self.game.current_world().get_tile(pos).tile_type.is_walkable() {
                     self.game.log.print(format!("Position {} cannot be occupied by player", pos));
                     return;
                 }
 
-                if !self.game.world.is_in_bounds(pos.x as isize, pos.y as isize) {
+                if !self.game.current_world().is_in_bounds(pos.x as isize, pos.y as isize) {
                     self.game.log.print(format!("Position {} is out of bounds", pos));
                     return;
                 }
@@ -255,10 +274,26 @@ impl App {
             GameCommand::RevealAll => {
                 self.game.log.print("Revealing all Tiles".to_string());
 
-                for tile in self.game.world.tiles.iter_mut() {
+                for tile in self.game.current_world_mut().tiles.iter_mut() {
                     tile.make_visible();
                     tile.make_explored();
                 }
+            }
+
+            GameCommand::Legend => {
+                self.game.log.print("@ - Player Character (you)".to_string());
+                self.game.log.print("+ - Door (closed)".to_string());
+                self.game.log.print("_ - Door (open)".to_string());
+                for item in item_defs().values() {
+                    self.game.log.print(format!("{} - {}", item.glyph, item.name));
+                }
+                for npc in npc_defs().values() {
+                    self.game.log.print(format!("{} - {}", npc.glyph, npc.name));
+                }
+            }
+
+            GameCommand::NoClip => {
+                self.game.game_rules.toggle(GameRules::NO_CLIP);
             }
         }
     }

@@ -23,10 +23,10 @@ impl WorldDisplay {
     /// * Applies conditional rendering to walls so they connect
     /// * Renders invisible explored tiles in gray
     pub fn render(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for y in 0..game.world.height {
-            for x in 0..game.world.width {
+        for y in 0..game.current_world().height {
+            for x in 0..game.current_world().width {
                 let point: Point = Point { x, y };
-                let tile: &Tile = game.world.get_tile(point);
+                let tile: &Tile = game.current_world().get_tile(point);
 
                 // Skip invisible and unexplored tiles
                 if !tile.visible && !tile.explored {
@@ -42,7 +42,7 @@ impl WorldDisplay {
                 if let Some(cell_content) = cell {
                     // Walls are a special case due to their conditional rendering (wall mask)
                     if tile.tile_type == TileType::Wall {
-                        let mask = wall_mask(&game.world, point);
+                        let mask = wall_mask(game.current_world(), point);
                         cell_content.set_char(wall_glyph(mask));
                     } else {
                         cell_content.set_char(tile.tile_type.glyph());
@@ -66,8 +66,8 @@ impl WorldDisplay {
 
     /// Renders all Npcs at their position in the world.
     pub fn render_npcs(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for npc in &game.npcs {
-            if game.world.get_tile(npc.pos()).visible {
+        for npc in &game.current_level().npcs {
+            if game.current_world().get_tile(npc.pos()).visible {
                 self.render_sprite(&npc.base, rect, buf);
             }
         }
@@ -75,8 +75,8 @@ impl WorldDisplay {
 
     /// Renders all Items at their position in the world.
     pub fn render_items(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
-        for item_sprite in &game.item_sprites {
-            if game.world.get_tile(item_sprite.pos()).visible {
+        for item_sprite in &game.current_level().item_sprites {
+            if game.current_world().get_tile(item_sprite.pos()).visible {
                 self.render_sprite(&item_sprite.base, rect, buf);
             }
         }
@@ -92,6 +92,17 @@ impl WorldDisplay {
         if let Some(cell_content) = cell {
             cell_content.set_char(entity_base.glyph());
             cell_content.set_style(entity_base.style());
+        }
+    }
+
+    pub fn render_cursor(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
+        if let Some(cursor) = &game.cursor {
+            let (display_x, display_y) = get_world_display_pos(cursor.point, rect);
+
+            if let Some(cell) = buf.cell_mut(Position::new(display_x, display_y)) {
+                let style = cell.style().bg(Color::LightCyan).fg(Color::Black);
+                cell.set_style(style);
+            }
         }
     }
 }
@@ -124,16 +135,26 @@ const EAST: u8 = 1 << 3; // 1000 -> 8
 fn wall_mask(world: &World, point: Point) -> u8 {
     let mut mask = 0;
 
-    if world.get_tile(point + Direction::Up).tile_type == TileType::Wall {
+    if matches!(world.get_tile(point + Direction::Up).tile_type, TileType::Wall | TileType::Door(_))
+    {
         mask |= NORTH; // +0001 -> +1
     }
-    if world.get_tile(point + Direction::Down).tile_type == TileType::Wall {
+    if matches!(
+        world.get_tile(point + Direction::Down).tile_type,
+        TileType::Wall | TileType::Door(_)
+    ) {
         mask |= SOUTH; // +0010 -> +2
     }
-    if world.get_tile(point + Direction::Left).tile_type == TileType::Wall {
+    if matches!(
+        world.get_tile(point + Direction::Left).tile_type,
+        TileType::Wall | TileType::Door(_)
+    ) {
         mask |= WEST; // +0100 -> +4
     }
-    if world.get_tile(point + Direction::Right).tile_type == TileType::Wall {
+    if matches!(
+        world.get_tile(point + Direction::Right).tile_type,
+        TileType::Wall | TileType::Door(_)
+    ) {
         mask |= EAST; // +1000 -> +8
     }
 

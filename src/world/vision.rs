@@ -133,7 +133,7 @@ impl FogOfWar for World {
 
 impl GameState {
     pub fn compute_fov(&mut self) {
-        compute_fov(self.player.character.pos(), &mut self.world);
+        compute_fov(self.player.character.pos(), self.current_world_mut());
     }
 }
 

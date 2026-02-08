@@ -8,6 +8,7 @@ use crate::{
     core::{
         entity_logic::EntityId,
         game_items::{GameItemId, GameItemKindDef},
+        text_log::LogData,
     },
     data::{item_defs::GameItemDefId, npc_defs::NpcDefId},
     world::coordinate_system::Point,
@@ -44,23 +45,32 @@ pub enum FailReason {
 
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
-    CannotUnequipEmptySlot,
+    EquipmentSlotEmpty,
+
+    /// An interaction was triggered, but the given object has no defined interaction.
+    /// This should not happen, since interactions are only triggered on defined objects.
+    NoInteraction,
+
+    /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
+    TileNotVisible(Point),
+
+    /// Action cannot be performed because the target is not the right kind for this action.
+    InvalidTarget(EntityId),
 }
 
 impl FailReason {
     /// This is a function that defines how (if at all) a user should be notified of the `GameOutcome::Fail(_)`.
     /// Some things should be told to the player (like the inventory being full).
     /// Other things go without saying (lik enot being able to walk into a wall).
-    pub fn notify_user(&self) -> Option<String> {
+    pub fn notify_user(&self) -> Option<LogData> {
         match self {
             FailReason::PointOutOfBounds(_) => None,
             FailReason::TileNotWalkable(_) => None,
-            FailReason::InventoryFull => {
-                Some("Your inventory is full. Cannot add another item.".to_string())
-            }
-            FailReason::CannotUnequipEmptySlot => {
-                Some("The equipment slot is already empty. Cannot unequip.".to_string())
-            }
+            FailReason::InventoryFull => Some(LogData::InventoryFull),
+            FailReason::EquipmentSlotEmpty => Some(LogData::EquipmentSlotEmpty),
+            FailReason::TileNotVisible(_) => None,
+            FailReason::InvalidTarget(_) => None,
+            FailReason::NoInteraction => Some(LogData::NoInteraction),
         }
     }
 }
@@ -130,6 +140,9 @@ pub enum EngineError {
 
     /// Spawning an entity at the given point failed.
     SpawningError(Point),
+
+    /// No level with the given index exists.
+    LevelNotFound(usize),
 }
 
 impl fmt::Display for EngineError {
@@ -161,6 +174,9 @@ impl fmt::Display for EngineError {
                     point.x, point.y
                 )
             }
+            EngineError::LevelNotFound(level_nr) => {
+                write!(f, "Could not find a level with id {}", level_nr)
+            }
         }
     }
 }
@@ -181,11 +197,11 @@ pub enum DataError {
     MissingNpcDefinition(NpcDefId),
 
     /// Tried to load static world, but no static world defined for id
-    StaticWorldNotFound(u8),
+    StaticWorldNotFound(usize),
 
     /// World needs to fit requirements to be loaded.
     /// * Cannot be larger than `WORLD_WIDTH`x`WORLD_HEIGHT`
-    InvalidWorldFormat(u8),
+    InvalidWorldFormat(usize),
 }
 
 impl fmt::Display for DataError {
@@ -217,20 +233,32 @@ impl From<DataError> for GameError {
 #[derive(Debug)]
 pub enum IoError {
     /// Reading the map file from the assets has failed.
-    MapReadFailed(io::Error),
+    FileReading(io::Error),
 
     /// Parsing the map file from the assets for its .ron structure failed.
-    MapParseFailed(SpannedError),
+    MapParsing(SpannedError),
+
+    /// Creating a new file failed.
+    FileCreation(io::Error),
+
+    /// Writing the app state to the file failed.
+    MapWriting(ron::Error),
 }
 
 impl fmt::Display for IoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IoError::MapReadFailed(error) => {
+            IoError::FileReading(error) => {
                 write!(f, "Couldn't load map file: {}", error)
             }
-            IoError::MapParseFailed(error) => {
+            IoError::MapParsing(error) => {
                 write!(f, "Couldn't parse map file: {}", error)
+            }
+            IoError::FileCreation(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
+            }
+            IoError::MapWriting(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
             }
         }
     }

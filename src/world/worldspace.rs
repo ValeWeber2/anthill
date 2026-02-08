@@ -2,18 +2,8 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use crate::util::errors_results::{DataError, FailReason, GameError, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
-use crate::world::tiles::Collision;
-use crate::{
-    core::{
-        entity_logic::{Entity, Movable},
-        game::GameState,
-    },
-    world::tiles::{DoorType, Tile, TileType},
-};
-
-use crate::world::world_data::{DoorTypeData, TileTypeData, WorldData};
+use crate::world::tiles::{DoorType, Tile, TileType};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
@@ -62,7 +52,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(_game: &mut GameState) -> Self {
+    pub fn new() -> Self {
         Self {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
@@ -195,84 +185,21 @@ impl World {
         let w = room.width;
         let h = room.height;
 
-        for y in oy + 1..oy + h - 1 {
-            for x in ox + 1..ox + w - 1 {
+        for y in oy + 1..oy + h {
+            for x in ox + 1..ox + w {
                 self.get_tile_mut(Point::new(x, y)).tile_type = TileType::Floor;
             }
         }
 
-        for y in oy..oy + h {
+        for y in oy..=oy + h {
             self.get_tile_mut(Point::new(ox, y)).tile_type = TileType::Wall;
-            self.get_tile_mut(Point::new(ox + w - 1, y)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(ox + w, y)).tile_type = TileType::Wall;
         }
 
-        for x in ox..ox + w {
+        for x in ox..=ox + w {
             self.get_tile_mut(Point::new(x, oy)).tile_type = TileType::Wall;
-            self.get_tile_mut(Point::new(x, oy + h - 1)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(x, oy + h)).tile_type = TileType::Wall;
         }
-    }
-
-    pub fn move_player_character<E: Entity + Movable>(
-        &self,
-        entity: &mut E,
-        dx: i32,
-        dy: i32,
-    ) -> GameResult {
-        let new_x = entity.pos().x as isize + dx as isize;
-        let new_y = entity.pos().y as isize + dy as isize;
-        let new_point = Point::new(new_x as usize, new_y as usize);
-
-        if !self.is_in_bounds(new_x, new_y) {
-            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-        }
-
-        if !self.get_tile(Point::new(new_x as usize, new_y as usize)).tile_type.is_walkable() {
-            return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
-        }
-
-        entity.move_to(new_point);
-
-        Ok(GameOutcome::Success)
-    }
-
-    pub fn apply_world_data(&mut self, data: &WorldData, index: u8) -> Result<(), GameError> {
-        if data.width != self.width || data.height != self.height {
-            return Err(GameError::from(DataError::InvalidWorldFormat(index)));
-        }
-
-        for t in self.tiles.iter_mut() {
-            *t = Tile::default();
-        }
-
-        for r in &data.rooms {
-            let room = Room::new(Point::new(r.x, r.y), r.width, r.height);
-            self.carve_room(&room);
-        }
-
-        for td in &data.tiles {
-            if td.x >= self.width || td.y >= self.height {
-                return Err(GameError::from(DataError::InvalidWorldFormat(index)));
-            }
-
-            let idx = self.index(td.x, td.y);
-
-            let tile_type = match td.tile_type {
-                TileTypeData::Floor => TileType::Floor,
-                TileTypeData::Wall => TileType::Wall,
-                TileTypeData::Hallway => TileType::Hallway,
-                TileTypeData::Stair => TileType::Stair,
-                TileTypeData::Door(DoorTypeData::Archway) => TileType::Door(DoorType::Archway),
-                TileTypeData::Door(DoorTypeData::Open) => TileType::Door(DoorType::Open),
-                TileTypeData::Door(DoorTypeData::Closed) => TileType::Door(DoorType::Closed),
-            };
-
-            self.tiles[idx] = Tile::new(tile_type);
-        }
-
-        // self.open_room_for_hallway();
-        self.add_walls_around_walkables();
-
-        Ok(())
     }
 }
 
@@ -284,15 +211,6 @@ impl Default for World {
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
         }
-    }
-}
-
-impl GameState {
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.world.is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.world.get_tile(pos).tile_type.is_walkable()
     }
 }
 

@@ -1,6 +1,9 @@
+#![allow(dead_code)]
+
 use std::fmt;
 use std::ops::{Add, Sub};
 
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
 /// Basic coordinate point in the coordinate system.
@@ -10,7 +13,7 @@ use strum_macros::EnumIter;
 /// Forms a whole number vector space together with [PointVector], which allows basic algebraic operations:
 /// - Addition: ([Add]): `(Point, PointVector) -> Point`
 /// - Subtraction: ([Sub]): `(Point, Point) -> PointVector`
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -33,6 +36,11 @@ impl Point {
     pub fn distance_squared_from(&self, other: Point) -> usize {
         let delta = *self - other;
         delta.length_squared() as usize
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(usize) -> usize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
     }
 }
 
@@ -90,7 +98,7 @@ pub struct PointVector {
 }
 
 impl PointVector {
-    fn new(x: isize, y: isize) -> Self {
+    pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 
@@ -100,6 +108,11 @@ impl PointVector {
     /// Returns the squared distance, because for this purpose the square root isn't needed. For the true Pythagorean distance, you need to take the square root (and convert to a float).
     fn length_squared(&self) -> isize {
         self.x * self.x + self.y * self.y
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(isize) -> isize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
     }
 }
 
