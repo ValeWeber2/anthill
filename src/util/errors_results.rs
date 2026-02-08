@@ -8,6 +8,7 @@ use crate::{
     core::{
         entity_logic::EntityId,
         game_items::{GameItemId, GameItemKindDef},
+        text_log::LogData,
     },
     data::{item_defs::GameItemDefId, npc_defs::NpcDefId},
     world::coordinate_system::Point,
@@ -57,16 +58,12 @@ impl FailReason {
     /// This is a function that defines how (if at all) a user should be notified of the `GameOutcome::Fail(_)`.
     /// Some things should be told to the player (like the inventory being full).
     /// Other things go without saying (lik enot being able to walk into a wall).
-    pub fn notify_user(&self) -> Option<String> {
+    pub fn notify_user(&self) -> Option<LogData> {
         match self {
             FailReason::PointOutOfBounds(_) => None,
             FailReason::TileNotWalkable(_) => None,
-            FailReason::InventoryFull => {
-                Some("Your inventory is full. Cannot add another item.".to_string())
-            }
-            FailReason::EquipmentSlotEmpty => {
-                Some("There is no item in the required equipment slot.".to_string())
-            }
+            FailReason::InventoryFull => Some(LogData::InventoryFull),
+            FailReason::EquipmentSlotEmpty => Some(LogData::EquipmentSlotEmpty),
             FailReason::TileNotVisible(_) => None,
             FailReason::InvalidTarget(_) => None,
         }

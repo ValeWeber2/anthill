@@ -8,6 +8,7 @@ use bitflags::bitflags;
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
+use crate::core::text_log::Log;
 use crate::util::errors_results::{FailReason, GameOutcome};
 use crate::world::coordinate_system::{Direction, Point};
 use crate::world::level::Level;
@@ -89,35 +90,6 @@ impl Default for GameState {
             rng: StdRng::seed_from_u64(73),
             game_rules: GameRules::empty(),
         }
-    }
-}
-
-// ----------------------------------------------
-//                  Game Text Log
-// ----------------------------------------------
-pub struct Log {
-    pub print_debug_info: bool,
-    pub messages: Vec<String>,
-}
-
-impl Log {
-    pub fn new(print_debug_info: bool) -> Self {
-        Self { print_debug_info, messages: Vec::new() }
-    }
-
-    pub fn print(&mut self, message: String) {
-        let lines: Vec<&str> = message.split("\n").collect();
-        for line in lines {
-            self.messages.push(line.to_string());
-        }
-    }
-
-    pub fn debug_print(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
-        }
-
-        self.print(message);
     }
 }
 
