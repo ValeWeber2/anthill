@@ -151,7 +151,7 @@ impl TryFrom<String> for GameCommand {
                 let item_def = tokens.next().ok_or("Missing item name")?.to_string();
 
                 let amount =
-                    tokens.next().ok_or("Missing item amount")?.parse::<u32>().unwrap_or(1);
+                    tokens.next().and_then(|string| string.parse::<u32>().ok()).unwrap_or(1);
 
                 Ok(GameCommand::Give { item_def, amount })
             }
@@ -203,14 +203,20 @@ impl App {
                     ))
                 }
             }
-            GameCommand::Give { item_def, amount } => {
+            GameCommand::Give { item_def: item_def_id, amount } => {
+                if self.game.get_item_def_by_id(item_def_id.clone()).is_none() {
+                    self.game.log.print("No item with this def_id exists.".to_string());
+                    return;
+                }
+
                 for _ in 0..amount {
-                    let item_id = self.game.register_item(item_def.clone());
+                    let item_id = self.game.register_item(item_def_id.clone());
+
                     match self.game.add_item_to_inv(item_id) {
-                        Ok(GameOutcome::Success) => self
-                            .game
-                            .log
-                            .print(format!("Added {} {} to player's inventory", item_def, amount)),
+                        Ok(GameOutcome::Success) => self.game.log.print(format!(
+                            "Added {} {} to player's inventory",
+                            item_def_id, amount
+                        )),
                         _ => {
                             self.game.log.info(LogData::InventoryFull);
                             let _ = self.game.deregister_item(item_id);
@@ -254,13 +260,13 @@ impl App {
             }
 
             GameCommand::Teleport(pos) => {
-                if !self.game.current_world().get_tile(pos).tile_type.is_walkable() {
-                    self.game.log.print(format!("Position {} cannot be occupied by player", pos));
+                if !self.game.current_world().is_in_bounds(pos.x as isize, pos.y as isize) {
+                    self.game.log.print(format!("Position {} is out of bounds", pos));
                     return;
                 }
 
-                if !self.game.current_world().is_in_bounds(pos.x as isize, pos.y as isize) {
-                    self.game.log.print(format!("Position {} is out of bounds", pos));
+                if !self.game.current_world().get_tile(pos).tile_type.is_walkable() {
+                    self.game.log.print(format!("Position {} cannot be occupied by player", pos));
                     return;
                 }
 
