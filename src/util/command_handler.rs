@@ -204,13 +204,13 @@ impl App {
                 }
             }
             GameCommand::Give { item_def: item_def_id, amount } => {
-                if self.game.get_item_def_by_id(item_def_id.clone()).is_none() {
+                if self.game.get_item_def_by_id(&item_def_id).is_none() {
                     self.game.log.print("No item with this def_id exists.".to_string());
                     return;
                 }
 
                 for _ in 0..amount {
-                    let item_id = self.game.register_item(item_def_id.clone());
+                    let item_id = self.game.register_item(&item_def_id);
 
                     match self.game.add_item_to_inv(item_id) {
                         Ok(GameOutcome::Success) => self.game.log.print(format!(

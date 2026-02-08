@@ -83,7 +83,7 @@ impl InfoDisplay {
                 };
 
                 // look up the definition by def_id
-                let def = match game.get_item_def_by_id(instance.def_id.clone()) {
+                let def = match game.get_item_def_by_id(&instance.def_id) {
                     Some(d) => d,
                     None => return "Invalid armor".to_string(),
                 };
@@ -111,7 +111,7 @@ impl InfoDisplay {
                 };
 
                 // look up the definition by def_id
-                let def = match game.get_item_def_by_id(instance.def_id.clone()) {
+                let def = match game.get_item_def_by_id(&instance.def_id) {
                     Some(d) => d,
                     None => return "Invalid weapon".to_string(),
                 };

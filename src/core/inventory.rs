@@ -51,7 +51,7 @@ impl GameState {
                 self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
 
             let item_def = self
-                .get_item_def_by_id(item.def_id.clone())
+                .get_item_def_by_id(&item.def_id)
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
             match item_def.kind {
@@ -102,7 +102,7 @@ impl GameState {
             let item =
                 self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
             let def = self
-                .get_item_def_by_id(item.def_id.clone())
+                .get_item_def_by_id(&item.def_id)
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
             def.name.to_string()
         };

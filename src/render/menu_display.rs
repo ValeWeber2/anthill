@@ -116,7 +116,7 @@ impl Menu {
                     None => return Line::raw(format!("{list_letter} - <Invalid Item>")),
                 };
 
-                let def = match game_state.get_item_def_by_id(instance.def_id.clone()) {
+                let def = match game_state.get_item_def_by_id(&instance.def_id) {
                     Some(d) => d,
                     None => return Line::raw(format!("{list_letter} - <Invalid Item>")),
                 };

@@ -167,6 +167,7 @@ impl NpcStats {
 
 #[cfg(test)]
 mod tests {
+    use crate::data::item_defs::GameItemDefId;
     use crate::world::level::Level;
     use crate::world::worldspace::Room;
 
@@ -218,8 +219,8 @@ mod tests {
         let mut level: Level = Level::new();
         level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let item_def_id: String = "armor_leather".to_string();
-        let item_id = game.register_item(item_def_id);
+        let item_def_id: GameItemDefId = "armor_leather".to_string();
+        let item_id = game.register_item(&item_def_id);
         let item_sprite = game.create_item_sprite(item_id, Point::new(50, 7)).unwrap();
         let item_sprite_id = item_sprite.id();
 

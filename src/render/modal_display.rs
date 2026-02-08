@@ -80,10 +80,8 @@ fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, it
 
     // look up item name
     let instance = &game.items[&item_id];
-    let item_name = game
-        .get_item_def_by_id(instance.def_id.clone())
-        .map(|def| def.name)
-        .unwrap_or("<unknown item>");
+    let item_name =
+        game.get_item_def_by_id(&instance.def_id).map(|def| def.name).unwrap_or("<unknown item>");
 
     let text = Text::from(vec![
         Line::from(format!("Selected: {}", item_name)),

@@ -70,7 +70,7 @@ pub struct GameItem {
 
 // Implementation into Game State
 impl GameState {
-    pub fn register_item(&mut self, def_id: GameItemDefId) -> GameItemId {
+    pub fn register_item(&mut self, def_id: &GameItemDefId) -> GameItemId {
         let id: GameItemId = self.id_system.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
         self.log.debug_info(format!("Registered item {} (ID: {})", def_id, id));
@@ -104,7 +104,7 @@ impl GameState {
 
         // Checking if item_def exists.
         let item_def = self
-            .get_item_def_by_id(item.def_id.clone())
+            .get_item_def_by_id(&item.def_id)
             .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
         // Creating item_sprite and assigning id.
@@ -125,8 +125,8 @@ impl GameState {
         self.items.get(&item_id).cloned()
     }
 
-    pub fn get_item_def_by_id(&self, item_def_id: GameItemDefId) -> Option<GameItemDef> {
-        item_defs().get(&item_def_id).cloned()
+    pub fn get_item_def_by_id(&self, item_def_id: &GameItemDefId) -> Option<GameItemDef> {
+        item_defs().get(item_def_id).cloned()
     }
 }
 

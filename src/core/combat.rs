@@ -73,7 +73,7 @@ impl GameState {
             self.get_item_by_id(weapon_id.0).ok_or(EngineError::UnregisteredItem(weapon_id.0))?; // Weapon not a registered item
 
         let weapon_def = self
-            .get_item_def_by_id(weapon_item.def_id.clone())
+            .get_item_def_by_id(&weapon_item.def_id)
             .ok_or(DataError::MissingItemDefinition(weapon_item.def_id))?; // Weapon is not defined
 
         let GameItemKindDef::Weapon { ranged: true, .. } = weapon_def.kind else {
@@ -147,7 +147,7 @@ impl GameState {
             let item_id =
                 self.get_item_by_id(weapon.0).ok_or(EngineError::UnregisteredItem(weapon.0))?;
             let item_def = self
-                .get_item_def_by_id(item_id.def_id.clone())
+                .get_item_def_by_id(&item_id.def_id)
                 .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
 
             match item_def.kind {
@@ -165,7 +165,7 @@ impl GameState {
         if let Some(armor) = &self.player.character.armor {
             let item_id = self.get_item_by_id(armor.0).ok_or("The item is not registered")?;
             let item_def =
-                self.get_item_def_by_id(item_id.def_id).ok_or("The item is not defined")?;
+                self.get_item_def_by_id(&item_id.def_id).ok_or("The item is not defined")?;
 
             match item_def.kind {
                 GameItemKindDef::Armor { mitigation } => Ok(mitigation),
