@@ -1,17 +1,22 @@
 use crate::{
     ai::npc_ai::NpcAiError,
-    core::{entity_logic::EntityId, game::GameState, game_items::GameItemKindDef},
+    core::{
+        entity_logic::{Entity, EntityId},
+        game::GameState,
+        game_items::GameItemKindDef,
+        text_log::LogData,
+    },
     util::{
-        errors_results::{DataError, EngineError, GameError, GameOutcome, GameResult},
+        errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
         rng::{DieSize, Roll},
     },
 };
 
 impl GameState {
-    pub fn player_attack_npc(&mut self, npc_id: u32) -> GameResult {
+    pub fn player_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
         // Fetching values
         let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        let npc_name = npc.base.name.clone();
+        let npc_name = npc.name().to_string();
         let npc_mitigation = npc.stats.mitigation;
         let npc_dodge_chance = npc.stats.dodge_chance();
 
@@ -27,12 +32,8 @@ impl GameState {
             npc_mitigation,
         );
 
-        let mut attack_message: String;
-
-        match attack_result {
-            None => {
-                attack_message = format!("{} dodged the attack!", npc_name);
-            }
+        let attack_message: LogData = match attack_result {
+            None => LogData::PlayerAttackMiss { npc_name },
             Some(damage) => {
                 // Apply Damage
                 let npc = self
@@ -41,19 +42,45 @@ impl GameState {
                     .ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
 
-                attack_message = format!("Player hits {} for {} damage!", npc.base.name, damage);
-
-                if !npc.stats.base.is_alive() {
-                    attack_message = format!("{}\n{} died!", attack_message, npc.base.name);
-                    self.current_level_mut().despawn(npc_id);
-                    self.player.character.gain_experience(25);
-                }
+                LogData::PlayerAttackHit { npc_name, damage }
             }
+        };
+
+        self.log.info(attack_message);
+
+        // Checks if the npc is dead. Later this will be moved into some central event handler.
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let npc_name = npc.name().to_string();
+        if !npc.stats.base.is_alive() {
+            self.log.info(LogData::NpcDied { npc_name });
+            self.current_level_mut().despawn(npc_id);
+            self.player.character.gain_experience(25);
         }
 
-        self.log.print(attack_message);
-
         Ok(GameOutcome::Success)
+    }
+
+    pub fn player_ranged_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
+        if self.current_level().get_npc(npc_id).is_none() {
+            return Ok(GameOutcome::Fail(FailReason::InvalidTarget(npc_id))); // Target entity is not an npc
+        }
+
+        let Some(weapon_id) = self.player.character.weapon else {
+            return Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty)); // No weapon equipped
+        };
+
+        let weapon_item =
+            self.get_item_by_id(weapon_id.0).ok_or(EngineError::UnregisteredItem(weapon_id.0))?; // Weapon not a registered item
+
+        let weapon_def = self
+            .get_item_def_by_id(weapon_item.def_id.clone())
+            .ok_or(DataError::MissingItemDefinition(weapon_item.def_id))?; // Weapon is not defined
+
+        let GameItemKindDef::Weapon { ranged: true, .. } = weapon_def.kind else {
+            return Err(GameError::from(EngineError::InvalidItem(weapon_def.kind))); // Weapon is not ranged
+        };
+
+        self.player_attack_npc(npc_id)
     }
 
     pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
@@ -71,11 +98,11 @@ impl GameState {
 
         match attack_result {
             None => {
-                self.log.print("Player dodged the attack!".to_string());
+                self.log.info(LogData::NpcAttackMiss { npc_name });
             }
             Some(damage) => {
                 self.player.character.take_damage(damage);
-                self.log.print(format!("{} hits Player for {} damage!", npc_name, damage,));
+                self.log.info(LogData::NpcAttackHit { npc_name, damage });
             }
         }
 
@@ -124,7 +151,9 @@ impl GameState {
                 .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
 
             match item_def.kind {
-                GameItemKindDef::Weapon { damage, crit_chance } => Ok((damage, crit_chance)),
+                GameItemKindDef::Weapon { damage, crit_chance, ranged: _ranged } => {
+                    Ok((damage, crit_chance))
+                }
                 _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {

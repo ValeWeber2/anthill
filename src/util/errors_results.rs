@@ -8,6 +8,7 @@ use crate::{
     core::{
         entity_logic::EntityId,
         game_items::{GameItemId, GameItemKindDef},
+        text_log::LogData,
     },
     data::{item_defs::GameItemDefId, npc_defs::NpcDefId},
     world::coordinate_system::Point,
@@ -44,28 +45,32 @@ pub enum FailReason {
 
     /// Action cannot be completed because the slot is already empty. Used in unequipping logic.
     /// (e.g. trying to unequip armor while not wearing armor)
-    CannotUnequipEmptySlot,
+    EquipmentSlotEmpty,
 
     /// An interaction was triggered, but the given object has no defined interaction.
     /// This should not happen, since interactions are only triggered on defined objects.
     NoInteraction,
+
+    /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
+    TileNotVisible(Point),
+
+    /// Action cannot be performed because the target is not the right kind for this action.
+    InvalidTarget(EntityId),
 }
 
 impl FailReason {
     /// This is a function that defines how (if at all) a user should be notified of the `GameOutcome::Fail(_)`.
     /// Some things should be told to the player (like the inventory being full).
     /// Other things go without saying (lik enot being able to walk into a wall).
-    pub fn notify_user(&self) -> Option<String> {
+    pub fn notify_user(&self) -> Option<LogData> {
         match self {
             FailReason::PointOutOfBounds(_) => None,
             FailReason::TileNotWalkable(_) => None,
-            FailReason::InventoryFull => {
-                Some("Your inventory is full. Cannot add another item.".to_string())
-            }
-            FailReason::CannotUnequipEmptySlot => {
-                Some("The equipment slot is already empty. Cannot unequip.".to_string())
-            }
-            FailReason::NoInteraction => Some("Cannot interact with this object".to_string()),
+            FailReason::InventoryFull => Some(LogData::InventoryFull),
+            FailReason::EquipmentSlotEmpty => Some(LogData::EquipmentSlotEmpty),
+            FailReason::TileNotVisible(_) => None,
+            FailReason::InvalidTarget(_) => None,
+            FailReason::NoInteraction => Some(LogData::NoInteraction),
         }
     }
 }

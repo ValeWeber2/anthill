@@ -21,7 +21,7 @@ WorldData(
     RoomData(x: 62, y: 18, width: 4,  height: 5),  // Raum 11
 
 
-    RoomData(x: 43, y: 1,  width: 8,  height: 18), // Raum x
+    RoomData(x: 43, y: 1,  width: 7,  height: 17), // Raum x
   ],
 
   tiles: [

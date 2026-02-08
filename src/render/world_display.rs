@@ -94,6 +94,17 @@ impl WorldDisplay {
             cell_content.set_style(entity_base.style());
         }
     }
+
+    pub fn render_cursor(&self, game: &GameState, rect: Rect, buf: &mut Buffer) {
+        if let Some(cursor) = &game.cursor {
+            let (display_x, display_y) = get_world_display_pos(cursor.point, rect);
+
+            if let Some(cell) = buf.cell_mut(Position::new(display_x, display_y)) {
+                let style = cell.style().bg(Color::LightCyan).fg(Color::Black);
+                cell.set_style(style);
+            }
+        }
+    }
 }
 
 /// Helper function to translate a position in the world into actual coordinates of characters in the Terminal screen.

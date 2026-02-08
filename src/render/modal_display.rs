@@ -190,10 +190,19 @@ fn render_help(area: Rect, buf: &mut Buffer) {
     const COMMAND_WIDTHS: [Constraint; 2] =
         [Constraint::Percentage(19), Constraint::Percentage(81)];
 
-    let commands = [
-        GameCommand::Quit,
-        GameCommand::Help,
-        GameCommand::PlayerInfo,
+    let player_commands = [GameCommand::Quit, GameCommand::Help, GameCommand::PlayerInfo];
+
+    let mut player_command_rows = Vec::with_capacity(player_commands.len() + 2);
+    player_command_rows.push(Row::new(vec![""]));
+
+    for cmd in player_commands {
+        player_command_rows
+            .push(Row::new(vec![cmd.name().to_string(), cmd.description().to_string()]));
+    }
+
+    player_command_rows.push(Row::new(vec![""]));
+
+    let dev_commands = [
         GameCommand::MaxStats,
         GameCommand::MaxEquip,
         GameCommand::RngTest,
@@ -203,26 +212,29 @@ fn render_help(area: Rect, buf: &mut Buffer) {
         GameCommand::RevealAll,
     ];
 
-    let mut command_rows = Vec::with_capacity(commands.len() + 3);
-    command_rows.push(Row::new(vec![""]));
+    let mut dev_command_rows = Vec::with_capacity(dev_commands.len() + 3);
+    dev_command_rows.push(Row::new(vec![""]));
 
-    for cmd in commands {
-        command_rows.push(Row::new(vec![cmd.name().to_string(), cmd.description().to_string()]));
+    for cmd in dev_commands {
+        dev_command_rows
+            .push(Row::new(vec![cmd.name().to_string(), cmd.description().to_string()]));
     }
 
-    command_rows.push(Row::new(vec![""]));
-    command_rows.push(Row::new(vec![""]));
+    dev_command_rows.push(Row::new(vec![""]));
+    dev_command_rows.push(Row::new(vec![""]));
 
     // Layout
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1),                          // controls header
-            Constraint::Length(controls_rows.len() as u16), // controls table
-            Constraint::Length(1),                          // commands header
-            Constraint::Length(command_rows.len() as u16),  // commands table
-            Constraint::Length(1),                          // footer
+            Constraint::Length(1),                                // controls header
+            Constraint::Length(controls_rows.len() as u16),       // controls table
+            Constraint::Length(1),                                // player commands header
+            Constraint::Length(player_command_rows.len() as u16), // player commands table
+            Constraint::Length(1),                                // dev commands header
+            Constraint::Length(dev_command_rows.len() as u16),    // dev commands table
+            Constraint::Length(1),                                // footer
         ])
         .split(inner);
 
@@ -235,16 +247,23 @@ fn render_help(area: Rect, buf: &mut Buffer) {
 
     Widget::render(controls_table, chunks[1], buf);
 
-    Paragraph::new("=== COMMANDS ========================================================================================================================================")
+    Paragraph::new("=== PLAYER COMMANDS =================================================================================================================================")
         .render(chunks[2], buf);
 
-    let command_table = Table::new(command_rows, COMMAND_WIDTHS).column_spacing(1);
+    let player_command_table = Table::new(player_command_rows, COMMAND_WIDTHS).column_spacing(1);
 
-    Widget::render(command_table, chunks[3], buf);
+    Widget::render(player_command_table, chunks[3], buf);
+
+    Paragraph::new("=== DEVELOPER COMMANDS ==============================================================================================================================")
+        .render(chunks[4], buf);
+
+    let dev_command_table = Table::new(dev_command_rows, COMMAND_WIDTHS).column_spacing(1);
+
+    Widget::render(dev_command_table, chunks[5], buf);
 
     Paragraph::new("Press ESC to close this window")
         .style(Style::default().add_modifier(Modifier::DIM))
-        .render(chunks[4], buf);
+        .render(chunks[6], buf);
 }
 
 pub enum SelectionAction {

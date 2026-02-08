@@ -4,9 +4,14 @@ use rand::Rng;
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
+use bitflags::bitflags;
+
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
+use crate::core::text_log::Log;
+use crate::util::errors_results::{FailReason, GameOutcome};
+use crate::world::coordinate_system::{Direction, Point};
 use crate::world::level::Level;
 
 // ----------------------------------------------
@@ -20,6 +25,10 @@ pub struct GameState {
     pub level_nr: usize,
 
     pub player: Player,
+
+    /// Represents the character on screen that is being controlled. (Usually on the Player character, but can be detached.)
+    pub cursor: Option<CursorState>,
+
     pub log: Log,
     pub round_nr: u64,
 
@@ -27,8 +36,9 @@ pub struct GameState {
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
 
     pub rng: StdRng,
-
     pub proc_gen: StdRng,
+
+    pub game_rules: GameRules,
 }
 
 impl GameState {
@@ -39,13 +49,15 @@ impl GameState {
         let mut state = Self {
             levels: Vec::new(),
             player: Player::new(0),
+            cursor: None,
             log: Log::new(true),
             round_nr: 0,
             level_nr: 0,
             id_system: IdSystem::default(),
             items: HashMap::new(),
-            rng,
+            rng: StdRng::seed_from_u64(73),
             proc_gen,
+            game_rules: GameRules::empty(),
         };
 
         let player_id = state.id_system.next_entity_id();
@@ -76,42 +88,15 @@ impl Default for GameState {
             levels: Vec::new(),
             level_nr: 0,
             player: Player::default(),
+            cursor: None,
             log: Log::new(true),
             round_nr: 0,
             id_system: IdSystem::default(),
             items: HashMap::new(),
             rng: StdRng::seed_from_u64(73),
             proc_gen: StdRng::seed_from_u64(42),
+            game_rules: GameRules::empty(),
         }
-    }
-}
-
-// ----------------------------------------------
-//                  Game Text Log
-// ----------------------------------------------
-pub struct Log {
-    pub print_debug_info: bool,
-    pub messages: Vec<String>,
-}
-
-impl Log {
-    pub fn new(print_debug_info: bool) -> Self {
-        Self { print_debug_info, messages: Vec::new() }
-    }
-
-    pub fn print(&mut self, message: String) {
-        let lines: Vec<&str> = message.split("\n").collect();
-        for line in lines {
-            self.messages.push(line.to_string());
-        }
-    }
-
-    pub fn debug_print(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
-        }
-
-        self.print(message);
     }
 }
 
@@ -138,5 +123,54 @@ impl IdSystem {
         self.item_id_counter += 1;
 
         id
+    }
+}
+
+// ----------------------------------------------
+//                Gamerule System
+// ----------------------------------------------
+
+bitflags! {
+    pub struct GameRules: u8 {
+        // This disables collision detection for the player, allowing them to walk through walls.
+        const NO_CLIP = 0b00000001;
+    }
+}
+
+// ----------------------------------------------
+//                Cursor System
+// ----------------------------------------------
+
+pub struct CursorState {
+    pub kind: CursorKind,
+    pub point: Point,
+}
+
+pub enum CursorKind {
+    Look,
+    RangedAttack,
+}
+
+impl GameState {
+    pub fn move_cursor(&mut self, direction: Direction) -> GameOutcome {
+        let Some(point) = self.cursor.as_ref().map(|cursor_state| cursor_state.point) else {
+            return GameOutcome::Success;
+        };
+
+        let new_pos = point + direction;
+
+        if !self.current_world().is_in_bounds(new_pos.x as isize, new_pos.y as isize) {
+            return GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos));
+        }
+
+        if !self.current_world().get_tile(new_pos).visible {
+            return GameOutcome::Fail(FailReason::TileNotVisible(new_pos));
+        }
+
+        if let Some(cursor) = self.cursor.as_mut() {
+            cursor.point = new_pos;
+        }
+
+        GameOutcome::Success
     }
 }

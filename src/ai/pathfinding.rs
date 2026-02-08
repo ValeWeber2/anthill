@@ -7,6 +7,9 @@ use crate::world::{
     worldspace::World,
 };
 
+// Max iterations the A* algorithm is allowed to run with.
+const MAX_ITERS: usize = 200;
+
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct Node {
     point: Point,
@@ -57,6 +60,8 @@ pub fn a_star<F>(start: Point, goal: Point, mut cost: F) -> Option<Vec<Point>>
 where
     F: FnMut(Point) -> Option<usize>,
 {
+    let mut iterations: usize = 0;
+
     let mut open_list = BinaryHeap::new();
 
     // Best-known cost to reach given tile
@@ -73,6 +78,11 @@ where
     open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
 
     while let Some(current) = open_list.pop() {
+        iterations += 1;
+        if iterations > MAX_ITERS {
+            return None;
+        }
+
         if current.point == goal {
             let mut path = vec![current.point];
             let mut current_position = current.point;

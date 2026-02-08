@@ -1,8 +1,9 @@
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable},
-        game::GameState,
+        game::{GameRules, GameState},
         game_items::GameItemId,
+        text_log::LogData,
     },
     util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
     world::{
@@ -19,6 +20,7 @@ pub enum PlayerInput {
     DropItem(GameItemId),
     UnequipWeapon,
     UnequipArmor,
+    RangedAttack(EntityId),
 }
 
 pub enum ActionKind {
@@ -31,6 +33,7 @@ pub enum ActionKind {
     UnequipWeapon,
     UnequipArmor,
     TileInteraction(Point),
+    RangedAttack(EntityId),
 }
 
 impl GameState {
@@ -45,14 +48,14 @@ impl GameState {
             }
 
             TileType::StairsDown => {
-                self.log.print("You go down the stairs...".to_string());
+                self.log.info(LogData::UseStairsDown);
                 self.goto_level(self.level_nr + 1)
                     .expect("Failed to load/generate level. Game cannot continue.");
                 Ok(GameOutcome::Success)
             }
 
             TileType::StairsUp => {
-                self.log.print("You go back up the stairs...".to_string());
+                self.log.info(LogData::UseStairsUp);
                 self.goto_level(self.level_nr - 1)
                     .expect("Failed to load/generate level, even though previous levels are always generated. Game cannot continue.");
                 Ok(GameOutcome::Success)
@@ -78,19 +81,20 @@ impl GameState {
             ActionKind::UnequipWeapon => self.unequip_weapon(),
             ActionKind::UnequipArmor => self.unequip_armor(),
             ActionKind::TileInteraction(point) => self.tile_interaction(point),
+            ActionKind::RangedAttack(npc_id) => self.player_ranged_attack_npc(npc_id),
         };
 
         match action_result {
             Ok(GameOutcome::Success) => self.next_round(),
             Ok(GameOutcome::Fail(reason)) => {
                 // Log for user only if message is defined for user
-                if let Some(message) = reason.notify_user() {
-                    self.log.print(message.to_string());
+                if let Some(log_data) = reason.notify_user() {
+                    self.log.info(log_data);
                 }
             }
             Err(error) => {
                 // Log for Debugging
-                self.log.debug_print(error.to_string());
+                self.log.debug_warn(error.to_string());
             }
         }
     }
@@ -121,6 +125,7 @@ impl GameState {
             PlayerInput::DropItem(item_id) => ActionKind::DropItem(item_id),
             PlayerInput::UnequipWeapon => ActionKind::UnequipWeapon,
             PlayerInput::UnequipArmor => ActionKind::UnequipArmor,
+            PlayerInput::RangedAttack(entity_id) => ActionKind::RangedAttack(entity_id),
         }
     }
 
@@ -143,7 +148,8 @@ impl GameState {
         self.remove_item_from_inv(item_id)?;
 
         let player_pos = self.player.character.pos();
-        self.create_item_sprite(item_id, player_pos)?;
+        let item_sprite = self.create_item_sprite(item_id, player_pos)?;
+        self.current_level_mut().spawn_item_sprite(item_sprite)?;
 
         Ok(GameOutcome::Success)
     }
@@ -156,7 +162,9 @@ impl GameState {
             return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos)));
         }
 
-        if !self.current_world().get_tile(new_pos).tile_type.is_walkable() {
+        if !self.current_world().get_tile(new_pos).tile_type.is_walkable()
+            && !self.game_rules.contains(GameRules::NO_CLIP)
+        {
             return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_pos)));
         }
 

@@ -4,6 +4,7 @@ use crate::{
     core::{
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
+        text_log::LogData,
     },
     util::errors_results::{
         DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
@@ -15,7 +16,7 @@ pub const INVENTORY_LIMIT: usize = 26;
 impl GameState {
     pub fn add_item_to_inv(&mut self, item_id: u32) -> GameResult {
         if self.player.character.inventory.len() >= INVENTORY_LIMIT {
-            self.log.debug_print(format!("Inventory full. Couldn't add item {}", item_id));
+            self.log.info(LogData::InventoryFull);
             return Ok(GameOutcome::Fail(FailReason::InventoryFull));
         }
 
@@ -30,7 +31,7 @@ impl GameState {
             self.player.character.inventory.swap_remove(found_item);
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.debug_print(format!("Couldn't remove item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't remove item {}: {}", item_id, error));
             return Err(error);
         }
 
@@ -60,7 +61,7 @@ impl GameState {
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.print(format!("Couldn't use item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't use item {}: {}", item_id, error));
             Err(error)
         }
     }
@@ -103,11 +104,11 @@ impl GameState {
             let def = self
                 .get_item_def_by_id(item.def_id.clone())
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
-            def.name
+            def.name.to_string()
         };
-        self.deregister_item(item_id)?;
 
-        self.log.print(format!("You have eaten {}.", item_name));
+        self.log.info(LogData::PlayerEats { item_name });
+        self.deregister_item(item_id)?;
 
         Ok(GameOutcome::Success)
     }
@@ -118,7 +119,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 
@@ -128,7 +129,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 }

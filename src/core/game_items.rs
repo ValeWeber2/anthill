@@ -18,12 +18,15 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum GameItemKindDef {
-    Weapon { damage: u16, crit_chance: u8 },
+    Weapon { damage: u16, crit_chance: u8, ranged: bool },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
 }
 
+#[derive(Clone, Copy)]
 pub struct ArmorItem(pub GameItemId);
+
+#[derive(Clone, Copy)]
 pub struct WeaponItem(pub GameItemId);
 
 impl ArmorItem {
@@ -70,8 +73,7 @@ impl GameState {
     pub fn register_item(&mut self, def_id: GameItemDefId) -> GameItemId {
         let id: GameItemId = self.id_system.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
-
-        self.log.debug_print(format!("Registered item {} (ID: {})", def_id, id,));
+        self.log.debug_info(format!("Registered item {} (ID: {})", def_id, id));
 
         id
     }
