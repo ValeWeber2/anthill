@@ -4,11 +4,11 @@ use crate::{
         entity_logic::{Entity, EntityId},
         game::GameState,
         game_items::GameItemKindDef,
-        text_log::LogData,
     },
     util::{
         errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
         rng::{DieSize, Roll},
+        text_log::LogData,
     },
 };
 

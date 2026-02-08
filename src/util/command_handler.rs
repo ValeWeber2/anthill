@@ -4,11 +4,11 @@ use strum_macros::EnumIter;
 use crate::{
     App,
     core::game::GameRules,
-    core::text_log::LogData,
     data::{item_defs::item_defs, npc_defs::npc_defs},
     util::{
         errors_results::GameOutcome,
         rng::{Check, DieSize, Roll},
+        text_log::LogData,
     },
     world::{coordinate_system::Point, tiles::Collision},
 };

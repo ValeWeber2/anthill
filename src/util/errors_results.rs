@@ -8,9 +8,9 @@ use crate::{
     core::{
         entity_logic::EntityId,
         game_items::{GameItemId, GameItemKindDef},
-        text_log::LogData,
     },
     data::{item_defs::GameItemDefId, npc_defs::NpcDefId},
+    util::text_log::LogData,
     world::coordinate_system::Point,
 };
 

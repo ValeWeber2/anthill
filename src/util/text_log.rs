@@ -78,7 +78,7 @@ pub enum LogData {
 }
 
 impl LogData {
-    pub fn display(&self) -> Line {
+    pub fn display(&self) -> Line<'_> {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),
 

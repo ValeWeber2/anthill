@@ -9,8 +9,8 @@ use bitflags::bitflags;
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
-use crate::core::text_log::Log;
 use crate::util::errors_results::{FailReason, GameOutcome};
+use crate::util::text_log::Log;
 use crate::world::coordinate_system::{Direction, Point};
 use crate::world::level::Level;
 

@@ -3,9 +3,9 @@ use crate::{
         entity_logic::{Entity, EntityId, Movable},
         game::{GameRules, GameState},
         game_items::GameItemId,
-        text_log::LogData,
     },
     util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
+    util::text_log::LogData,
     world::{
         coordinate_system::{Direction, Point, PointVector},
         tiles::{Collision, DoorType, Interactable, TileType},

@@ -4,10 +4,10 @@ use crate::{
     core::{
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
-        text_log::LogData,
     },
-    util::errors_results::{
-        DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
+    util::{
+        errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
+        text_log::LogData,
     },
 };
 
