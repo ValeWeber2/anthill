@@ -3,10 +3,10 @@ WorldData(
   height: 25,
 
   rooms: [
-    RoomData(x: 10, y: 5, width: 15, height: 10), // Raum 1
-    RoomData(x: 35, y: 5, width: 20, height: 12), // Raum 2
-    RoomData(x: 65, y: 8, width: 18, height: 10), // Raum 3
-    RoomData(x: 12, y: 17, width: 5, height: 5),  // Raum 4
+    RoomData(x: 10, y: 5, width: 14, height: 9), // Raum 1
+    RoomData(x: 35, y: 5, width: 19, height: 11), // Raum 2
+    RoomData(x: 65, y: 8, width: 17, height: 9), // Raum 3
+    RoomData(x: 12, y: 17, width: 4, height: 4),  // Raum 4
   ],
 
   tiles: [
@@ -75,7 +75,7 @@ WorldData(
     TileData(x: 63, y: 13, tile_type: Hallway),
     TileData(x: 64, y: 13, tile_type: Hallway),
 
-    TileData(x: 12, y: 6, tile_type: Stair),
+    TileData(x: 12, y: 6, tile_type: StairsDown),
   ],
 
   entry: Point(x: 11, y: 6),

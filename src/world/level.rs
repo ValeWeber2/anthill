@@ -2,9 +2,12 @@
 
 use std::collections::HashMap;
 
+use rand::RngCore;
+
 use crate::core::entity_logic::{Entity, Npc};
 use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
+use crate::proc_gen::bsp::generate_map;
 use crate::util::errors_results::{DataError, EngineError};
 use crate::world::coordinate_system::Point;
 use crate::world::tiles::Collision;
@@ -191,7 +194,7 @@ impl GameState {
                 error
             })?
         } else {
-            todo!("Generate Level using Procedural Generation");
+            self.load_generated_level(index).unwrap()
         };
 
         self.levels.insert(index, new_level);
@@ -205,6 +208,38 @@ impl GameState {
         }
 
         let data = load_world_from_ron(level_paths()[level_nr])?;
+
+        let mut level = Level::new();
+
+        level.world.apply_world_data(&data, level_nr)?;
+        level.entry = data.entry;
+
+        for spawn in &data.spawns {
+            let pos = Point::new(spawn.x, spawn.y);
+
+            if !level.is_available(pos) {
+                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
+                continue;
+            }
+
+            match &spawn.kind {
+                SpawnKind::Npc { def_id } => {
+                    let npc = self.create_npc(def_id.clone(), pos)?;
+                    level.spawn_npc(npc)?;
+                }
+                SpawnKind::Item { def_id } => {
+                    let item_id = self.register_item(def_id.clone());
+                    let item_sprite = self.create_item_sprite(item_id, pos)?;
+                    level.spawn_item_sprite(item_sprite)?;
+                }
+            }
+        }
+
+        Ok(level)
+    }
+
+    pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
+        let data = generate_map(self.proc_gen.next_u64());
 
         let mut level = Level::new();
 

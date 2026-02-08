@@ -47,6 +47,10 @@ pub enum FailReason {
     /// (e.g. trying to unequip armor while not wearing armor)
     EquipmentSlotEmpty,
 
+    /// An interaction was triggered, but the given object has no defined interaction.
+    /// This should not happen, since interactions are only triggered on defined objects.
+    NoInteraction,
+
     /// Action cannot be completed because the targeted tile is not visible. Used with cursors.
     TileNotVisible(Point),
 
@@ -66,6 +70,7 @@ impl FailReason {
             FailReason::EquipmentSlotEmpty => Some(LogData::EquipmentSlotEmpty),
             FailReason::TileNotVisible(_) => None,
             FailReason::InvalidTarget(_) => None,
+            FailReason::NoInteraction => Some(LogData::NoInteraction),
         }
     }
 }
@@ -228,20 +233,32 @@ impl From<DataError> for GameError {
 #[derive(Debug)]
 pub enum IoError {
     /// Reading the map file from the assets has failed.
-    MapReadFailed(io::Error),
+    FileReading(io::Error),
 
     /// Parsing the map file from the assets for its .ron structure failed.
-    MapParseFailed(SpannedError),
+    MapParsing(SpannedError),
+
+    /// Creating a new file failed.
+    FileCreation(io::Error),
+
+    /// Writing the app state to the file failed.
+    MapWriting(ron::Error),
 }
 
 impl fmt::Display for IoError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IoError::MapReadFailed(error) => {
+            IoError::FileReading(error) => {
                 write!(f, "Couldn't load map file: {}", error)
             }
-            IoError::MapParseFailed(error) => {
+            IoError::MapParsing(error) => {
                 write!(f, "Couldn't parse map file: {}", error)
+            }
+            IoError::FileCreation(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
+            }
+            IoError::MapWriting(error) => {
+                write!(f, "Couldn't open map file to save: {}", error)
             }
         }
     }

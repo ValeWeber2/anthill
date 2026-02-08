@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use std::fmt;
 use std::ops::{Add, Sub};
 
@@ -34,6 +36,11 @@ impl Point {
     pub fn distance_squared_from(&self, other: Point) -> usize {
         let delta = *self - other;
         delta.length_squared() as usize
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(usize) -> usize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
     }
 }
 
@@ -101,6 +108,11 @@ impl PointVector {
     /// Returns the squared distance, because for this purpose the square root isn't needed. For the true Pythagorean distance, you need to take the square root (and convert to a float).
     fn length_squared(&self) -> isize {
         self.x * self.x + self.y * self.y
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(isize) -> isize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
     }
 }
 

@@ -61,7 +61,12 @@ pub enum TileType {
 
     /// Door that leads from a room's [TileType::Wall] to a [TileType::Hallway]
     Door(DoorType),
-    Stair,
+
+    /// Stairs that lead further down into the dungeon
+    StairsDown,
+
+    /// Stairs that lead back up the dungeon floors
+    StairsUp,
 }
 
 impl std::fmt::Display for TileType {
@@ -74,7 +79,8 @@ impl std::fmt::Display for TileType {
             TileType::Door(DoorType::Archway) => write!(f, "Archway"),
             TileType::Door(DoorType::Closed) => write!(f, "Closed Door"),
             TileType::Door(DoorType::Open) => write!(f, "Open Door"),
-            TileType::Stair => write!(f, "Stairs"),
+            TileType::StairsDown => write!(f, "Stairs leading further down..."),
+            TileType::StairsUp => write!(f, "Stairs leading back up."),
         }
     }
 }
@@ -114,6 +120,11 @@ pub trait Opacity {
     fn is_opaque(&self) -> bool;
 }
 
+/// A trait for defining if an object is interactable and what game interaction it creates.
+pub trait Interactable {
+    fn is_interactable(&self) -> bool;
+}
+
 impl Collision for TileType {
     fn is_walkable(&self) -> bool {
         match self {
@@ -124,7 +135,8 @@ impl Collision for TileType {
             TileType::Door(DoorType::Open) => true,
             TileType::Door(DoorType::Closed) => false,
             TileType::Door(DoorType::Archway) => true,
-            TileType::Stair => true,
+            TileType::StairsDown => true,
+            TileType::StairsUp => true,
         }
     }
 }
@@ -138,10 +150,11 @@ impl Drawable for TileType {
             TileType::Floor => '·',
             TileType::Wall => '#', // Will not be displayed Is replaced with a directional wall character instead.
             TileType::Hallway => '░',
-            TileType::Door(DoorType::Archway) => '░',
+            TileType::Door(DoorType::Archway) => '·',
             TileType::Door(DoorType::Open) => '_',
             TileType::Door(DoorType::Closed) => '+',
-            TileType::Stair => '>',
+            TileType::StairsDown => '>',
+            TileType::StairsUp => '<',
         }
     }
     fn style(&self) -> Style {
@@ -152,7 +165,8 @@ impl Drawable for TileType {
             TileType::Hallway => Style::default().fg(Color::DarkGray),
             TileType::Door(DoorType::Archway) => Style::default().fg(Color::Gray),
             TileType::Door(_) => Style::default().fg(Color::Yellow),
-            TileType::Stair => Style::default().fg(Color::White),
+            TileType::StairsDown => Style::default().fg(Color::White),
+            TileType::StairsUp => Style::default().fg(Color::White),
         }
     }
 }
@@ -167,7 +181,24 @@ impl Opacity for TileType {
             TileType::Door(DoorType::Open) => false,
             TileType::Door(DoorType::Closed) => true,
             TileType::Door(DoorType::Archway) => false,
-            TileType::Stair => false,
+            TileType::StairsDown => false,
+            TileType::StairsUp => false,
+        }
+    }
+}
+
+impl Interactable for TileType {
+    fn is_interactable(&self) -> bool {
+        match self {
+            TileType::Void => false,
+            TileType::Floor => false,
+            TileType::Wall => false,
+            TileType::Hallway => false,
+            TileType::Door(DoorType::Open) => false,
+            TileType::Door(DoorType::Closed) => true,
+            TileType::Door(DoorType::Archway) => false,
+            TileType::StairsDown => true,
+            TileType::StairsUp => true,
         }
     }
 }

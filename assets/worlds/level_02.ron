@@ -8,20 +8,20 @@ WorldData(
 
 
   rooms: [
-    RoomData(x: 2,  y: 3,  width: 5,  height: 6),  // Raum 1
-    RoomData(x: 9,  y: 2,  width: 8,  height: 5),  // Raum 2
-    RoomData(x: 4,  y: 10, width: 28, height: 5),  // Raum 3
-    RoomData(x: 33, y: 1,  width: 8,  height: 18), // Raum 4
-    RoomData(x: 18, y: 4,  width: 10, height: 5),  // Raum 5
-    RoomData(x: 1,  y: 17, width: 7,  height: 7),  // Raum 6
-    RoomData(x: 10, y: 16, width: 7,  height: 4),  // Raum 7
-    RoomData(x: 18, y: 17, width: 9,  height: 4),  // Raum 8
-    RoomData(x: 36, y: 20, width: 20, height: 4),  // Raum 9
-    RoomData(x: 54, y: 13, width: 40, height: 4),  // Raum 10
-    RoomData(x: 62, y: 18, width: 5,  height: 6),  // Raum 11
+    RoomData(x: 2,  y: 3,  width: 4,  height: 5),  // Raum 1
+    RoomData(x: 9,  y: 2,  width: 7,  height: 4),  // Raum 2
+    RoomData(x: 4,  y: 10, width: 27, height: 4),  // Raum 3
+    RoomData(x: 33, y: 1,  width: 7,  height: 17), // Raum 4
+    RoomData(x: 18, y: 4,  width: 9, height: 4),  // Raum 5
+    RoomData(x: 1,  y: 17, width: 6,  height: 6),  // Raum 6
+    RoomData(x: 10, y: 16, width: 6,  height: 3),  // Raum 7
+    RoomData(x: 18, y: 17, width: 8,  height: 3),  // Raum 8
+    RoomData(x: 36, y: 20, width: 19, height: 3),  // Raum 9
+    RoomData(x: 54, y: 13, width: 39, height: 3),  // Raum 10
+    RoomData(x: 62, y: 18, width: 4,  height: 5),  // Raum 11
 
 
-    RoomData(x: 43, y: 1,  width: 8,  height: 18), // Raum x
+    RoomData(x: 43, y: 1,  width: 7,  height: 17), // Raum x
   ],
 
   tiles: [
@@ -127,6 +127,8 @@ WorldData(
     TileData(x: 75, y: 19,  tile_type: Hallway),
 
 
+    // Way down
+    TileData(x: 4, y: 7, tile_type: StairsDown),
 
   ],
 

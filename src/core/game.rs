@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use rand::Rng;
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
@@ -35,12 +36,16 @@ pub struct GameState {
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
 
     pub rng: StdRng,
+    pub proc_gen: StdRng,
 
     pub game_rules: GameRules,
 }
 
 impl GameState {
     pub fn new() -> Self {
+        let mut rng = StdRng::seed_from_u64(73);
+        let proc_gen = StdRng::seed_from_u64(rng.random());
+
         let mut state = Self {
             levels: Vec::new(),
             player: Player::new(0),
@@ -51,6 +56,7 @@ impl GameState {
             id_system: IdSystem::default(),
             items: HashMap::new(),
             rng: StdRng::seed_from_u64(73),
+            proc_gen,
             game_rules: GameRules::empty(),
         };
 
@@ -88,6 +94,7 @@ impl Default for GameState {
             id_system: IdSystem::default(),
             items: HashMap::new(),
             rng: StdRng::seed_from_u64(73),
+            proc_gen: StdRng::seed_from_u64(42),
             game_rules: GameRules::empty(),
         }
     }
