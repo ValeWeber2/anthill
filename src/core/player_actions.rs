@@ -49,14 +49,14 @@ impl GameState {
 
             TileType::StairsDown => {
                 self.log.info(LogData::UseStairsDown);
-                self.goto_level(self.level_nr + 1)
+                self.goto_level_next()
                     .expect("Failed to load/generate level. Game cannot continue.");
                 Ok(GameOutcome::Success)
             }
 
             TileType::StairsUp => {
                 self.log.info(LogData::UseStairsUp);
-                self.goto_level(self.level_nr - 1)
+                self.goto_level_previous()
                     .expect("Failed to load/generate level, even though previous levels are always generated. Game cannot continue.");
                 Ok(GameOutcome::Success)
             }

@@ -1,7 +1,7 @@
 use crate::proc_gen::corridors::MapEdge;
 
 /// Union-Find data structure required for the minimum spanning tree
-/// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/disjoint_set_union.rs#L17
+/// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/disjoint_set_union.rs#L17 (adapted to our purposes)
 pub struct UnionFind {
     nodes: Vec<UnionFindNode>,
 }
@@ -51,7 +51,7 @@ pub struct UnionFindNode {
 }
 
 /// Create a minimum spanning tree using the Kruskal algorithm.
-/// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/minimum_spanning_tree.rs
+/// Source: https://github.com/TheAlgorithms/Rust/blob/master/src/graph/minimum_spanning_tree.rs (adapted to our purposes)
 pub fn mst_kruskal(
     mut edges: Vec<MapEdge>,
     num_vertices: usize,

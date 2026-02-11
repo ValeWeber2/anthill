@@ -7,7 +7,7 @@ use rand::RngCore;
 use crate::core::entity_logic::{Entity, Npc};
 use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
-use crate::proc_gen::bsp::generate_map;
+use crate::proc_gen::proc_gen_map::generate_map;
 use crate::util::errors_results::{DataError, EngineError};
 use crate::world::coordinate_system::Point;
 use crate::world::tiles::Collision;
@@ -29,6 +29,7 @@ pub struct Level {
     pub world: World,
 
     pub entry: Point,
+    pub exit: Point,
 
     pub npcs: Vec<Npc>,
     pub npc_index: HashMap<EntityId, usize>,
@@ -43,6 +44,7 @@ impl Level {
             world: World::new(),
 
             entry: Point::default(),
+            exit: Point::default(),
 
             npcs: Vec::new(),
             npc_index: HashMap::new(),
@@ -149,6 +151,13 @@ impl Level {
     }
 }
 
+/// All possibilities where a level can be entered. Used in [GameState::goto_level].
+/// Can be extended in the future with `Custom(Point)` or `Random` in cases like traps, where you fall through the floor.
+pub enum LevelEntrance {
+    Entry,
+    Exit,
+}
+
 impl GameState {
     /// Getter for the level that is currently active in the game.
     pub fn current_level(&self) -> &Level {
@@ -170,7 +179,11 @@ impl GameState {
         &mut self.current_level_mut().world
     }
 
-    pub fn goto_level(&mut self, index: usize) -> Result<(), GameError> {
+    pub fn goto_level(
+        &mut self,
+        index: usize,
+        entrance_point: LevelEntrance,
+    ) -> Result<(), GameError> {
         match self.levels.get(index) {
             Some(_) => self.level_nr = index,
             None => {
@@ -179,10 +192,22 @@ impl GameState {
             }
         }
 
-        self.player.character.base.pos = self.current_level().entry;
+        self.player.character.base.pos = match entrance_point {
+            LevelEntrance::Entry => self.current_level().entry,
+            LevelEntrance::Exit => self.current_level().exit,
+        };
+
         self.compute_fov();
 
         Ok(())
+    }
+
+    pub fn goto_level_next(&mut self) -> Result<(), GameError> {
+        self.goto_level(self.level_nr + 1, LevelEntrance::Entry)
+    }
+
+    pub fn goto_level_previous(&mut self) -> Result<(), GameError> {
+        self.goto_level(self.level_nr - 1, LevelEntrance::Exit)
     }
 
     pub fn initialize_level(&mut self, index: usize) -> Result<(), GameError> {
@@ -213,6 +238,7 @@ impl GameState {
 
         level.world.apply_world_data(&data, level_nr)?;
         level.entry = data.entry;
+        level.exit = data.exit;
 
         for spawn in &data.spawns {
             let pos = Point::new(spawn.x, spawn.y);
@@ -245,6 +271,7 @@ impl GameState {
 
         level.world.apply_world_data(&data, level_nr)?;
         level.entry = data.entry;
+        level.exit = data.exit;
 
         for spawn in &data.spawns {
             let pos = Point::new(spawn.x, spawn.y);

@@ -27,6 +27,9 @@ pub struct WorldData {
     pub entry: Point,
 
     #[serde(default)]
+    pub exit: Point,
+
+    #[serde(default)]
     pub spawns: Vec<SpawnData>,
 }
 

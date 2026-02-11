@@ -12,7 +12,7 @@ use crate::core::player::Player;
 use crate::util::errors_results::{FailReason, GameOutcome};
 use crate::util::text_log::Log;
 use crate::world::coordinate_system::{Direction, Point};
-use crate::world::level::Level;
+use crate::world::level::{Level, LevelEntrance};
 
 // ----------------------------------------------
 //                Game State Struct
@@ -63,7 +63,7 @@ impl GameState {
         let player_id = state.id_system.next_entity_id();
         state.player = Player::new(player_id);
 
-        let _ = state.goto_level(state.level_nr);
+        let _ = state.goto_level(state.level_nr, LevelEntrance::Entry);
         state
     }
 

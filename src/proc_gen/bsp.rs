@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
+use rand::{Rng, seq::IndexedRandom};
 
 /// Binary Space Partitioning to procedurally generate rooms
 /// Inspired by: https://www.youtube.com/watch?v=Pj4owFPH1Hw (Java)
@@ -8,7 +8,6 @@ use crate::{
     world::{
         coordinate_system::Point,
         world_data::{RoomData, SpawnData, TileData, TileTypeData, WorldData},
-        world_loader::save_world_to_ron,
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH, World},
     },
 };
@@ -87,7 +86,7 @@ impl MapBSP {
     }
 
     /// Initiates the BSp algorithm by subdividing the root [MapNode].
-    fn divide<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+    pub fn divide<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         let mut rooms: usize = 1;
 
         while rooms < self.num_rooms {
@@ -105,7 +104,7 @@ impl MapBSP {
     ///
     /// # Returns
     /// Returns a `bool` value that denotes whether a subdivision has been done or not. (Successful subdivisions are counted by the caller [MapBSP::divide()])
-    fn divide_node<R: Rng + ?Sized>(&mut self, node_id: NodeId, rng: &mut R) -> bool {
+    pub fn divide_node<R: Rng + ?Sized>(&mut self, node_id: NodeId, rng: &mut R) -> bool {
         let (point_a, point_b) = {
             let node = &self.get_node(node_id);
             (node.point_a, node.point_b)
@@ -186,14 +185,14 @@ impl MapBSP {
     }
 
     /// Takes all leaves of the BSP tree structure and shrinks their dimensions. This is done to make the map appear more natural and to create space between nodes.
-    fn shrink_leaves<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+    pub fn shrink_leaves<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         for node_id in self.rooms.clone() {
             self.get_node_mut(node_id).shrink(rng);
         }
     }
 
     /// Adds entry points and exit points for the Map (which will be turned into stairs)
-    fn add_entry_exit<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+    pub fn add_entry_exit<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         // Define rooms that need to exist on every level.
         let mandatory_rooms: Vec<usize> = self.rooms.choose_multiple(rng, 2).cloned().collect();
         let entry_node_id = mandatory_rooms[0];
@@ -202,15 +201,17 @@ impl MapBSP {
         // Determine entry
         let entry_node = self.get_node_mut(entry_node_id);
         let entry_node_floor = entry_node.floor_points();
-        let entry_point =
-            entry_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
+        let entry_point = entry_node_floor
+            .choose(rng)
+            .expect("Room smaller than 0. Rooms are by definition bigger than 0");
         self.entry = *entry_point;
 
         // Determine exit
         let exit_node = self.get_node_mut(exit_node_id);
         let exit_node_floor = exit_node.floor_points();
-        let exit_point =
-            exit_node_floor.choose(rng).expect("Rooms are by definition bigger than 0");
+        let exit_point = exit_node_floor
+            .choose(rng)
+            .expect("Room smaller than 0. Rooms are by definition bigger than 0");
         self.exit = *exit_point;
     }
 }
@@ -254,6 +255,7 @@ impl From<MapBSP> for WorldData {
             rooms: room_data,
             corridors: value.corridors,
             entry: value.entry,
+            exit: value.exit,
             spawns: value.spawns,
         }
     }
@@ -276,22 +278,4 @@ impl Default for MapBSP {
             spawns: Vec::new(),
         }
     }
-}
-
-pub fn generate_map(map_seed: u64) -> WorldData {
-    let mut rng = StdRng::seed_from_u64(map_seed);
-
-    let mut map = MapBSP::default();
-    map.divide(&mut rng);
-    map.leaves_to_rooms(map.root);
-    map.shrink_leaves(&mut rng);
-    map.find_node_connections(&mut rng);
-    map.a_star_corridors(&mut rng);
-    map.populate_rooms(&mut rng);
-    map.add_entry_exit(&mut rng);
-
-    let world_data = WorldData::from(map);
-    let _ = save_world_to_ron(&world_data, "assets/worlds/proc_gen.ron");
-
-    world_data
 }

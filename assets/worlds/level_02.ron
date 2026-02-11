@@ -126,13 +126,12 @@ WorldData(
     TileData(x: 74, y: 19,  tile_type: Hallway),
     TileData(x: 75, y: 19,  tile_type: Hallway),
 
-
-    // Way down
+    TileData(x: 3, y: 4, tile_type: StairsUp),
     TileData(x: 4, y: 7, tile_type: StairsDown),
-
   ],
 
   entry: Point(x: 3, y: 4),
+  exit: Point(x: 4, y: 7),
 
   spawns: [
     //NPCs
