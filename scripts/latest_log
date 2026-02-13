@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+logdir="$HOME/.local/share/Anthill/logs"
+
+latest=$(ls -At "$logdir" | head -n 1)
+
+cat "$HOME/.local/share/Anthill/logs/$latest"

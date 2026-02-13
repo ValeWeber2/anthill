@@ -1,3 +1,10 @@
+use std::{
+    fmt,
+    fs::{self, File},
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
+
 use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -9,18 +16,42 @@ use ratatui::{
 pub struct Log {
     pub print_debug_info: bool,
     pub messages: Vec<LogData>,
+    file: Option<BufWriter<File>>,
 }
 
 impl Log {
     pub fn new(print_debug_info: bool) -> Self {
-        Self { print_debug_info, messages: Vec::new() }
+        let path = create_log_file();
+
+        let file = File::create(path).ok();
+        let writer = file.map(BufWriter::new);
+
+        Self { print_debug_info, messages: Vec::new(), file: writer }
+    }
+
+    /// Specific getter that returns all messages, but filetered by debug messages or not depending on [Log::print_debug_info]
+    pub fn get_messages_for_display(&self) -> Vec<&LogData> {
+        if self.print_debug_info {
+            self.messages.iter().collect()
+        } else {
+            self.messages
+                .iter()
+                .filter(|&message| {
+                    !matches!(message, LogData::DebugInfo(_) | LogData::DebugWarn(_))
+                })
+                .collect()
+        }
     }
 
     /// Add information about a new log event to the log.
     ///
     /// This is to be used as the primary way of logging.
     pub fn info(&mut self, log_data: LogData) {
-        self.messages.push(log_data);
+        self.messages.push(log_data.clone());
+
+        if let Some(file) = &mut self.file {
+            let _ = writeln!(file, "{}", log_data);
+        }
     }
 
     /// Add plain text to the log.
@@ -38,10 +69,6 @@ impl Log {
     ///
     /// Use this for printing debug and development information to the log.
     pub fn debug_info(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
-        }
-
         let lines: Vec<&str> = message.split("\n").collect();
         for line in lines {
             self.info(LogData::DebugInfo(line.to_string()));
@@ -49,10 +76,6 @@ impl Log {
     }
 
     pub fn debug_warn(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
-        }
-
         let lines: Vec<&str> = message.split("\n").collect();
         for line in lines {
             self.info(LogData::DebugWarn(line.to_string()));
@@ -60,6 +83,21 @@ impl Log {
     }
 }
 
+/// Creates a log file in the OS's local data directory (./local/share on Linux)
+/// The filename is timestamped
+fn create_log_file() -> PathBuf {
+    let mut path = dirs::data_local_dir().expect("No data directory found on this OS");
+    path.push("Anthill");
+    path.push("logs");
+    fs::create_dir_all(&path).expect("Could not create data directory in OS.");
+
+    let filename = format!("anthill_log_{}.txt", chrono::Local::now().format("%Y-%m-%d-%H-%M-%S"));
+    path.push(filename);
+
+    path
+}
+
+#[derive(Clone)]
 pub enum LogData {
     DebugInfo(String),
     DebugWarn(String),
@@ -75,6 +113,16 @@ pub enum LogData {
     UseStairsDown,
     UseStairsUp,
     NoInteraction,
+}
+
+impl fmt::Display for LogData {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LogData::DebugInfo(_) => write!(f, "[ INFO ] {}", self.display()),
+            LogData::DebugWarn(_) => write!(f, "[ WARN ] {}", self.display()),
+            _ => write!(f, "         {}", self.display()),
+        }
+    }
 }
 
 impl LogData {

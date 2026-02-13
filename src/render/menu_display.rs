@@ -68,11 +68,12 @@ impl Menu {
     pub fn render_log(&self, game_state: &GameState, rect: Rect, buf: &mut Buffer) {
         let height = rect.height as usize;
         let width = rect.width as usize;
-        let start = game_state.log.messages.len().saturating_sub(height);
+
+        let messages = game_state.log.get_messages_for_display();
+        let start = messages.len().saturating_sub(height);
 
         // Fetch only as many lines as can be displayed (rough estimation, not accurate if lines wrap)
-        let lines: Vec<Line> =
-            game_state.log.messages[start..].iter().map(|msg| msg.display()).collect();
+        let lines: Vec<Line> = messages[start..].iter().map(|msg| msg.display()).collect();
 
         // Use a heuristic to count how many lines the texts actually take up.
         let mut used_height = 0;
