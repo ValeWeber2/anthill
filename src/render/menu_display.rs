@@ -104,7 +104,9 @@ impl Menu {
         let inventory = &game_state.player.character.inventory;
 
         let height = rect.height as usize;
-        let start = inventory.len().saturating_sub(height);
+        let item_height = height.saturating_sub(1); // reserve bottom line for footer
+
+        let start = inventory.len().saturating_sub(item_height);
 
         let lines: Vec<Line> = inventory[start..]
             .iter()
@@ -130,8 +132,20 @@ impl Menu {
             })
             .collect();
 
-        let paragraph = Paragraph::new(Text::from(lines)).wrap(Wrap { trim: true });
-        paragraph.render(rect, buf);
+        // Render the inventory list
+        let list_rect = Rect { x: rect.x, y: rect.y, width: rect.width, height: rect.height - 1 };
+
+        Paragraph::new(Text::from(lines)).wrap(Wrap { trim: true }).render(list_rect, buf);
+
+        // Render footer
+        let footer_y = rect.y + rect.height - 1;
+
+        buf.set_span(
+            rect.x,
+            footer_y,
+            &Span::styled("Press ESC to close the inventory", Style::default().fg(Color::DarkGray)),
+            rect.width,
+        );
     }
 }
 

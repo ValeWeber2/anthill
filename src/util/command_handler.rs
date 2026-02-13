@@ -109,8 +109,8 @@ impl GameCommand {
             }
             GameCommand::RevealAll => "Get vision over the entire map for 1 round",
             GameCommand::Suicide => "Set HP to zero to test game over state",
-            GameCommand::Legend => "Show list of all map symbols.",
-            GameCommand::NoClip => "Toggle to walk through impassible terrain.",
+            GameCommand::Legend => "Show list of all map symbols",
+            GameCommand::NoClip => "Toggle to walk through impassable terrain",
         }
     }
 
@@ -167,12 +167,12 @@ impl TryFrom<String> for GameCommand {
                     .next()
                     .ok_or("Missing coordinates")?
                     .parse::<usize>()
-                    .map_err(|_| "Invalid format for coordinates.")?;
+                    .map_err(|_| "Invalid format for coordinates")?;
                 let arg_y = tokens
                     .next()
                     .ok_or("Missing y-coordinate")?
                     .parse::<usize>()
-                    .map_err(|_| "Invalid format for y-coordinate.")?;
+                    .map_err(|_| "Invalid format for y-coordinate")?;
 
                 Ok(GameCommand::Teleport(Point { x: arg_x, y: arg_y }))
             }

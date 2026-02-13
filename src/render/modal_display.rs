@@ -208,6 +208,8 @@ fn render_help(area: Rect, buf: &mut Buffer) {
         GameCommand::Teleport(Point::new(0, 0)), // dummy
         GameCommand::Give { item_def: "".into(), amount: 0 }, // dummy
         GameCommand::RevealAll,
+        GameCommand::NoClip,
+        GameCommand::Legend,
     ];
 
     let mut dev_command_rows = Vec::with_capacity(dev_commands.len() + 3);
