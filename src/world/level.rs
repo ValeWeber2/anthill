@@ -7,11 +7,11 @@ use rand::RngCore;
 use crate::core::entity_logic::{Entity, Npc};
 use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
-use crate::proc_gen::proc_gen_map::generate_map;
+use crate::proc_gen::proc_gen_level::ProcGenLevel;
 use crate::util::errors_results::{DataError, EngineError};
 use crate::world::coordinate_system::Point;
 use crate::world::tiles::Collision;
-use crate::world::world_data::SpawnKind;
+use crate::world::world_data::{LevelData, SpawnKind};
 use crate::world::world_loader::load_world_from_ron;
 use crate::{
     core::{entity_logic::EntityId, game::GameState},
@@ -265,7 +265,8 @@ impl GameState {
     }
 
     pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
-        let data = generate_map(self.proc_gen.next_u64());
+        let proc_gen = ProcGenLevel::generate(self.proc_gen.next_u64());
+        let data = LevelData::from(proc_gen);
 
         let mut level = Level::new();
 

@@ -1,11 +1,7 @@
-use std::cmp;
-
-use rand::Rng;
-
 use crate::{
-    proc_gen::bsp::{GRID_SIZE, MIN_NODE_DIM_SHRUNK, PADDING, SHRINK_FACTOR_RANGE},
+    proc_gen::bsp::PADDING,
     world::{
-        coordinate_system::{Point, PointVector},
+        coordinate_system::Point,
         world_data::RoomData,
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH},
     },
@@ -23,7 +19,7 @@ pub type NodeId = usize;
 /// This data structure is not a nested tree structure. Instead of nesting other `MapNode`s, only an ID is saved for child nodes.
 /// A linear list structure with id references was chosen because rust struggles with recursive data structures.
 #[derive(Clone, Debug)]
-pub struct MapNode {
+pub struct MapBSPNode {
     /// Point of origin (top left) of the room.
     pub point_a: Point,
 
@@ -37,7 +33,7 @@ pub struct MapNode {
     pub right: Option<NodeId>,
 }
 
-impl MapNode {
+impl MapBSPNode {
     pub fn new(point_a: Point, point_b: Point) -> Self {
         Self { point_a, point_b, left: None, right: None }
     }
@@ -46,92 +42,9 @@ impl MapNode {
     pub fn is_leaf(&self) -> bool {
         self.left.is_none() && self.right.is_none()
     }
-
-    pub fn shrink<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let width = self.point_b.x - self.point_a.x;
-        let height = self.point_b.y - self.point_a.y;
-
-        // Shrunk width
-        let new_width = shrink_dimension(width, rng.random_range(SHRINK_FACTOR_RANGE));
-        // Shrunk height. Max 1.5 times as large as the width. This avoids weird long rooms (due to terminal grid not being 1:1)
-        let new_height = cmp::min(
-            shrink_dimension(height, rng.random_range(SHRINK_FACTOR_RANGE)),
-            (new_width as f32 * 1.5) as usize,
-        );
-
-        let new_origin_x =
-            rng.random_range((self.point_a.x + 1)..=(self.point_b.x - new_width - 1));
-        let new_origin_y =
-            rng.random_range((self.point_a.y + 1)..=(self.point_b.y - new_height - 1));
-
-        self.point_a.x = new_origin_x;
-        self.point_b.x = new_origin_x + new_width;
-        self.point_a.y = new_origin_y;
-        self.point_b.y = new_origin_y + new_height;
-    }
-
-    pub fn center(&self) -> Point {
-        let dimensions: PointVector = self.point_b - self.point_a;
-        self.point_a + dimensions.map(|n| n / 2)
-    }
-
-    pub fn corner_points(&self) -> Vec<Point> {
-        vec![
-            self.point_a,
-            Point::new(self.point_b.x, self.point_a.y),
-            self.point_b,
-            Point::new(self.point_a.x, self.point_b.y),
-        ]
-    }
-
-    pub fn wall_points(&self) -> Vec<Point> {
-        let mut points: Vec<Point> = Vec::new();
-
-        let top = self.point_a.y;
-        let right = self.point_b.x;
-        let bottom = self.point_b.y;
-        let left = self.point_a.x;
-
-        for x in left..=right {
-            points.push(Point::new(x, top));
-            points.push(Point::new(x, bottom));
-        }
-
-        for y in top..=bottom {
-            points.push(Point::new(left, y));
-            points.push(Point::new(right, y));
-        }
-
-        points
-    }
-
-    pub fn floor_points(&self) -> Vec<Point> {
-        let mut points: Vec<Point> = Vec::new();
-
-        let x_range = (self.point_a.x + GRID_SIZE)..(self.point_b.x - GRID_SIZE);
-        let y_range = (self.point_a.y + GRID_SIZE)..(self.point_b.y - GRID_SIZE);
-
-        for x in x_range {
-            for y in y_range.clone() {
-                points.push(Point::new(x, y));
-            }
-        }
-
-        points
-    }
 }
 
-/// Helper function to shrink dimensions of a room (height or width).
-///
-/// Gives the room 1 layer of padding first and then shrinks it relatively. Cannot shrink further than the [MIN_NODE_DIM_SHRUNK]
-fn shrink_dimension(dimension: usize, factor: f32) -> usize {
-    let padded = dimension.saturating_sub(2);
-    let shrunken = (padded as f32 * factor) as usize;
-
-    cmp::max(MIN_NODE_DIM_SHRUNK, shrunken)
-}
-
-impl Default for MapNode {
+impl Default for MapBSPNode {
     /// A default node always encompasses the entire available worldspace. This is the parent node in the tree that will be subdivided in the BSP algorithm.
     fn default() -> Self {
         Self {
@@ -144,16 +57,16 @@ impl Default for MapNode {
 }
 
 // To convert a MapNode (BSP data structure) into a Room (data structure used by the game to carve rooms into the void)
-impl From<MapNode> for Room {
-    fn from(value: MapNode) -> Self {
+impl From<MapBSPNode> for Room {
+    fn from(value: MapBSPNode) -> Self {
         let dimensions = value.point_b - value.point_a;
         Room::new(value.point_a, dimensions.x as usize, dimensions.y as usize)
     }
 }
 
 // To convert a MapNode (BSP data structure) into RoomData (data structure used by the world save files)
-impl From<MapNode> for RoomData {
-    fn from(value: MapNode) -> Self {
+impl From<MapBSPNode> for RoomData {
+    fn from(value: MapBSPNode) -> Self {
         let dimensions = value.point_b - value.point_a;
         RoomData {
             x: value.point_a.x,

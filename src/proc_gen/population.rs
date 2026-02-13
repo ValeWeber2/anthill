@@ -8,13 +8,16 @@ use rand::{
 
 use crate::{
     data::{item_defs::item_defs, npc_defs::npc_defs},
-    proc_gen::{bsp::MapBSP, bsp_nodes::MapNode},
+    proc_gen::{proc_gen_level::ProcGenLevel, proc_gen_room::ProcGenRoom},
     world::{
         coordinate_system::Point,
         world_data::{SpawnData, SpawnKind},
     },
 };
 
+/// Defines all possible "Encounters", which are variants for how a room can be populated.
+///
+/// This implements [Distribution], where the chances of each random `RoomEncounter` are defined
 pub enum RoomEncounter {
     Empty,
     Enemy,
@@ -34,20 +37,22 @@ impl Distribution<RoomEncounter> for StandardUniform {
     }
 }
 
-impl MapBSP {
-    pub fn populate_rooms<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        for node_id in self.rooms.clone() {
-            let node = self.get_node_mut(node_id);
-
+impl ProcGenLevel {
+    /// Populates the level with npcs.
+    ///
+    /// Populating a room requires its data, which is why populate is a method on room as well.
+    pub fn populate<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+        for room in &mut self.world.rooms {
             let encounter: RoomEncounter = rng.random();
 
-            let mut population = node.populate(encounter, rng);
+            let mut population = room.populate(encounter, rng);
             self.spawns.append(&mut population);
         }
     }
 }
 
-impl MapNode {
+impl ProcGenRoom {
+    /// Creates spawn points for randomly determined items/npcs within the bounds of the given room.
     pub fn populate<R: Rng + ?Sized>(
         &mut self,
         encounter: RoomEncounter,
@@ -78,6 +83,7 @@ impl MapNode {
     }
 }
 
+/// Helper method that randomly selects npcs to spawn and where to put them.
 fn random_npcs<R: Rng + ?Sized>(
     available_x: Range<usize>,
     available_y: Range<usize>,
@@ -102,6 +108,7 @@ fn random_npcs<R: Rng + ?Sized>(
     spawns
 }
 
+/// Helper method that randomly selects items to spawn as sprites and where to put them.
 fn random_items<R: Rng + ?Sized>(
     available_x: Range<usize>,
     available_y: Range<usize>,

@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorldData {
+pub struct LevelData {
     pub width: usize,
     pub height: usize,
 
@@ -79,7 +79,7 @@ pub enum SpawnKind {
 }
 
 impl World {
-    pub fn apply_world_data(&mut self, data: &WorldData, index: usize) -> Result<(), GameError> {
+    pub fn apply_world_data(&mut self, data: &LevelData, index: usize) -> Result<(), GameError> {
         if data.width != self.width || data.height != self.height {
             return Err(GameError::from(DataError::InvalidWorldFormat(index)));
         }
