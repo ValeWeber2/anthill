@@ -24,4 +24,4 @@ RUN pip install --break-system-packages pre-commit
 ENV CARGO_HOME=/usr/local/cargo
 ENV PATH="$CARGO_HOME/bin:${PATH}"
 
-WORKDIR /workspace
+WORKDIR /workspaces/anthill
