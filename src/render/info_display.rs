@@ -23,6 +23,7 @@ impl InfoDisplay {
     ///     * Character Hit Points
     ///     * Character equipped armor
     ///     * Character equipped weapon
+    ///     * Character position
     /// * Game Info
     ///     * Dungeon Floor the character is currently on
     ///     * Experience points collected
@@ -38,7 +39,7 @@ impl InfoDisplay {
                 Cell::from(format!("HP:{}({})", player_hp_current, player_hp_max)),
                 Cell::from(format!("Weapon: {}", weapon)),
                 Cell::from(format!(
-                    "Exp:{} Round:{}",
+                    "EXP:{} Round:{}",
                     game.player.character.stats.experience, game.round_nr
                 )),
                 Cell::from(format!(
@@ -72,7 +73,7 @@ impl InfoDisplay {
         Widget::render(info_table, rect, buf);
     }
 
-    // Render the currently equipped armor into a String, displaying its stats.
+    /// Render the currently equipped armor into a String, displaying its stats.
     fn format_armor(&self, game: &GameState) -> String {
         match &game.player.character.armor {
             Some(w) => {
@@ -100,7 +101,7 @@ impl InfoDisplay {
         }
     }
 
-    // Render the currently equipped weapon into a String, displaying its stats.
+    /// Render the currently equipped weapon into a String, displaying its stats.
     pub fn format_weapon(&self, game: &GameState) -> String {
         match &game.player.character.weapon {
             Some(w) => {

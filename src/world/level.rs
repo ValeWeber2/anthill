@@ -93,6 +93,11 @@ impl Level {
             && self.world.get_tile(pos).tile_type.is_walkable()
     }
 
+    /// Spawns an NPC on the map.
+    ///
+    /// The function checks whether the target position is free.  
+    /// If the position is unavailable, a `GameError::SpawningError` is returned.
+    /// On success, the NPC is added to the internal list and its ID is indexed.
     pub fn spawn_npc(&mut self, npc: Npc) -> Result<(), GameError> {
         if !self.is_available(npc.pos()) {
             let err = GameError::from(EngineError::SpawningError(npc.pos()));
@@ -108,6 +113,7 @@ impl Level {
         Ok(())
     }
 
+    /// Spawns an item sprite on the map.
     pub fn spawn_item_sprite(&mut self, item_sprite: GameItemSprite) -> Result<(), GameError> {
         if !self.is_available(item_sprite.pos()) {
             let err = GameError::from(EngineError::SpawningError(item_sprite.pos()));
@@ -125,7 +131,7 @@ impl Level {
 
     /// Removes an entity from the level if it exists.
     ///
-    /// Looks up the ID in NPCs first, then item sprites. Uses `swap_remove`
+    /// Looks up the ID in NPCs and item sprites. Uses `swap_remove`
     /// and fixes the moved entity’s index if needed.
     pub fn despawn(&mut self, id: EntityId) {
         if let Some(&index) = self.npc_index.get(&id) {
