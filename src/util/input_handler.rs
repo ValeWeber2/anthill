@@ -247,17 +247,21 @@ impl App {
                     }
                     _ => ModalAction::CloseModal,
                 },
-                ModalInterface::ConfirmChooseItem { item_id } => match key_event.code {
+                ModalInterface::ConfirmUseItem { item_id } => match key_event.code {
                     KeyCode::Char('y') | KeyCode::Enter => {
-                        match self.ui.menu.mode {
-                            MenuMode::Inventory(InventoryAction::Use) => {
-                                self.game.resolve_player_action(PlayerInput::UseItem(*item_id))
-                            }
-                            MenuMode::Inventory(InventoryAction::Drop) => {
-                                self.game.resolve_player_action(PlayerInput::DropItem(*item_id))
-                            }
-                            _ => {}
-                        }
+                        self.game.resolve_player_action(PlayerInput::UseItem(*item_id));
+
+                        // close inventory after using
+                        self.focus_reset();
+
+                        ModalAction::CloseModal
+                    }
+                    KeyCode::Char('n') | KeyCode::Esc => ModalAction::CloseModal,
+                    _ => ModalAction::Idle,
+                },
+                ModalInterface::ConfirmDropItem { item_id } => match key_event.code {
+                    KeyCode::Char('y') | KeyCode::Enter => {
+                        self.game.resolve_player_action(PlayerInput::DropItem(*item_id));
 
                         // close inventory after using
                         self.focus_reset();
@@ -344,8 +348,17 @@ impl App {
             KeyCode::Char(c) => {
                 if let Some(index) = App::letter_to_index(c) {
                     if let Some(item_id) = self.game.player.character.inventory.get(index) {
-                        self.ui.modal =
-                            Some(ModalInterface::ConfirmChooseItem { item_id: *item_id });
+                        match self.ui.menu.mode {
+                            MenuMode::Inventory(InventoryAction::Use) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                            }
+                            MenuMode::Inventory(InventoryAction::Drop) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
+                            }
+                            _ => {}
+                        }
                     }
                 }
             }

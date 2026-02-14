@@ -15,7 +15,8 @@ use crate::{
 
 pub enum ModalInterface {
     ConfirmQuit,
-    ConfirmChooseItem { item_id: GameItemId },
+    ConfirmUseItem { item_id: GameItemId },
+    ConfirmDropItem { item_id: GameItemId },
     CommandInput { buffer: String },
     TextDisplay { title: String, paragraphs: Vec<String> },
     HelpDisplay,
@@ -29,8 +30,11 @@ impl ModalInterface {
     pub fn render(&self, rect: Rect, buf: &mut Buffer, game: &GameState) {
         match self {
             ModalInterface::ConfirmQuit => render_confirm_quit(rect, buf),
-            ModalInterface::ConfirmChooseItem { item_id } => {
-                render_confirm_select_item(rect, buf, game, *item_id)
+            ModalInterface::ConfirmUseItem { item_id } => {
+                render_confirm_use_item(rect, buf, game, *item_id)
+            }
+            ModalInterface::ConfirmDropItem { item_id } => {
+                render_confirm_drop_item(rect, buf, game, *item_id);
             }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
             ModalInterface::TextDisplay { title, paragraphs } => {
@@ -75,7 +79,7 @@ fn render_confirm_quit(rect: Rect, buf: &mut Buffer) {
 }
 
 /// Displays the dialog where the user has to confirm the item that they selected (e.g. for using or dropping)
-fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
+fn render_confirm_use_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
     let modal_area = render_modal_window(50, 5, " Confirm Action ".to_string(), rect, buf);
 
     // look up item name
@@ -86,7 +90,27 @@ fn render_confirm_select_item(rect: Rect, buf: &mut Buffer, game: &GameState, it
     let text = Text::from(vec![
         Line::from(format!("Selected: {}", item_name)),
         Line::from(""),
-        Line::from("Press <y> to confirm, <n> to cancel"),
+        Line::from("Press <y> to use, <n> to cancel"),
+    ]);
+
+    let center_of_rect = get_centered_rect(50, 3, modal_area);
+
+    Paragraph::new(text).alignment(Alignment::Center).render(center_of_rect, buf);
+}
+
+/// Displays the dialog where the user has to confirm the item that they selected (e.g. for using or dropping)
+fn render_confirm_drop_item(rect: Rect, buf: &mut Buffer, game: &GameState, item_id: GameItemId) {
+    let modal_area = render_modal_window(50, 5, " Confirm Action ".to_string(), rect, buf);
+
+    // look up item name
+    let instance = &game.items[&item_id];
+    let item_name =
+        game.get_item_def_by_id(&instance.def_id).map(|def| def.name).unwrap_or("<unknown item>");
+
+    let text = Text::from(vec![
+        Line::from(format!("Selected: {}", item_name)),
+        Line::from(""),
+        Line::from("Press <y> to drop, <n> to cancel"),
     ]);
 
     let center_of_rect = get_centered_rect(50, 3, modal_area);
