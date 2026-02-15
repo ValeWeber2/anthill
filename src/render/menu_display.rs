@@ -175,7 +175,7 @@ pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
             spans.push(Span::raw(format!("{} NUT", nutrition)));
             spans.push(Span::raw(">"));
         }
+        GameItemKindDef::Potion { .. } => {}
     }
-
     Line::from(spans)
 }

@@ -2,6 +2,7 @@
 
 use crate::{
     core::{
+        buff_effects::PotionEffectDef,
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
     },
@@ -58,6 +59,7 @@ impl GameState {
                 GameItemKindDef::Armor { .. } => self.use_armor(item_id),
                 GameItemKindDef::Weapon { .. } => self.use_weapon(item_id),
                 GameItemKindDef::Food { nutrition } => self.use_food(item_id, nutrition),
+                GameItemKindDef::Potion { effect } => self.use_potion(&item_id, effect),
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
@@ -131,5 +133,12 @@ impl GameState {
         } else {
             Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
+    }
+
+    pub fn use_potion(&mut self, item_id: &GameItemId, effect: PotionEffectDef) -> GameResult {
+        self.apply_potion_effect(effect);
+
+        self.remove_item_from_inv(*item_id)?;
+        Ok(GameOutcome::Success)
     }
 }
