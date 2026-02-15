@@ -5,7 +5,7 @@ use ratatui::style::Style;
 
 use crate::{
     core::{
-        buff_effects::PotionEffect,
+        buff_effects::PotionEffectDef,
         entity_logic::{Entity, EntityBase, EntityId},
         game::GameState,
     },
@@ -22,7 +22,7 @@ pub enum GameItemKindDef {
     Weapon { damage: u16, crit_chance: u8, ranged: bool },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
-    Potion { effect: PotionEffect },
+    Potion { effect: PotionEffectDef },
 }
 
 #[derive(Clone, Copy)]

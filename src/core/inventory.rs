@@ -2,7 +2,7 @@
 
 use crate::{
     core::{
-        buff_effects::{ActiveBuff, PotionEffect},
+        buff_effects::{ActiveBuff, PotionEffectDef},
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
     },
@@ -135,24 +135,24 @@ impl GameState {
         }
     }
 
-    pub fn use_potion(&mut self, item_id: &GameItemId, effect: PotionEffect) -> GameResult {
+    pub fn use_potion(&mut self, item_id: &GameItemId, effect: PotionEffectDef) -> GameResult {
         match effect {
-            PotionEffect::Heal { amount } => {
+            PotionEffectDef::Heal { amount } => {
                 self.player.character.stats.base.heal(amount);
                 self.log.print(format!("You regain {} HP.", amount));
             }
 
-            PotionEffect::Strength { amount, duration } => {
+            PotionEffectDef::Strength { amount, duration } => {
                 self.player.character.active_buffs.push(ActiveBuff {
-                    effect: PotionEffect::Strength { amount, duration },
+                    effect: PotionEffectDef::Strength { amount, duration },
                     remaining_turns: duration,
                 });
                 self.log.print(format!("Strength increased by {} for {} turns.", amount, duration));
             }
 
-            PotionEffect::Dexterity { amount, duration } => {
+            PotionEffectDef::Dexterity { amount, duration } => {
                 self.player.character.active_buffs.push(ActiveBuff {
-                    effect: PotionEffect::Dexterity { amount, duration },
+                    effect: PotionEffectDef::Dexterity { amount, duration },
                     remaining_turns: duration,
                 });
                 self.log

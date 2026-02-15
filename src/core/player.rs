@@ -1,14 +1,13 @@
-#![allow(dead_code)]
-
 use std::collections::HashMap;
 
-use crate::core::buff_effects::{ActiveBuff, PotionEffect, PotionType, PotionUsage};
+use crate::core::buff_effects::{ActiveBuff, PotionEffectDef, PotionType, PotionUsage};
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
 use crate::core::game_items::{ArmorItem, GameItemId, WeaponItem};
 use crate::world::coordinate_system::Point;
 use ratatui::style::Color;
 
 pub struct Player {
+    #[allow(dead_code)]
     pub name: String,
     pub character: PlayerCharacter,
 }
@@ -59,10 +58,10 @@ impl PlayerCharacter {
 
         for buff in &self.active_buffs {
             match buff.effect {
-                PotionEffect::Strength { amount, .. } => {
+                PotionEffectDef::Strength { amount, .. } => {
                     bonus += amount;
                 }
-                PotionEffect::Fatigue { strength_penalty, .. } => {
+                PotionEffectDef::Fatigue { strength_penalty, .. } => {
                     bonus = bonus.saturating_sub(strength_penalty);
                 }
                 _ => {}
@@ -76,10 +75,10 @@ impl PlayerCharacter {
 
         for buff in &self.active_buffs {
             match buff.effect {
-                PotionEffect::Dexterity { amount, .. } => {
+                PotionEffectDef::Dexterity { amount, .. } => {
                     dodge = (dodge + amount).min(100);
                 }
-                PotionEffect::Cramp { .. } => dodge /= 2,
+                PotionEffectDef::Cramp { .. } => dodge /= 2,
                 _ => {}
             }
         }
@@ -121,11 +120,8 @@ impl PlayerCharacter {
     pub fn tick_buffs(&mut self) {
         let mut damage_accrued: u16 = 0;
         for buff in &mut self.active_buffs {
-            if let PotionEffect::Poison { ticks_left, damage_per_tick } = &mut buff.effect {
-                if *ticks_left > 0 {
-                    damage_accrued += *damage_per_tick;
-                    *ticks_left -= 1
-                }
+            if let PotionEffectDef::Poison { damage_per_tick, duration: _ } = &buff.effect {
+                damage_accrued += *damage_per_tick;
             }
             if buff.remaining_turns > 0 {
                 buff.remaining_turns -= 1;
@@ -154,15 +150,15 @@ pub struct PcStats {
 
 impl PcStats {
     pub fn new() -> Self {
-        let vitality = 10;
-        let hp_max = vitality as u16 * 10;
+        let vitality = 1;
+        let hp_max = 20 + vitality as u16 * 10;
 
         Self {
             base: BaseStats { hp_max, hp_current: hp_max },
-            strength: 10,
-            dexterity: 10,
+            strength: 1,
+            dexterity: 1,
             vitality,
-            perception: 10,
+            perception: 1,
             level: 1,
             experience: 0,
         }
@@ -204,17 +200,5 @@ impl Movable for PlayerCharacter {
     fn move_to(&mut self, point: Point) {
         self.base.pos.x = point.x;
         self.base.pos.y = point.y;
-    }
-}
-
-#[derive(Clone)]
-pub struct Weapon {
-    pub base_damage: u32,
-    pub crit_chance: u8,
-}
-
-impl Weapon {
-    pub fn new(base_damage: u32, crit_chance: u8) -> Self {
-        Self { base_damage, crit_chance }
     }
 }

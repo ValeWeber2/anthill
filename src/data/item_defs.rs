@@ -3,7 +3,7 @@ use std::sync::OnceLock;
 
 use ratatui::style::{Color, Style};
 
-use crate::core::{buff_effects::PotionEffect, game_items::GameItemKindDef};
+use crate::core::{buff_effects::PotionEffectDef, game_items::GameItemKindDef};
 
 pub type GameItemDefId = String;
 
@@ -250,7 +250,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Small Healing Potion",
                 glyph: '!',
                 style: Style::default().fg(Color::Magenta),
-                kind: GameItemKindDef::Potion { effect: PotionEffect::Heal { amount: 20 } },
+                kind: GameItemKindDef::Potion { effect: PotionEffectDef::Heal { amount: 20 } },
             },
         );
         m.insert(
@@ -260,7 +260,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: '!',
                 style: Style::default().fg(Color::Magenta),
                 kind: GameItemKindDef::Potion {
-                    effect: PotionEffect::Strength { amount: 3, duration: 10 },
+                    effect: PotionEffectDef::Strength { amount: 3, duration: 100 },
                 },
             },
         );
@@ -271,7 +271,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: '!',
                 style: Style::default().fg(Color::Blue),
                 kind: GameItemKindDef::Potion {
-                    effect: PotionEffect::Dexterity { amount: 2, duration: 10 },
+                    effect: PotionEffectDef::Dexterity { amount: 2, duration: 100 },
                 },
             },
         );
