@@ -36,59 +36,63 @@ Your goal is simple: explore deeper into the Anthill, survive its dangers, and g
 
 If you want to jump straight into the game, here’s everything you need:
 
-```
-Movement:               W A S D
-Wait:                   .
-Look Mode:              l
-Ranged Combat Mode:     r
-Inventory:              i (use mode), D (drop mode)
-Unequip:                W (weapon), A (armor)
-Descend:                Walk onto >
-Attack:                 Walk into an enemy
-Pick up:                Walk over an item
-```
+| Action               | Keys |
+|----------------------|------|
+| Movement             | <kbd>w</kbd> <kbd>a</kbd> <kbd>s</kbd> <kbd>d</kbd> |
+| Wait                 | <kbd>.</kbd> |
+| Look Mode            | <kbd>l</kbd> |
+| Ranged Combat Mode   | <kbd>r</kbd> |
+| Inventory            | <kbd>i</kbd> (use mode), <kbd>SHIFT</kbd> + <kbd>d</kbd> (drop mode) |
+| Unequip              | <kbd>SHIFT</kbd> + <kbd>w</kbd> (weapon), <kbd>SHIFT</kbd> + <kbd>a</kbd> (armor) |
+| Descend              | Walk onto `<` or `>` |
+| Attack               | Walk into an enemy |
+| Pick up              | Walk over an item |
 
-If you forget a command, press **H** to open the in‑game help window.
+
+If you forget a command, press <kbd>SHIFT</kbd> + <kbd>h</kbd> to open the in‑game help window.
 
 ---
 
 # 3. Getting Started
 
 ## 3.1 Basic Controls
-You move your character using **WASD**.
+You move your character using <kbd>w</kbd> <kbd>a</kbd> <kbd>s</kbd> <kbd>d</kbd>.
 
 Movement also interacts with the world:
 - Walk into an item to pick it up  
 - Walk into an enemy to attack  
-- Walk into a door to open it  
-- Walk onto `>` to descend  
+- Walk into a door (`+`) to open it  
+- Walk onto stairs (`<` or `>`) to descend  
 
-Press `.` to wait one turn.
+Press <kbd>.</kbd> to wait one turn.
 
 ## 3.2 Look Mode
-Press `l` to enter Look Mode.
+Press <kbd>l</kbd> to enter Look Mode.
 - A cursor appears on your character  
-- Move the cursor with **WASD**  
-- Press **ENTER** to inspect the tile  
+- Move the cursor with <kbd>w</kbd> <kbd>a</kbd> <kbd>s</kbd> <kbd>d</kbd>  
+- Press <kbd>ENTER</kbd> to inspect the tile  
 
 Look Mode does not consume turns.
 
 ## 3.3 Ranged Attack Mode
-Press `r` to enter Ranged Attack Mode.
-- Move the cursor with **WASD**  
-- Press **ENTER** to fire at the selected tile  
+Press <kbd>r</kbd> to enter Ranged Attack Mode.
+- Move the cursor with <kbd>w</kbd> <kbd>a</kbd> <kbd>s</kbd> <kbd>d</kbd>  
+- Press <kbd>ENTER</kbd> to fire at the selected tile  
 
-If the target is valid and visible, your ranged weapon fires.
+If you have a ranged weapon equipped and your target is valid and visible, the weapon fires.
 
 ---
 
 # 4. User Interface
 
 ## 4.1 Worldspace (Main Game View)
-The worldspace is where the game takes place. It displays:
+The worldspace is where the game takes place. 
+
+It displays:
 - The dungeon layout
 - Your character
 - Enemies and items
+
 All movement, combat, and exploration happen here.
 
 ## 4.2 Menu Panel
@@ -99,27 +103,32 @@ Shows recent messages such as:
 - Combat results
 - Environmental messages
 - Invalid actions
+
 This is the default mode when no other menu is open.
 
 ### Inventory (Use Mode)
-Opened with `i`.  
+Opened with <kbd>i</kbd>.  
 Displays all items in your inventory, each assigned a letter from a–z.
 Press the corresponding letter to **use** the item.
 
 ### Inventory (Drop Mode)
-Opened with `D` (Shift + d).  
+Opened with <kbd>SHIFT</kbd> + <kbd>d</kbd>.  
 Same layout as Use Mode, but selecting an item **drops** it on the ground.
 
 ## 4.3 Character Info Panel
 This panel is always visible and shows your character’s current status. 
+
 It includes:
-- HP — current and maximum health
-- Weapon / Armor — currently equipped gear
-- EXP — experience points
-- Round — number of turns taken
-- Coordinates — your position in the dungeon
-- Stats — STR, DEX, VIT, PER
-- Dungeon Floor — current level of the Anthill
+
+| Field            | Description |
+|------------------|-------------|
+| **HP**               | Current and maximum health |
+| **Weapon / Armor**   | Currently equipped gear |
+| **EXP**              | Experience points |
+| **Round**            | Number of turns taken |
+| **Coordinates**      | Your position in the dungeon |
+| **Stats**            | STR, DEX, VIT, PER |
+| **Dungeon Floor**    | Current level of the Anthill |
 
 ---
 
@@ -138,9 +147,9 @@ Affects accuracy and finesse actions.
 Represents toughness and resilience.
 Improves survivability.
 
-### Persistence (PER)
-Represents awareness and perception.
-? Useful for mechanics like spotting enemies, improving vision, or interacting with the environment more effectively.
+### Perception (PER)
+Represents awareness and sensory sharpness.  
+Improves detection, vision and environmental awareness.
 
 ### Health (HP)
 Your life total.
@@ -153,6 +162,8 @@ When HP reaches **0**, the run ends.
 ### Vision & Fog of War
 You cannot see through walls. Your field of view updates as you move, revealing new parts of the dungeon.
 
+The Anthill is infinite — but certain depth thresholds contain special challenge floors known as **Gauntlets**.
+
 ---
 
 # 7. Combat
@@ -161,7 +172,7 @@ You cannot see through walls. Your field of view updates as you move, revealing 
 Move into an enemy to attack with your equipped weapon (or bare hands).
 
 ## 7.2 Ranged Combat
-If you have a ranged weapon equipped, you can attack from a distance by using Ranged Attack Mode (`r`) to aim and shoot.
+If you have a ranged weapon equipped, you can attack from a distance by using Ranged Attack Mode (<kbd>r</kbd>) to aim and shoot.
 
 ## 7.3 Damage & Mitigation
 Stats, armor, and weapon types influence how effective your attacks are.
@@ -171,94 +182,44 @@ Stats, armor, and weapon types influence how effective your attacks are.
 # 8. Inventory & Equipment
 
 ## 8.1 Inventory
-- Press `i` to open your inventory in use mode.
-- Press `D` (Shift + d) to open it in drop mode.
+- Press <kbd>i</kbd> to open your inventory in use mode.
+- Press <kbd>SHIFT</kbd> + <kbd>d</kbd> to open it in drop mode.
 - Each item is assigned a letter from **a–z**, and you select items by pressing their letter.
 - Inventory capacity is limited to 26 items — choose wisely.
 
 ## 8.2 Equipment
 You can unequip gear at any time:
-- `W` → unequip weapon  
-- `A` → unequip armor  
+- <kbd>SHIFT</kbd> + <kbd>w</kbd> → unequip weapon  
+- <kbd>SHIFT</kbd> + <kbd>a</kbd> → unequip armor  
+
+To equip an item, simply **use** it from the inventory (<kbd>i</kbd>). 
 
 ---
 
 # 9. Items
-Items are essential for survival in the Anthill. You will find weapons, armor, food, and other useful objects scattered throughout the dungeon.
+Items are essential for survival in the Anthill.  
+They come in several categories:
 
-## 9.1 Weapons
-Weapons increase your damage output and determine whether you can attack at range.
+- **Weapons** — used for melee or ranged combat  
+- **Armor** — reduces incoming damage  
+- **Food** — restores nutrition or health  
+- **Potions** — temporary effects or healing  
 
-### Rusty Sword
-A simple melee weapon.
-- Damage: 5  
-- Crit Chance: 5%  
-- Melee  
-- Glyph: `/` (gray)
-
-### Shortbow
-A basic ranged weapon.
-- Damage: 3  
-- Crit Chance: 5%  
-- Ranged  
-- Glyph: `D` (gray)
-Ranged weapons can be used in Ranged Attack Mode `r`, allowing you to strike enemies from a distance.
-
-## 9.2 Armor
-Armor reduces incoming damage and increases your survivability.
-
-### Leather Armor
-Light protection made from hardened leather.
-- Mitigation: 2  
-- Glyph: `A` (yellow)
-
-## 9.3 Food
-Food restores nutrition and helps keep your character alive.
-
-### Cake
-A small but tasty treat.
-- Nutrition: 1  
-- Glyph: `%` (red)
+You can inspect items in Look Mode (<kbd>l</kbd>) or in the inventory (<kbd>i</kbd>).
 
 ---
 
 # 10. Enemies
 The Anthill is home to a variety of creatures, each with its own strengths and weaknesses. Enemies act only when you take a turn, but they will pursue and attack you once you are in their range of sight.
 
-## Goblin
-- Glyph: `g` (green)  
-Goblins are weak but nimble creatures that roam the Anthill.
-- HP: 10  
-- Damage: 2  
-- Dodge: 10  
-- Mitigation: 0  
-They are not very dangerous alone, but can overwhelm careless players in groups.
-
-## Funny Frog
-- Glyph: `f` (light green)  
-A strange, harmless creature that hops around the dungeon.
-- HP: 5  
-- Damage: 0  
-- Dodge: 20  
-- Mitigation: 0  
-Funny Frogs pose no real threat, but their high dodge makes them surprisingly hard to hit.
-
-## Orc
-- Glyph: `O` (gray)  
-Orcs are tough, aggressive fighters that appear deeper in the Anthill.
-- HP: 20  
-- Damage: 5  
-- Dodge: 0  
-- Mitigation: 2  
-They hit hard and can withstand several blows, making them one of the more dangerous early enemies.
-
 ---
 
 # 11. Death
 
-Anthill follows classic roguelike tradition:
+Anthill follows classic roguelike tradition: 
 
 **When you die, the run ends.**  
+
 There are no second chances — but every run teaches you something new.
 
 ---
@@ -269,56 +230,52 @@ Below is a concise summary of the most important controls and commands.
 
 ## Hotkeys
 
-### Movement
-- **W A S D** — move  
-- **.** — wait one turn  
-
-### Interaction
-- Walk into items to pick them up  
-- Walk into enemies to attack  
-- Walk into doors to open them  
-- Walk onto `>` to descend  
-
-### Inventory & Equipment
-- **i** — open inventory (use mode)  
-- **D** — open inventory (drop mode)  
-- **W** — unequip weapon  
-- **A** — unequip armor  
-
-### Modes
-- **l** — Look Mode (cursor inspect)  
-- **r** — Ranged Attack Mode (cursor aim & shoot)  
-
-### Game Control
-- **ENTER** — start game / confirm  
-- **Q** — quit game  
-- **ESC** — close menus  
-
-### Command Prompt
-- **:** — open command prompt  
-- **ENTER** — run command  
-- **ESC** — cancel  
+| Action                | Keys |
+|-----------------------|------|
+| Movement              | <kbd>w</kbd> <kbd>a</kbd> <kbd>s</kbd> <kbd>d</kbd> |
+| Help | <kbd>SHIFT</kbd> + <kbd>h</kbd> |
+| Wait                  | <kbd>.</kbd> |
+| Look Mode             | <kbd>l</kbd> |
+| Ranged Attack Mode    | <kbd>r</kbd> |
+| Open inventory (use)  | <kbd>i</kbd> |
+| Open inventory (drop) | <kbd>SHIFT</kbd> + <kbd>d</kbd> |
+| Unequip weapon        | <kbd>SHIFT</kbd> + <kbd>w</kbd> |
+| Unequip armor         | <kbd>SHIFT</kbd> + <kbd>a</kbd> |
+| Equip item            | Use it from inventory (<kbd>i</kbd>) |
+| Open door             | Walk into <kbd>+</kbd> |
+| Use stairs            | Walk onto <kbd>&lt;</kbd> or <kbd>&gt;</kbd> |
+| Attack                | Walk into an enemy |
+| Pick up item          | Walk over an item |
+| Start / Confirm       | <kbd>ENTER</kbd> |
+| Quit game             | <kbd>SHIFT</kbd> + <kbd>q</kbd> |
+| Close menus           | <kbd>ESC</kbd> |
+| Open command prompt   | <kbd>:</kbd> |
+| Run command           | <kbd>ENTER</kbd> |
+| Cancel                | <kbd>ESC</kbd> |
 
 ---
 
 ## Player Commands
-- `quit` — quit the game  
-- `help` — list available commands  
-- `playerinfo` — print player info to log  
+
+| Command       | Description |
+|---------------|-------------|
+| `quit`        | Quit the game |
+| `help`        | List available commands |
+| `playerinfo`  | Print player info to log |
+| `legend` | Show map symbol list |
 
 ---
 
-## Developer Commands (optional)
-These are intended for debugging and testing:
+## Developer Commands
 
-- `maxstats` — give player max stats  
-- `maxequip` — give best equipment  
-- `rngtest` — test RNG engine  
-- `suicide` — set HP to zero  
-- `teleport <x> <y>` — teleport player  
-- `give <item> <amount>` — spawn items  
-- `revealall` — reveal entire map for 1 round  
-- `noclip` — walk through walls  
-- `legend` — show map symbol list  
+| Command | Description |
+|---------|-------------|
+| `maxstats` | Give player max stats |
+| `maxequip` | Give player best equipment |
+| `rngtest` | Test RNG engine |
+| `suicide` | Set HP to zero |
+| `teleport <x> <y>` | Teleport player to given coordinates |
+| `give <item> <amount>` | Add item to player's inventory |
+| `revealall` | Reveal entire map for 1 round |
+| `noclip` | Walk through walls |
 
----
