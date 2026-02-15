@@ -158,18 +158,18 @@ impl GameState {
             return GameOutcome::Success;
         };
 
-        let new_pos = point + direction;
+        let new_point = point + direction;
 
-        if !self.current_world().is_in_bounds(new_pos.x as isize, new_pos.y as isize) {
-            return GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos));
+        if !self.current_world().is_in_bounds(new_point.x as isize, new_point.y as isize) {
+            return GameOutcome::Fail(FailReason::PointOutOfBounds(new_point));
         }
 
-        if !self.current_world().get_tile(new_pos).visible {
-            return GameOutcome::Fail(FailReason::TileNotVisible(new_pos));
+        if !self.current_world().get_tile(new_point).visible {
+            return GameOutcome::Fail(FailReason::TileNotVisible(new_point));
         }
 
         if let Some(cursor) = self.cursor.as_mut() {
-            cursor.point = new_pos;
+            cursor.point = new_point;
         }
 
         GameOutcome::Success

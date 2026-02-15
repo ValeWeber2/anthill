@@ -20,7 +20,7 @@ impl GameState {
     /// # Errors
     /// - [DataError::MissingNpcDefinition()] if npc is not defined in game data.
     /// - [EngineError::SpawningError()] if the position is not available.
-    pub fn create_npc(&mut self, npc_def_id: NpcDefId, pos: Point) -> Result<Npc, GameError> {
+    pub fn create_npc(&mut self, npc_def_id: NpcDefId, point: Point) -> Result<Npc, GameError> {
         // Looking if the npc_def exists.
         let npc_def = get_npc_def_by_id(npc_def_id.clone())
             .ok_or(DataError::MissingNpcDefinition(npc_def_id))?;
@@ -30,7 +30,7 @@ impl GameState {
         let npc = Npc::new(
             entity_id,
             npc_def.name.to_string(),
-            pos,
+            point,
             npc_def.glyph,
             npc_def.style,
             npc_def.stats,
@@ -240,7 +240,7 @@ mod tests {
         let mut level: Level = Level::new();
         level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let pos = Point { x: 50, y: 7 };
+        let point = Point { x: 50, y: 7 };
 
         let npc = game.create_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
         let npc_id = npc.id();
@@ -248,7 +248,7 @@ mod tests {
 
         game.levels.insert(0, level);
 
-        assert_eq!(game.current_level().get_entity_at(pos), Some(npc_id));
+        assert_eq!(game.current_level().get_npc_at(point), Some(npc_id));
     }
 
     #[test]
@@ -283,19 +283,19 @@ mod tests {
         let mut level: Level = Level::new();
         level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let pos = Point::new(50, 7);
+        let point = Point::new(50, 7);
 
-        let npc = game.create_npc("goblin".into(), pos).unwrap();
+        let npc = game.create_npc("goblin".into(), point).unwrap();
         let npc_id = npc.id();
         let _ = level.spawn_npc(npc);
 
         game.levels.insert(0, level);
 
-        assert_eq!(game.current_level().get_entity_at(pos), Some(npc_id));
+        assert_eq!(game.current_level().get_npc_at(point), Some(npc_id));
 
         game.current_level_mut().despawn(npc_id);
 
-        assert_eq!(game.current_level().get_entity_at(pos), None);
+        assert_eq!(game.current_level().get_npc_at(point), None);
     }
 
     #[test]

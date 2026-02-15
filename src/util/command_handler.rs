@@ -280,18 +280,18 @@ impl App {
                 ))
             }
 
-            GameCommand::Teleport(pos) => {
-                if !self.game.current_world().is_in_bounds(pos.x as isize, pos.y as isize) {
-                    self.game.log.print(format!("Position {} is out of bounds", pos));
+            GameCommand::Teleport(point) => {
+                if !self.game.current_world().is_in_bounds(point.x as isize, point.y as isize) {
+                    self.game.log.print(format!("Position {} is out of bounds", point));
                     return;
                 }
 
-                if !self.game.current_world().get_tile(pos).tile_type.is_walkable() {
-                    self.game.log.print(format!("Position {} cannot be occupied by player", pos));
+                if !self.game.current_world().get_tile(point).tile_type.is_walkable() {
+                    self.game.log.print(format!("Position {} cannot be occupied by player", point));
                     return;
                 }
 
-                self.game.player.character.base.pos = pos;
+                self.game.player.character.base.pos = point;
             }
 
             GameCommand::Suicide => {

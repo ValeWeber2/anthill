@@ -70,27 +70,46 @@ impl Level {
         self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
     }
 
-    pub fn get_entity_at(&self, pos: Point) -> Option<EntityId> {
+    /// Looks through NPCs to find one at the given `Point`.
+    ///
+    /// # Returns
+    /// Returns `Some(EntityId)` if an npc was found.
+    pub fn get_npc_at(&self, point: Point) -> Option<EntityId> {
         for npc in &self.npcs {
-            if npc.pos() == pos {
+            if npc.pos() == point {
                 return Some(npc.id());
-            }
-        }
-
-        for item in &self.item_sprites {
-            if item.pos() == pos {
-                return Some(item.id());
             }
         }
 
         None
     }
 
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.world.is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.world.get_tile(pos).tile_type.is_walkable()
+    /// Looks through item_sprites to find one at the given `Point`.
+    ///
+    /// # Returns
+    /// Returns `Some(EntityId)` if an item_sprite was found.
+    pub fn get_item_sprite_at(&self, point: Point) -> Option<EntityId> {
+        for item_sprite in &self.item_sprites {
+            if item_sprite.pos() == point {
+                return Some(item_sprite.id());
+            }
+        }
+
+        None
+    }
+
+    /// Checks if a given point is:
+    /// - In Bounds
+    /// - Not occupied by NPCs
+    /// - Not occupied by item_sprites
+    /// - Walkable
+    pub fn is_available(&self, point: Point) -> bool {
+        let in_bounds = self.world.is_in_bounds(point.x as isize, point.y as isize);
+        let free_of_npcs = self.npcs.iter().all(|npc| npc.base.pos != point);
+        let free_of_item_sprites = self.item_sprites.iter().all(|item| item.base.pos != point);
+        let walkable = self.world.get_tile(point).tile_type.is_walkable();
+
+        in_bounds && free_of_npcs && free_of_item_sprites && walkable
     }
 
     /// Spawns an NPC on the map.

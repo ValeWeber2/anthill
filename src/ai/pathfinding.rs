@@ -1,11 +1,9 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
 
+use crate::core::game::GameState;
+use crate::world::coordinate_system::{Direction, Point};
 use crate::world::tiles::Collision;
-use crate::world::{
-    coordinate_system::{Direction, Point},
-    worldspace::World,
-};
 
 // Max iterations the A* algorithm is allowed to run with.
 const MAX_ITERS: usize = 200;
@@ -39,13 +37,22 @@ fn heuristic(a: Point, b: Point) -> usize {
     a.distance_squared_from(b)
 }
 
-impl World {
+impl GameState {
     /// Uses the A* algorithm to find the next direction to move in.
     pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
-        let a_star_path: Vec<Point> = a_star(start, goal, |p| {
-            if self.get_tile(p).tile_type.is_walkable() { Some(1) } else { None }
+        let a_star_path: Vec<Point> = a_star(start, goal, |point| {
+            if self.current_world().get_tile(point).tile_type.is_walkable() {
+                Some(1)
+            } else {
+                None
+            }
         })?;
         let next = a_star_path.get(1)?;
+
+        // If the next point is occupied by an npc, do not move.
+        if self.current_level().get_npc_at(*next).is_some() {
+            return None;
+        }
 
         let delta = *next - start;
 

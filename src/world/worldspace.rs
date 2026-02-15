@@ -60,17 +60,18 @@ impl World {
         }
     }
 
+    #[inline]
     pub fn index(&self, x: usize, y: usize) -> usize {
         y * self.width + x
     }
 
-    pub fn get_tile(&self, pos: Point) -> &Tile {
-        let index = self.index(pos.x, pos.y);
+    pub fn get_tile(&self, point: Point) -> &Tile {
+        let index = self.index(point.x, point.y);
         &self.tiles[index]
     }
 
-    pub fn get_tile_mut(&mut self, pos: Point) -> &mut Tile {
-        let index = self.index(pos.x, pos.y);
+    pub fn get_tile_mut(&mut self, point: Point) -> &mut Tile {
+        let index = self.index(point.x, point.y);
         &mut self.tiles[index]
     }
 

@@ -66,7 +66,7 @@ impl GameState {
                 if melee_area.contains(&self.player.character.pos()) {
                     NpcActionKind::Attack
                 } else if let Some(next_step) =
-                    self.current_world().next_step_toward(npc.pos(), self.player.character.pos())
+                    self.next_step_toward(npc.pos(), self.player.character.pos())
                 {
                     NpcActionKind::Move(next_step)
                 } else {

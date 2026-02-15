@@ -106,13 +106,12 @@ impl GameState {
                 let target_point: Point = self.player.character.pos().get_adjacent(direction);
                 let target_tile = self.current_world().get_tile(target_point);
 
-                if let Some(entity_id) = self.current_level().get_entity_at(target_point) {
-                    if self.current_level().get_npc(entity_id).is_some() {
-                        return ActionKind::Attack(entity_id);
-                    }
-                    if self.current_level().get_item_sprite(entity_id).is_some() {
-                        return ActionKind::PickUpItem(entity_id);
-                    }
+                if let Some(entity_id) = self.current_level().get_npc_at(target_point) {
+                    return ActionKind::Attack(entity_id);
+                }
+
+                if let Some(entity_id) = self.current_level().get_item_sprite_at(target_point) {
+                    return ActionKind::PickUpItem(entity_id);
                 }
 
                 if target_tile.tile_type.is_interactable() {

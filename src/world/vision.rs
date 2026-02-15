@@ -90,9 +90,9 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
 
         // Tile is in both start and end slope
         if tile_is_wall || is_symmetric(row, tile) {
-            let pos = quadrant.transform(tile);
-            world.mark_visible(pos.into());
-            world.mark_explored(pos.into());
+            let point = quadrant.transform(tile);
+            world.mark_visible(point.into());
+            world.mark_explored(point.into());
         }
 
         // Covered by wall

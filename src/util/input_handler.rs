@@ -390,12 +390,17 @@ impl App {
                 // Run cursor action
                 KeyCode::Enter => match cursor.kind {
                     CursorKind::Look => {
-                        if let Some(entity_id) =
-                            self.game.current_level().get_entity_at(cursor.point)
+                        if let Some(entity_id) = self.game.current_level().get_npc_at(cursor.point)
                         {
                             if let Some(npc) = self.game.current_level().get_npc(entity_id) {
                                 self.game.log.print(format!("You see: {}", npc.name()));
                             }
+                            return;
+                        }
+
+                        if let Some(entity_id) =
+                            self.game.current_level().get_item_sprite_at(cursor.point)
+                        {
                             if let Some(item_sprite) =
                                 self.game.current_level().get_item_sprite(entity_id)
                             {
@@ -403,16 +408,15 @@ impl App {
                             }
                             return;
                         }
+
                         let tile = self.game.current_world().get_tile(cursor.point);
                         self.game.log.print(format!("You see: {}", tile.tile_type));
                     }
                     CursorKind::RangedAttack => {
-                        let Some(entity_id) = self.game.current_level().get_entity_at(cursor.point)
-                        else {
-                            return; // Target point has no entity
-                        };
-
-                        self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                        if let Some(entity_id) = self.game.current_level().get_npc_at(cursor.point)
+                        {
+                            self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                        }
                     }
                 },
 
