@@ -1,9 +1,7 @@
-use std::ops::Range;
-
 use rand::{
     Rng,
     distr::{Distribution, StandardUniform},
-    seq::IndexedRandom,
+    seq::{IndexedRandom, SliceRandom},
 };
 
 use crate::{
@@ -58,50 +56,41 @@ impl ProcGenRoom {
         encounter: RoomEncounter,
         rng: &mut R,
     ) -> Vec<SpawnData> {
-        let available_x = (self.point_a.x + 1)..(self.point_b.x - 1);
-        let available_y = (self.point_a.y + 1)..(self.point_b.y - 1);
+        let mut available_points = self.floor_points();
+        available_points.shuffle(rng);
+
+        let mut population = Vec::new();
 
         match encounter {
-            RoomEncounter::Empty => Vec::new(),
+            RoomEncounter::Empty => {}
             RoomEncounter::Enemy => {
-                let mut population = Vec::new();
-                population.append(&mut random_npcs(available_x, available_y, rng));
-                population
+                population.append(&mut random_npcs(&mut available_points, rng));
             }
             RoomEncounter::EnemyTreasure => {
-                let mut population = Vec::new();
-                population.append(&mut random_npcs(available_x.clone(), available_y.clone(), rng));
-                population.append(&mut random_items(available_x, available_y, rng));
-                population
+                population.append(&mut random_npcs(&mut available_points, rng));
+                population.append(&mut random_items(&mut available_points, rng));
             }
             RoomEncounter::Treasure => {
-                let mut population = Vec::new();
-                population.append(&mut random_items(available_x, available_y, rng));
-                population
+                population.append(&mut random_items(&mut available_points, rng));
             }
         }
+
+        population
     }
 }
 
 /// Helper method that randomly selects npcs to spawn and where to put them.
-fn random_npcs<R: Rng + ?Sized>(
-    available_x: Range<usize>,
-    available_y: Range<usize>,
-    rng: &mut R,
-) -> Vec<SpawnData> {
+fn random_npcs<R: Rng + ?Sized>(available_points: &mut Vec<Point>, rng: &mut R) -> Vec<SpawnData> {
     let spawns_amount = rng.random_range(1..3);
 
     let mut spawns: Vec<SpawnData> = Vec::new();
     for _ in 0..spawns_amount {
         let npcs: Vec<&String> = npc_defs().keys().collect();
-        if let Some(npc) = npcs.choose(rng) {
-            let point = Point::new(
-                rng.random_range(available_x.clone()),
-                rng.random_range(available_y.clone()),
-            );
-
-            let spawn_kind = SpawnKind::Npc { def_id: npc.to_string() };
-            spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+        if let Some(npc_def_id) = npcs.choose(rng) {
+            if let Some(point) = available_points.pop() {
+                let spawn_kind = SpawnKind::Npc { def_id: npc_def_id.to_string() };
+                spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+            }
         }
     }
 
@@ -109,24 +98,17 @@ fn random_npcs<R: Rng + ?Sized>(
 }
 
 /// Helper method that randomly selects items to spawn as sprites and where to put them.
-fn random_items<R: Rng + ?Sized>(
-    available_x: Range<usize>,
-    available_y: Range<usize>,
-    rng: &mut R,
-) -> Vec<SpawnData> {
+fn random_items<R: Rng + ?Sized>(available_points: &mut Vec<Point>, rng: &mut R) -> Vec<SpawnData> {
     let spawns_amount = rng.random_range(1..2);
 
     let mut spawns: Vec<SpawnData> = Vec::new();
     for _ in 0..spawns_amount {
-        let items: Vec<&String> = item_defs().keys().collect();
-        if let Some(item) = items.choose(rng) {
-            let point = Point::new(
-                rng.random_range(available_x.clone()),
-                rng.random_range(available_y.clone()),
-            );
-
-            let spawn_kind = SpawnKind::Item { def_id: item.to_string() };
-            spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+        let item_defs: Vec<&String> = item_defs().keys().collect();
+        if let Some(item_def_id) = item_defs.choose(rng) {
+            if let Some(point) = available_points.pop() {
+                let spawn_kind = SpawnKind::Item { def_id: item_def_id.to_string() };
+                spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+            }
         }
     }
 

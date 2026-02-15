@@ -225,7 +225,7 @@ impl GameState {
                 error
             })?
         } else {
-            self.load_generated_level(index).unwrap()
+            self.load_generated_level(index).expect("Generating a new level failed. With the given ruleset, generating a level should always be possible")
         };
 
         self.levels.insert(index, new_level);
