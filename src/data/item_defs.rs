@@ -25,7 +25,25 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Rusty Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 5, crit_chance: 5 },
+                kind: GameItemKindDef::Weapon { damage: 5, crit_chance: 5, ranged: false },
+            },
+        );
+        m.insert(
+            "weapon_bow_short".to_string(),
+            GameItemDef {
+                name: "Shortbow",
+                glyph: 'D',
+                style: Style::default().fg(Color::Gray),
+                kind: GameItemKindDef::Weapon { damage: 3, crit_chance: 5, ranged: true },
+            },
+        );
+        m.insert(
+            "weapon_bow_long".to_string(),
+            GameItemDef {
+                name: "Longbow",
+                glyph: 'D',
+                style: Style::default().fg(Color::DarkGray),
+                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 7, ranged: true },
             },
         );
         m.insert(
@@ -34,7 +52,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Iron Mace",
                 glyph: '/',
                 style: Style::default().fg(Color::Yellow),
-                kind: GameItemKindDef::Weapon { damage: 10, crit_chance: 5 },
+                kind: GameItemKindDef::Weapon { damage: 10, crit_chance: 5, ranged: false },
             },
         );
         m.insert(
@@ -43,7 +61,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Iron Axe",
                 glyph: '/',
                 style: Style::default().fg(Color::DarkGray),
-                kind: GameItemKindDef::Weapon { damage: 8, crit_chance: 7 },
+                kind: GameItemKindDef::Weapon { damage: 8, crit_chance: 7, ranged: false },
             },
         );
         m.insert(
@@ -52,7 +70,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Sharp Dagger",
                 glyph: '\\',
                 style: Style::default().fg(Color::White),
-                kind: GameItemKindDef::Weapon { damage: 4, crit_chance: 15 },
+                kind: GameItemKindDef::Weapon { damage: 4, crit_chance: 15, ranged: false },
             },
         );
         m.insert(
@@ -61,7 +79,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Warhammer",
                 glyph: '/',
                 style: Style::default().fg(Color::Red),
-                kind: GameItemKindDef::Weapon { damage: 12, crit_chance: 5 },
+                kind: GameItemKindDef::Weapon { damage: 12, crit_chance: 5, ranged: false },
             },
         );
         m.insert(
@@ -70,7 +88,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Short Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 10 },
+                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 10, ranged: false },
             },
         );
         m.insert(
@@ -79,7 +97,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Spear",
                 glyph: '/',
                 style: Style::default().fg(Color::White),
-                kind: GameItemKindDef::Weapon { damage: 7, crit_chance: 8 },
+                kind: GameItemKindDef::Weapon { damage: 7, crit_chance: 8, ranged: false },
             },
         );
         m.insert(

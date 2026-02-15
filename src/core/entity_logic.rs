@@ -1,147 +1,80 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
-
 use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiState;
 use crate::core::game::GameState;
-use crate::core::game_items::GameItemSprite;
 use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
-use crate::util::errors_results::{DataError, EngineError, GameError};
+use crate::util::errors_results::{
+    DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
+};
 use crate::world::coordinate_system::Point;
-use crate::world::worldspace::Drawable;
+use crate::world::tiles::{Collision, Drawable};
 
 impl GameState {
-    pub fn spawn<T: Spawnable + Entity>(
-        &mut self,
-        name: String,
-        pos: Point,
-        glyph: char,
-        style: Style,
-        extra: T::Extra,
-    ) -> Result<EntityId, GameError> {
-        if !self.world.is_available(pos) {
-            let err = GameError::from(EngineError::SpawningError(pos));
-            self.log.debug_print(format!("Not able to spawn {}: {}", name, err));
-            return Err(err);
-        }
-
-        let id = self.next_entity_id();
-        let entity = T::new(id, name, pos, glyph, style, extra);
-
-        self.log.debug_print(format!(
-            "Spawned {} (ID: {}) at position ({}, {})",
-            entity.name(),
-            entity.id(),
-            entity.pos().x,
-            entity.pos().y,
-        ));
-
-        T::storage_mut(self).push(entity);
-        let index = T::storage_mut(self).len() - 1;
-        T::index_mut(self).insert(id, index);
-
-        Ok(id)
-    }
-
-    pub fn spawn_npc(&mut self, npc_def_id: NpcDefId, pos: Point) -> Result<EntityId, GameError> {
-        self.log.debug_print(format!("Trying to spawn {}", npc_def_id));
-        let npc_def = self
-            .get_npc_def_by_id(npc_def_id.clone())
+    /// Creates a new entity of type `Npc`.
+    ///
+    /// # Returns
+    /// The Npcs [EntityId], which can then be used to get access to the newly spawned Npc.
+    ///
+    /// # Errors
+    /// - [DataError::MissingNpcDefinition()] if npc is not defined in game data.
+    /// - [EngineError::SpawningError()] if the position is not available.
+    pub fn create_npc(&mut self, npc_def_id: NpcDefId, pos: Point) -> Result<Npc, GameError> {
+        // Looking if the npc_def exists.
+        let npc_def = get_npc_def_by_id(npc_def_id.clone())
             .ok_or(DataError::MissingNpcDefinition(npc_def_id))?;
-        self.spawn::<Npc>(npc_def.name.to_owned(), pos, npc_def.glyph, npc_def.style, npc_def.stats)
+
+        // Creating npc and assigning id.
+        let entity_id = self.id_system.next_entity_id();
+        let npc = Npc::new(
+            entity_id,
+            npc_def.name.to_string(),
+            pos,
+            npc_def.glyph,
+            npc_def.style,
+            npc_def.stats,
+        );
+
+        Ok(npc)
     }
 
-    pub fn next_entity_id(&mut self) -> EntityId {
-        let id = self.entity_id_counter;
-        self.entity_id_counter += 1;
+    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> GameResult {
+        let (new_x, new_y) = {
+            let npc =
+                self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
-        id
-    }
+            let new_x = npc.pos().x as isize + dx;
+            let new_y = npc.pos().y as isize + dy;
+            let new_point = Point::new(new_x as usize, new_y as usize);
 
-    pub fn despawn(&mut self, id: EntityId) {
-        if let Some(&index) = self.world.npc_index.get(&id) {
-            self.world.npcs.swap_remove(index);
-
-            if let Some(moved) = self.world.npcs.get(index) {
-                self.world.npc_index.insert(moved.id(), index);
+            if !self.current_world().is_in_bounds(new_x, new_y) {
+                return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
             }
 
-            self.world.npc_index.remove(&id);
-            return;
-        }
-
-        if let Some(&index) = self.world.item_sprites_index.get(&id) {
-            self.world.item_sprites.swap_remove(index);
-
-            if let Some(moved) = self.world.item_sprites.get(index) {
-                self.world.item_sprites_index.insert(moved.id(), index);
+            if !self.current_world().get_tile(new_point).tile_type.is_walkable() {
+                return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
             }
 
-            self.world.item_sprites_index.remove(&id);
-        }
-    }
+            (new_x, new_y)
+        };
 
-    pub fn get_entity_by_id(&'_ self, id: EntityId) -> Option<EntityRef<'_>> {
-        if let Some(&i) = self.world.npc_index.get(&id) {
-            return Some(EntityRef::Npc(&self.world.npcs[i]));
-        }
+        let npc =
+            self.current_level_mut().get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        npc.move_to(Point::new(new_x as usize, new_y as usize));
 
-        if let Some(&i) = self.world.item_sprites_index.get(&id) {
-            return Some(EntityRef::ItemSprite(&self.world.item_sprites[i]));
-        }
-
-        None
-    }
-
-    pub fn get_entity_at(&self, pos: Point) -> Option<EntityId> {
-        for npc in &self.world.npcs {
-            if *npc.pos() == pos {
-                return Some(npc.id());
-            }
-        }
-
-        for item in &self.world.item_sprites {
-            if *item.pos() == pos {
-                return Some(item.id());
-            }
-        }
-
-        None
-    }
-
-    pub fn get_npc_def_by_id(&self, npc_def_id: NpcDefId) -> Option<NpcDef> {
-        npc_defs().get(&npc_def_id).cloned()
+        Ok(GameOutcome::Success)
     }
 }
 
-pub enum EntityRef<'a> {
-    Npc(&'a Npc),
-    ItemSprite(&'a GameItemSprite),
+pub fn get_npc_def_by_id(npc_def_id: NpcDefId) -> Option<NpcDef> {
+    npc_defs().get(&npc_def_id).cloned()
 }
 
-pub trait Spawnable {
-    type Extra;
-
-    fn new(
-        id: EntityId,
-        name: String,
-        pos: Point,
-        glyph: char,
-        style: Style,
-        extra: Self::Extra,
-    ) -> Self;
-
-    fn storage_mut(state: &mut GameState) -> &mut Vec<Self>
-    where
-        Self: Sized;
-    fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize>;
-}
 pub trait Entity {
     fn name(&self) -> &str;
     fn id(&self) -> EntityId;
-    fn pos(&self) -> &Point;
+    fn pos(&self) -> Point;
 }
 
 pub trait Movable {
@@ -175,6 +108,7 @@ pub struct BaseStats {
 }
 
 // NPC
+#[derive(Clone)]
 pub struct Npc {
     pub base: EntityBase,
     pub stats: NpcStats,
@@ -188,31 +122,8 @@ impl Entity for Npc {
     fn id(&self) -> EntityId {
         self.base.id
     }
-    fn pos(&self) -> &Point {
-        &self.base.pos
-    }
-}
-
-impl Spawnable for Npc {
-    type Extra = NpcStats;
-
-    fn new(
-        id: EntityId,
-        name: String,
-        pos: Point,
-        glyph: char,
-        style: Style,
-        stats: NpcStats,
-    ) -> Self {
-        Npc::new(id, name, pos, glyph, style, stats)
-    }
-
-    fn storage_mut(state: &mut GameState) -> &mut Vec<Self> {
-        &mut state.world.npcs
-    }
-
-    fn index_mut(state: &mut GameState) -> &mut HashMap<EntityId, usize> {
-        &mut state.world.npc_index
+    fn pos(&self) -> Point {
+        self.base.pos
     }
 }
 
@@ -256,36 +167,48 @@ impl NpcStats {
 
 #[cfg(test)]
 mod tests {
-    use ratatui::style::Color;
-
-    use crate::{core::entity_logic::NpcStats, world::worldspace::Room};
+    use crate::data::item_defs::GameItemDefId;
+    use crate::world::level::Level;
+    use crate::world::worldspace::Room;
 
     use super::*;
 
     #[test]
     fn test_spawn_npc() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc = game.create_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc_id = npc.id();
+
+        let _ = level.spawn_npc(npc);
+
+        game.levels.insert(0, level);
 
         // Vec contains NPC
-        assert_eq!(game.world.npcs.len(), 1);
-        assert_eq!(game.world.npcs[0].id(), id);
+        assert_eq!(game.current_level().npcs.len(), 1);
+        assert_eq!(game.current_level().npcs[0].id(), npc_id);
 
         // HashMap contains correct index
-        assert_eq!(game.world.npc_index.get(&id), Some(&0));
+        assert_eq!(game.current_level().npc_index.get(&npc_id), Some(&0));
     }
 
     #[test]
     fn test_get_entity_by_id() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let npc_id = game.spawn_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
+        let npc = game.create_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
+        let npc_id = npc.id();
 
-        match game.get_entity_by_id(npc_id) {
-            Some(EntityRef::Npc(npc)) => assert_eq!(npc.name(), "Orc"),
+        let _ = level.spawn_npc(npc);
+
+        game.levels.insert(0, level);
+
+        match game.current_level().get_npc(npc_id) {
+            Some(npc) => assert_eq!(npc.name(), "Orc"),
             _ => panic!("Expected NPC"),
         }
     }
@@ -293,14 +216,20 @@ mod tests {
     #[test]
     fn test_get_entity_by_id_item() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let item_def_id: String = "armor_leather".to_string();
-        let item_id = game.register_item(item_def_id);
-        let item_sprite_id = game.spawn_item(item_id, Point::new(50, 7)).unwrap();
+        let item_def_id: GameItemDefId = "armor_leather".to_string();
+        let item_id = game.register_item(&item_def_id);
+        let item_sprite = game.create_item_sprite(item_id, Point::new(50, 7)).unwrap();
+        let item_sprite_id = item_sprite.id();
 
-        match game.get_entity_by_id(item_sprite_id) {
-            Some(EntityRef::ItemSprite(item)) => assert_eq!(item.name(), "Leather Armor"),
+        let _ = level.spawn_item_sprite(item_sprite);
+
+        game.levels.insert(0, level);
+
+        match game.current_level().get_item_sprite(item_sprite_id) {
+            Some(item) => assert_eq!(item.name(), "Leather Armor"),
             _ => panic!("Expected Item"),
         }
     }
@@ -308,81 +237,97 @@ mod tests {
     #[test]
     fn test_get_entity_at() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+
         let pos = Point { x: 50, y: 7 };
 
-        let id = game
-            .spawn::<Npc>(
-                "Skeleton".into(),
-                pos,
-                's',
-                Color::White.into(),
-                NpcStats {
-                    base: BaseStats { hp_max: 10, hp_current: 10 },
-                    damage: 2,
-                    dodge: 50,
-                    mitigation: 0,
-                },
-            )
-            .unwrap();
+        let npc = game.create_npc("orc".into(), Point { x: 50, y: 7 }).unwrap();
+        let npc_id = npc.id();
+        let _ = level.spawn_npc(npc);
 
-        assert_eq!(game.get_entity_at(pos), Some(id));
+        game.levels.insert(0, level);
+
+        assert_eq!(game.current_level().get_entity_at(pos), Some(npc_id));
     }
 
     #[test]
     fn test_despawn_npc_updates_indices() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc1 = game.create_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc1_id = npc1.id();
+        let _ = level.spawn_npc(npc1);
 
-        let id2 = game.spawn_npc("orc".into(), Point::new(51, 7)).unwrap();
+        let npc2 = game.create_npc("orc".into(), Point::new(51, 7)).unwrap();
+        let npc2_id = npc2.id();
+        let _ = level.spawn_npc(npc2);
+
+        game.levels.insert(0, level);
 
         // Remove the first NPC
-        game.despawn(id1);
+        game.current_level_mut().despawn(npc1_id);
 
         // Only one NPC should remain
-        assert_eq!(game.world.npcs.len(), 1);
+        assert_eq!(game.current_level().npcs.len(), 1);
 
         // The remaining NPC must now be at index 0
-        assert_eq!(game.world.npc_index.get(&id2), Some(&0));
+        assert_eq!(game.current_level().npc_index.get(&npc2_id), Some(&0));
     }
 
     #[test]
     fn test_despawn_removes_from_position() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let pos = Point::new(50, 7);
 
-        let id = game.spawn_npc("goblin".into(), pos).unwrap();
+        let npc = game.create_npc("goblin".into(), pos).unwrap();
+        let npc_id = npc.id();
+        let _ = level.spawn_npc(npc);
 
-        assert_eq!(game.get_entity_at(pos), Some(id));
+        game.levels.insert(0, level);
 
-        game.despawn(id);
+        assert_eq!(game.current_level().get_entity_at(pos), Some(npc_id));
 
-        assert_eq!(game.get_entity_at(pos), None);
+        game.current_level_mut().despawn(npc_id);
+
+        assert_eq!(game.current_level().get_entity_at(pos), None);
     }
 
     #[test]
     fn test_get_entity_by_id_missing() {
-        let game = GameState::default();
+        let mut game = GameState::default();
+        let level: Level = Level::new();
+
+        game.levels.insert(0, level);
 
         let missing = 9999;
 
-        assert!(game.get_entity_by_id(missing).is_none());
+        assert!(game.current_level().get_npc(missing).is_none());
+        assert!(game.current_level().get_item_sprite(missing).is_none());
     }
 
     #[test]
     fn test_multiple_spawns_indices() {
         let mut game = GameState::default();
-        game.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
+        let mut level: Level = Level::new();
+        level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
-        let id1 = game.spawn_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc1 = game.create_npc("goblin".into(), Point::new(50, 7)).unwrap();
+        let npc1_id = npc1.id();
+        let _ = level.spawn_npc(npc1);
 
-        let id2 = game.spawn_npc("orc".into(), Point::new(51, 7)).unwrap();
+        let npc2 = game.create_npc("orc".into(), Point::new(51, 7)).unwrap();
+        let npc2_id = npc2.id();
+        let _ = level.spawn_npc(npc2);
 
-        assert_eq!(game.world.npc_index.get(&id1), Some(&0));
-        assert_eq!(game.world.npc_index.get(&id2), Some(&1));
+        game.levels.insert(0, level);
+
+        assert_eq!(game.current_level().npc_index.get(&npc1_id), Some(&0));
+        assert_eq!(game.current_level().npc_index.get(&npc2_id), Some(&1));
     }
 }

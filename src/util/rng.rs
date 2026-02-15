@@ -84,7 +84,7 @@ impl Roll {
 ///     .add_modifier(penalty)
 ///     .set_difficulty(difficulty)
 ///     .resolve(&mut rng);
-/// ```///
+/// ```
 pub struct Check {
     roll: Roll,
     /// Target number that must be met for a success.

@@ -3,11 +3,14 @@ use std::io;
 
 use crate::{
     App, State,
-    ascii_art::HELP_CONTENT,
-    core::player_actions::PlayerInput,
+    core::{
+        entity_logic::Entity,
+        game::{CursorKind, CursorState},
+        player_actions::PlayerInput,
+    },
     render::{
         menu_display::{InventoryAction, MenuMode},
-        modal_display::ModalInterface,
+        modal_display::{ModalInterface, SelectionAction},
     },
     world::coordinate_system::Direction,
 };
@@ -38,6 +41,9 @@ impl App {
         self.ui.menu.mode = MenuMode::Log;
     }
 
+    /// Central event handler.
+    ///
+    /// Currently, only takes keyboard events into consideration.
     pub fn handle_events(&mut self) -> io::Result<()> {
         match event::read()? {
             Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
@@ -48,6 +54,9 @@ impl App {
         Ok(())
     }
 
+    /// Central event handler for keyboard input.
+    ///
+    /// Here it switches the event handling logic depending on what menu or ui-section the user is interacting with.
     fn handle_key_event(&mut self, key_event: KeyEvent) {
         // 1. Prioritise Modal
         if self.ui.modal.is_some() {
@@ -74,6 +83,7 @@ impl App {
         }
     }
 
+    /// Hotkeys that are always available regardless of ui state.
     fn handle_global_hotkeys(&mut self, key_event: KeyEvent) -> bool {
         match key_event.code {
             // Control: Open game closing modal (SHIFT+q)
@@ -83,22 +93,23 @@ impl App {
             }
             // Control: Open help window
             KeyCode::Char('H') => {
-                self.ui.modal = Some(ModalInterface::TextDisplay {
-                    title: " Help ".into(),
-                    paragraphs: HELP_CONTENT.lines().map(|l| l.to_string()).collect(),
-                });
+                self.ui.modal = Some(ModalInterface::HelpDisplay);
                 true
             }
             _ => false,
         }
     }
 
+    /// Handling input in the starting screen.
     fn handle_start_screen_input(&mut self, key_event: KeyEvent) {
         if key_event.code == KeyCode::Enter {
             self.state = State::Playing
         }
     }
 
+    /// Handling while playing the game.
+    ///
+    /// Here it switches the event handling logic depending on if the UI focus is on the world or the menu.
     fn handle_playing_input(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Char(':') => {
@@ -112,13 +123,20 @@ impl App {
         }
     }
 
+    /// Handling input in the Game Over screen.
     fn handle_game_over_input(&mut self, key_event: KeyEvent) {
         if key_event.code == KeyCode::Enter {
             self.restart()
         }
     }
 
+    /// Handling input while the focus is on the world. This is where the game's main controls for the player character are.
     fn handle_world_key_event(&mut self, key_event: KeyEvent) {
+        if self.game.cursor.is_some() {
+            self.handle_cursor_key_event(key_event);
+            return;
+        }
+
         match key_event.code {
             // Action: Move up
             KeyCode::Char('w') => {
@@ -149,21 +167,33 @@ impl App {
                 self.game.resolve_player_action(PlayerInput::UnequipArmor);
             }
 
-            // Control: Open Inventory without any intentions
-            KeyCode::Char('i') => {
-                self.focus_menu(MenuMode::Inventory(InventoryAction::View));
-            }
             // Control: Open Inventory with intention to Action: Use Item (shifts focus to menu)
-            KeyCode::Char('u') => {
+            KeyCode::Char('i') => {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Use));
             }
             // Control: Open Inventory with intention to Action: Leave Item (shifts focus to menu)
-            KeyCode::Char('l') => {
+            KeyCode::Char('D') => {
                 self.focus_menu(MenuMode::Inventory(InventoryAction::Drop));
             }
 
+            // Control: Start Look mode
+            KeyCode::Char('l') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::Look,
+                    point: self.game.player.character.pos(),
+                });
+            }
+
+            // Control: Start Ranged Attack modej
+            KeyCode::Char('r') => {
+                self.game.cursor = Some(CursorState {
+                    kind: CursorKind::RangedAttack,
+                    point: self.game.player.character.pos(),
+                });
+            }
+
             // Debug: Print player pos
-            KeyCode::Char('p') => self.game.log.print(format!(
+            KeyCode::Char('p') => self.game.log.debug_info(format!(
                 "Player at position x: {}, y: {}",
                 self.game.player.character.base.pos.x, self.game.player.character.base.pos.y
             )),
@@ -171,7 +201,7 @@ impl App {
             // Debug: Print game iten register
             KeyCode::Char('o') => {
                 for (item_id, item) in self.game.items.iter() {
-                    self.game.log.print(format!("Item ID: {} DEF: {}", item_id, item.def_id))
+                    self.game.log.debug_info(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
             // Debug: Open Test Modal
@@ -184,10 +214,19 @@ impl App {
                     ],
                 })
             }
+            KeyCode::Char('8') => {
+                self.ui.modal = Some(ModalInterface::SelectPrompt {
+                    selection_action: SelectionAction::Debug,
+                    options: vec!["Message 1".into(), "Message 2".into(), "Message 3".into()],
+                })
+            }
             _ => {}
         }
     }
 
+    /// Handling input while the focus is on the menu.
+    ///
+    /// Here it switches the event handling logic depending on if the inventory was opened or the log. The log has no controls and is generally not accessible to the player.
     fn handle_menu_key_event(&mut self, key_event: KeyEvent) {
         match &self.ui.menu.mode {
             MenuMode::Inventory(_) => self.handle_inventory_key_event(key_event),
@@ -195,6 +234,9 @@ impl App {
         }
     }
 
+    /// Handling the input while a modal display is opened.
+    ///
+    /// Handling input for each of the different modal types.
     fn handle_modal_key_event(&mut self, key_event: KeyEvent) {
         let modal_action = if let Some(modal) = &mut self.ui.modal {
             match modal {
@@ -205,17 +247,21 @@ impl App {
                     }
                     _ => ModalAction::CloseModal,
                 },
-                ModalInterface::ConfirmChooseItem { item_id } => match key_event.code {
+                ModalInterface::ConfirmUseItem { item_id } => match key_event.code {
                     KeyCode::Char('y') | KeyCode::Enter => {
-                        match self.ui.menu.mode {
-                            MenuMode::Inventory(InventoryAction::Use) => {
-                                self.game.resolve_player_action(PlayerInput::UseItem(*item_id))
-                            }
-                            MenuMode::Inventory(InventoryAction::Drop) => {
-                                self.game.resolve_player_action(PlayerInput::DropItem(*item_id))
-                            }
-                            _ => {}
-                        }
+                        self.game.resolve_player_action(PlayerInput::UseItem(*item_id));
+
+                        // close inventory after using
+                        self.focus_reset();
+
+                        ModalAction::CloseModal
+                    }
+                    KeyCode::Char('n') | KeyCode::Esc => ModalAction::CloseModal,
+                    _ => ModalAction::Idle,
+                },
+                ModalInterface::ConfirmDropItem { item_id } => match key_event.code {
+                    KeyCode::Char('y') | KeyCode::Enter => {
+                        self.game.resolve_player_action(PlayerInput::DropItem(*item_id));
 
                         // close inventory after using
                         self.focus_reset();
@@ -243,6 +289,31 @@ impl App {
                     KeyCode::Enter => ModalAction::CloseModal,
                     _ => ModalAction::Idle,
                 },
+                ModalInterface::HelpDisplay => match key_event.code {
+                    KeyCode::Esc => ModalAction::CloseModal,
+                    KeyCode::Enter => ModalAction::CloseModal,
+                    _ => ModalAction::Idle,
+                },
+                ModalInterface::SelectPrompt { selection_action, options } => {
+                    match key_event.code {
+                        KeyCode::Esc => ModalAction::CloseModal,
+                        KeyCode::Char(c) => {
+                            // Getting the selected option
+                            if let Some(index) = App::letter_to_index(c) {
+                                if let Some(option) = options.get(index) {
+                                    // Appying the selection action to the selected option
+                                    match selection_action {
+                                        SelectionAction::Debug => {
+                                            self.game.log.debug_info(option.to_string())
+                                        }
+                                    }
+                                }
+                            }
+                            ModalAction::Idle
+                        }
+                        _ => ModalAction::Idle,
+                    }
+                }
             }
         } else {
             return;
@@ -258,6 +329,7 @@ impl App {
         }
     }
 
+    /// Handling input while the menu is focused and the inventory is open. Allows interaction with the inventory.
     fn handle_inventory_key_event(&mut self, key_event: KeyEvent) {
         match key_event.code {
             KeyCode::Esc => {
@@ -265,19 +337,28 @@ impl App {
             }
             KeyCode::Char('W') => {
                 if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_warn(format!("{}", e));
                 }
             }
             KeyCode::Char('A') => {
                 if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.print(format!("{}", e));
+                    self.game.log.debug_warn(format!("{}", e));
                 }
             }
             KeyCode::Char(c) => {
                 if let Some(index) = App::letter_to_index(c) {
                     if let Some(item_id) = self.game.player.character.inventory.get(index) {
-                        self.ui.modal =
-                            Some(ModalInterface::ConfirmChooseItem { item_id: *item_id });
+                        match self.ui.menu.mode {
+                            MenuMode::Inventory(InventoryAction::Use) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                            }
+                            MenuMode::Inventory(InventoryAction::Drop) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
+                            }
+                            _ => {}
+                        }
                     }
                 }
             }
@@ -286,6 +367,62 @@ impl App {
         }
     }
 
+    fn handle_cursor_key_event(&mut self, key_event: KeyEvent) {
+        if let Some(cursor) = &self.game.cursor {
+            match key_event.code {
+                // Move up
+                KeyCode::Char('w') => {
+                    let _ = self.game.move_cursor(Direction::Up);
+                }
+                // Move down
+                KeyCode::Char('s') => {
+                    let _ = self.game.move_cursor(Direction::Down);
+                }
+                // Move left
+                KeyCode::Char('a') => {
+                    let _ = self.game.move_cursor(Direction::Left);
+                }
+                // Move right
+                KeyCode::Char('d') => {
+                    let _ = self.game.move_cursor(Direction::Right);
+                }
+
+                // Run cursor action
+                KeyCode::Enter => match cursor.kind {
+                    CursorKind::Look => {
+                        if let Some(entity_id) =
+                            self.game.current_level().get_entity_at(cursor.point)
+                        {
+                            if let Some(npc) = self.game.current_level().get_npc(entity_id) {
+                                self.game.log.print(format!("You see: {}", npc.name()));
+                            }
+                            if let Some(item_sprite) =
+                                self.game.current_level().get_item_sprite(entity_id)
+                            {
+                                self.game.log.print(format!("You see: {}", item_sprite.name()));
+                            }
+                            return;
+                        }
+                        let tile = self.game.current_world().get_tile(cursor.point);
+                        self.game.log.print(format!("You see: {}", tile.tile_type));
+                    }
+                    CursorKind::RangedAttack => {
+                        let Some(entity_id) = self.game.current_level().get_entity_at(cursor.point)
+                        else {
+                            return; // Target point has no entity
+                        };
+
+                        self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                    }
+                },
+
+                KeyCode::Esc => self.game.cursor = None,
+                _ => {}
+            };
+        }
+    }
+
+    /// Helper function to convert letter input [a-z] into a number [0-25] to access item indices in the inventory.
     fn letter_to_index(c: char) -> Option<usize> {
         if c.is_ascii_lowercase() { Some((c as u8 - b'a') as usize) } else { None }
     }

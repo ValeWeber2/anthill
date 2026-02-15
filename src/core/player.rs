@@ -195,8 +195,8 @@ impl Entity for PlayerCharacter {
     fn id(&self) -> EntityId {
         self.base.id
     }
-    fn pos(&self) -> &Point {
-        &self.base.pos
+    fn pos(&self) -> Point {
+        self.base.pos
     }
 }
 

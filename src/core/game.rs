@@ -1,87 +1,76 @@
 #![allow(dead_code)]
 
+use rand::Rng;
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
+
+use bitflags::bitflags;
 
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
-use crate::world::world_loader::load_world_from_ron;
-use crate::world::worldspace::World;
-
-use crate::world::coordinate_system::Point;
-use crate::world::world_data::SpawnKind;
+use crate::util::errors_results::{FailReason, GameOutcome};
+use crate::util::text_log::Log;
+use crate::world::coordinate_system::{Direction, Point};
+use crate::world::level::{Level, LevelEntrance};
 
 // ----------------------------------------------
 //                Game State Struct
 // ----------------------------------------------
 pub struct GameState {
-    pub world: World,
+    /// Contains the data for every level in the game.
+    pub levels: Vec<Level>,
+
+    /// Points to the [Level] the player is on.
+    pub level_nr: usize,
+
     pub player: Player,
+
+    /// Represents the character on screen that is being controlled. (Usually on the Player character, but can be detached.)
+    pub cursor: Option<CursorState>,
+
     pub log: Log,
     pub round_nr: u64,
-    pub level_nr: u8,
-    pub entity_id_counter: u32,
+
+    pub id_system: IdSystem,
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
-    pub item_id_counter: GameItemId,
+
     pub rng: StdRng,
+    pub proc_gen: StdRng,
+
+    pub game_rules: GameRules,
 }
 
 impl GameState {
     pub fn new() -> Self {
+        let mut rng = StdRng::seed_from_u64(73);
+        let proc_gen = StdRng::seed_from_u64(rng.random());
+
         let mut state = Self {
-            world: World::default(),
+            levels: Vec::new(),
             player: Player::new(0),
+            cursor: None,
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
-            entity_id_counter: 0,
+            level_nr: 0,
+            id_system: IdSystem::default(),
             items: HashMap::new(),
-            item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
+            proc_gen,
+            game_rules: GameRules::empty(),
         };
 
-        let player_id = state.next_entity_id();
+        let player_id = state.id_system.next_entity_id();
         state.player = Player::new(player_id);
 
-        let data = load_world_from_ron("assets/worlds/test_world.ron")
-            .expect("Failed to load or parse .ron file");
-
-        state.world = World::new(&mut state);
-        state.world.apply_world_data(&data).expect("Failed to apply world data");
-
-        if let Some(r) = data.rooms.first() {
-            state.player.character.base.pos = Point::new(r.x + 1, r.y + 1);
-        }
-
-        for s in &data.spawns {
-            let pos = Point::new(s.x, s.y);
-
-            if !state.world.is_available(pos) {
-                state.log.debug_print(format!("Spawn blocked at ({}, {})", s.x, s.y));
-                continue;
-            }
-
-            match &s.kind {
-                SpawnKind::Npc { def_id } => {
-                    let _ = state.spawn_npc(def_id.clone(), pos);
-                }
-                SpawnKind::Item { def_id } => {
-                    let item_id = state.register_item(def_id.clone());
-                    let _ = state.spawn_item(item_id, pos);
-                }
-            }
-        }
-
-        state.compute_fov();
-
+        let _ = state.goto_level(state.level_nr, LevelEntrance::Entry);
         state
     }
 
     // This is the routine of operations that need to be called every round.
     pub fn next_round(&mut self) {
         self.player.character.tick_buffs();
-        let npc_ids: Vec<EntityId> = self.world.npc_index.keys().copied().collect();
+        let npc_ids: Vec<EntityId> = self.current_level().npc_index.keys().copied().collect();
 
         for npc_id in npc_ids {
             let _ = self.npc_take_turn(npc_id);
@@ -97,44 +86,92 @@ impl Default for GameState {
     // placeholder, only for tests
     fn default() -> Self {
         Self {
-            world: World::default(),
+            levels: Vec::new(),
+            level_nr: 0,
             player: Player::default(),
+            cursor: None,
             log: Log::new(true),
             round_nr: 0,
-            level_nr: 1,
-            entity_id_counter: 0,
+            id_system: IdSystem::default(),
             items: HashMap::new(),
-            item_id_counter: 0,
             rng: StdRng::seed_from_u64(73),
+            proc_gen: StdRng::seed_from_u64(42),
+            game_rules: GameRules::empty(),
         }
     }
 }
 
 // ----------------------------------------------
-//                  Game Text Log
+//                  ID System
 // ----------------------------------------------
-pub struct Log {
-    pub print_debug_info: bool,
-    pub messages: Vec<String>,
+
+#[derive(Default)]
+pub struct IdSystem {
+    entity_id_counter: EntityId,
+    item_id_counter: GameItemId,
 }
 
-impl Log {
-    pub fn new(print_debug_info: bool) -> Self {
-        Self { print_debug_info, messages: Vec::new() }
+impl IdSystem {
+    pub fn next_entity_id(&mut self) -> EntityId {
+        let id = self.entity_id_counter;
+        self.entity_id_counter += 1;
+
+        id
     }
 
-    pub fn print(&mut self, message: String) {
-        let lines: Vec<&str> = message.split("\n").collect();
-        for line in lines {
-            self.messages.push(line.to_string());
-        }
+    pub fn next_item_id(&mut self) -> GameItemId {
+        let id = self.item_id_counter;
+        self.item_id_counter += 1;
+
+        id
     }
+}
 
-    pub fn debug_print(&mut self, message: String) {
-        if !self.print_debug_info {
-            return;
+// ----------------------------------------------
+//                Gamerule System
+// ----------------------------------------------
+
+bitflags! {
+    pub struct GameRules: u8 {
+        // This disables collision detection for the player, allowing them to walk through walls.
+        const NO_CLIP = 0b00000001;
+    }
+}
+
+// ----------------------------------------------
+//                Cursor System
+// ----------------------------------------------
+
+pub struct CursorState {
+    pub kind: CursorKind,
+    pub point: Point,
+}
+
+pub enum CursorKind {
+    Look,
+    RangedAttack,
+}
+
+impl GameState {
+    pub fn move_cursor(&mut self, direction: Direction) -> GameOutcome {
+        let Some(point) = self.cursor.as_ref().map(|cursor_state| cursor_state.point) else {
+            return GameOutcome::Success;
+        };
+
+        let new_pos = point + direction;
+
+        if !self.current_world().is_in_bounds(new_pos.x as isize, new_pos.y as isize) {
+            return GameOutcome::Fail(FailReason::PointOutOfBounds(new_pos));
         }
 
-        self.print(message);
+        if !self.current_world().get_tile(new_pos).visible {
+            return GameOutcome::Fail(FailReason::TileNotVisible(new_pos));
+        }
+
+        if let Some(cursor) = self.cursor.as_mut() {
+            cursor.point = new_pos;
+        }
+
+        GameOutcome::Success
     }
 }

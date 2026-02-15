@@ -6,15 +6,18 @@ use crate::{
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
     },
-    util::errors_results::{
-        DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
+    util::{
+        errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
+        text_log::LogData,
     },
 };
 
+pub const INVENTORY_LIMIT: usize = 26;
+
 impl GameState {
     pub fn add_item_to_inv(&mut self, item_id: u32) -> GameResult {
-        if self.player.character.inventory.len() >= 24 {
-            self.log.debug_print(format!("Inventory full. Couldn't add item {}", item_id));
+        if self.player.character.inventory.len() >= INVENTORY_LIMIT {
+            self.log.info(LogData::InventoryFull);
             return Ok(GameOutcome::Fail(FailReason::InventoryFull));
         }
 
@@ -29,13 +32,18 @@ impl GameState {
             self.player.character.inventory.swap_remove(found_item);
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.debug_print(format!("Couldn't remove item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't remove item {}: {}", item_id, error));
             return Err(error);
         }
 
         Ok(GameOutcome::Success)
     }
 
+    /// Uses an item from the player's inventory.
+    ///
+    /// Checks whether the item is present, resolves its definition, and
+    /// dispatches to the appropriate handler (armor, weapon, or food).  
+    /// Returns an error if the item is missing or unregistered.
     pub fn use_item(&mut self, item_id: u32) -> GameResult {
         let search_item = self.player.character.inventory.iter().position(|item| *item == item_id);
 
@@ -44,7 +52,7 @@ impl GameState {
                 self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
 
             let item_def = self
-                .get_item_def_by_id(item.def_id.clone())
+                .get_item_def_by_id(&item.def_id)
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
             match item_def.kind {
@@ -55,7 +63,7 @@ impl GameState {
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));
-            self.log.print(format!("Couldn't use item {}: {}", item_id, error));
+            self.log.debug_warn(format!("Couldn't use item {}: {}", item_id, error));
             Err(error)
         }
     }
@@ -96,13 +104,13 @@ impl GameState {
             let item =
                 self.get_item_by_id(item_id).ok_or(EngineError::UnregisteredItem(item_id))?;
             let def = self
-                .get_item_def_by_id(item.def_id.clone())
+                .get_item_def_by_id(&item.def_id)
                 .ok_or(DataError::MissingItemDefinition(item.def_id))?;
-            def.name
+            def.name.to_string()
         };
-        self.deregister_item(item_id)?;
 
-        self.log.print(format!("You have eaten {}.", item_name));
+        self.log.info(LogData::PlayerEats { item_name });
+        self.deregister_item(item_id)?;
 
         Ok(GameOutcome::Success)
     }
@@ -113,7 +121,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 
@@ -123,7 +131,7 @@ impl GameState {
 
             Ok(GameOutcome::Success)
         } else {
-            Ok(GameOutcome::Fail(FailReason::CannotUnequipEmptySlot))
+            Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty))
         }
     }
 

@@ -1,34 +1,12 @@
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
-use ratatui::style::Style;
-
-use crate::util::errors_results::{EngineError, FailReason, GameOutcome, GameResult};
 use crate::world::coordinate_system::Point;
-use crate::{
-    core::{
-        entity_logic::{Entity, EntityId, Movable, Npc},
-        game::GameState,
-        game_items::GameItemSprite,
-    },
-    world::tiles::{DoorType, Tile, TileType},
-};
-
-use crate::world::world_data::{TileTypeData, WorldData};
+use crate::world::tiles::{DoorType, Tile, TileType};
 
 pub const WORLD_WIDTH: usize = 100;
 pub const WORLD_HEIGHT: usize = 25;
-
-pub trait Drawable {
-    fn glyph(&self) -> char;
-    fn style(&self) -> Style;
-}
-
-pub trait Collision {
-    fn is_walkable(&self) -> bool;
-}
 
 // ----------------------------------------------
 //                     Rooms
@@ -46,7 +24,7 @@ impl Room {
     }
 
     pub fn center(&self) -> Point {
-        Point { x: self.origin.x + self.width / 2, y: self.origin.y + self.height / 2 }
+        Point::new(self.origin.x + self.width / 2, self.origin.y + self.height / 2)
     }
 
     pub fn left(&self) -> usize {
@@ -71,22 +49,14 @@ pub struct World {
     pub width: usize,
     pub height: usize,
     pub tiles: [Tile; WORLD_WIDTH * WORLD_HEIGHT], // Grid is 100 wide and 25 high.
-    pub npcs: Vec<Npc>,
-    pub npc_index: HashMap<EntityId, usize>,
-    pub item_sprites: Vec<GameItemSprite>,
-    pub item_sprites_index: HashMap<EntityId, usize>,
 }
 
 impl World {
-    pub fn new(_game: &mut GameState) -> Self {
+    pub fn new() -> Self {
         Self {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
         }
     }
 
@@ -94,13 +64,13 @@ impl World {
         y * self.width + x
     }
 
-    pub fn get_tile(&self, x: usize, y: usize) -> &Tile {
-        let index = self.index(x, y);
+    pub fn get_tile(&self, pos: Point) -> &Tile {
+        let index = self.index(pos.x, pos.y);
         &self.tiles[index]
     }
 
-    pub fn get_tile_mut(&mut self, x: usize, y: usize) -> &mut Tile {
-        let index = self.index(x, y);
+    pub fn get_tile_mut(&mut self, pos: Point) -> &mut Tile {
+        let index = self.index(pos.x, pos.y);
         &mut self.tiles[index]
     }
 
@@ -111,31 +81,7 @@ impl World {
         in_lower_bounds && in_upper_bounds
     }
 
-    pub fn is_available(&self, pos: Point) -> bool {
-        self.is_in_bounds(pos.x as isize, pos.y as isize)
-            && self.npcs.iter().all(|npc| npc.base.pos != pos)
-            && self.item_sprites.iter().all(|item| item.base.pos != pos)
-            && self.get_tile(pos.x, pos.y).tile_type.is_walkable()
-    }
-
-    pub fn get_npc(&self, id: EntityId) -> Option<&Npc> {
-        self.npc_index.get(&id).map(|&index| &self.npcs[index])
-    }
-
-    pub fn get_npc_mut(&mut self, id: EntityId) -> Option<&mut Npc> {
-        self.npc_index.get(&id).map(|&index| &mut self.npcs[index])
-    }
-
-    pub fn get_item_sprite(&self, id: EntityId) -> Option<&GameItemSprite> {
-        self.item_sprites_index.get(&id).map(|&index| &self.item_sprites[index])
-    }
-
-    pub fn get_item_sprite_mut(&mut self, id: EntityId) -> Option<&mut GameItemSprite> {
-        self.item_sprites_index.get(&id).map(|&index| &mut self.item_sprites[index])
-    }
-
-    // could be used in combat system or graphics
-    pub fn get_points_in_radius(&self, pos: &Point, radius: isize) -> Vec<Point> {
+    pub fn get_points_in_radius(&self, pos: Point, radius: isize) -> Vec<Point> {
         let mut points = Vec::new();
         let x = pos.x as isize;
         let y = pos.y as isize;
@@ -156,49 +102,51 @@ impl World {
         points
     }
 
-    pub fn carve_corridor(&mut self, from: Point, to: Point) {
-        let mut x = from.x;
-        let mut y = from.y;
+    pub fn open_room_for_hallway(&mut self) {
+        let dirs: [(isize, isize); 4] = [(1, 0), (-1, 0), (0, 1), (0, -1)];
 
-        while x != to.x {
-            self.carve_corridor_step(x, y);
-            if to.x > x {
-                x += 1
-            } else {
-                x -= 1
-            };
-        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let hall = Point::new(x, y);
+                if self.get_tile(hall).tile_type != TileType::Hallway {
+                    continue;
+                }
 
-        while y != to.y {
-            self.carve_corridor_step(x, y);
-            if to.y > y {
-                y += 1
-            } else {
-                y -= 1
-            };
-        }
+                for (dx, dy) in dirs {
+                    let wx = x as isize + dx;
+                    let wy = y as isize + dy;
+                    if !self.is_in_bounds(wx, wy) {
+                        continue;
+                    }
+                    let wall_p = Point::new(wx as usize, wy as usize);
 
-        self.carve_corridor_step(x, y);
-    }
+                    if self.get_tile(wall_p).tile_type != TileType::Wall {
+                        continue;
+                    }
 
-    fn carve_corridor_step(&mut self, x: usize, y: usize) {
-        let tile = self.get_tile_mut(x, y);
+                    let bx = wx + dx;
+                    let by = wy + dy;
+                    if !self.is_in_bounds(bx, by) {
+                        continue;
+                    }
+                    let behind = Point::new(bx as usize, by as usize);
 
-        tile.tile_type = match tile.tile_type {
-            TileType::Wall => TileType::Door(DoorType::Archway),
-            TileType::Door(DoorType::Closed) => TileType::Door(DoorType::Archway),
-            _ => TileType::Floor,
+                    if self.get_tile(behind).tile_type == TileType::Floor {
+                        self.get_tile_mut(wall_p).tile_type = TileType::Door(DoorType::Archway);
+                    }
+                }
+            }
         }
     }
 
     pub fn add_walls_around_walkables(&mut self) {
-        let mut to_wall: Vec<(usize, usize)> = Vec::new();
+        let mut to_wall: Vec<Point> = Vec::new();
 
         for y in 0..self.height {
             for x in 0..self.width {
-                let tt = self.get_tile(x, y).tile_type;
+                let tt = self.get_tile(Point::new(x, y)).tile_type;
 
-                if matches!(tt, TileType::Floor | TileType::Hallway | TileType::Door(_)) {
+                if matches!(tt, TileType::Floor | TileType::Door(_)) {
                     let y0 = y.saturating_sub(1);
                     let y1 = (y + 1).min(self.height - 1);
                     let x0 = x.saturating_sub(1);
@@ -210,8 +158,9 @@ impl World {
                                 continue;
                             }
 
-                            if self.get_tile(nx, ny).tile_type == TileType::Void {
-                                to_wall.push((nx, ny));
+                            let new_point = Point::new(nx, ny);
+                            if self.get_tile(new_point).tile_type == TileType::Void {
+                                to_wall.push(new_point);
                             }
                         }
                     }
@@ -219,129 +168,38 @@ impl World {
             }
         }
 
-        for (x, y) in to_wall {
-            if self.get_tile(x, y).tile_type == TileType::Void {
-                self.get_tile_mut(x, y).tile_type = TileType::Wall;
+        for point in to_wall {
+            if self.get_tile(point).tile_type == TileType::Void {
+                self.get_tile_mut(point).tile_type = TileType::Wall;
             }
         }
     }
 
+    /// Carves a rectangular room into the map.
+    ///
+    /// Fills the interior with `Floor` tiles and surrounds it with `Wall` tiles
+    /// based on the room’s origin, width, and height.
     pub fn carve_room(&mut self, room: &Room) {
         let ox = room.origin.x;
         let oy = room.origin.y;
         let w = room.width;
         let h = room.height;
 
-        for y in oy + 1..oy + h - 1 {
-            for x in ox + 1..ox + w - 1 {
-                self.get_tile_mut(x, y).tile_type = TileType::Floor;
+        for y in oy + 1..oy + h {
+            for x in ox + 1..ox + w {
+                self.get_tile_mut(Point::new(x, y)).tile_type = TileType::Floor;
             }
         }
 
-        for y in oy..oy + h {
-            self.get_tile_mut(ox, y).tile_type = TileType::Wall;
-            self.get_tile_mut(ox + w - 1, y).tile_type = TileType::Wall;
+        for y in oy..=oy + h {
+            self.get_tile_mut(Point::new(ox, y)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(ox + w, y)).tile_type = TileType::Wall;
         }
 
-        for x in ox..ox + w {
-            self.get_tile_mut(x, oy).tile_type = TileType::Wall;
-            self.get_tile_mut(x, oy + h - 1).tile_type = TileType::Wall;
+        for x in ox..=ox + w {
+            self.get_tile_mut(Point::new(x, oy)).tile_type = TileType::Wall;
+            self.get_tile_mut(Point::new(x, oy + h)).tile_type = TileType::Wall;
         }
-    }
-
-    pub fn move_player_character<E: Entity + Movable>(
-        &self,
-        entity: &mut E,
-        dx: i32,
-        dy: i32,
-    ) -> GameResult {
-        let new_x = entity.pos().x as isize + dx as isize;
-        let new_y = entity.pos().y as isize + dy as isize;
-        let new_point = Point { x: new_x as usize, y: new_y as usize };
-
-        if !self.is_in_bounds(new_x, new_y) {
-            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-        }
-
-        if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-            return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
-        }
-
-        entity.move_to(new_point);
-
-        Ok(GameOutcome::Success)
-    }
-
-    pub fn move_npc(&mut self, npc_id: EntityId, dx: isize, dy: isize) -> GameResult {
-        let (new_x, new_y) = {
-            let npc = self.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-
-            let new_x = npc.pos().x as isize + dx;
-            let new_y = npc.pos().y as isize + dy;
-            let new_point = Point { x: new_x as usize, y: new_y as usize };
-
-            if !self.is_in_bounds(new_x, new_y) {
-                return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-            }
-
-            if !self.get_tile(new_x as usize, new_y as usize).tile_type.is_walkable() {
-                return Ok(GameOutcome::Fail(FailReason::TileNotWalkable(new_point)));
-            }
-
-            (new_x, new_y)
-        };
-
-        let npc = self.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        npc.move_to(Point { x: new_x as usize, y: new_y as usize });
-
-        Ok(GameOutcome::Success)
-    }
-
-    pub fn apply_world_data(&mut self, data: &WorldData) -> Result<(), &'static str> {
-        if data.width != self.width || data.height != self.height {
-            return Err("WorldData dimensions do not match current ones");
-        }
-
-        for t in self.tiles.iter_mut() {
-            *t = Tile::default();
-        }
-
-        for r in &data.rooms {
-            let room = Room::new(Point::new(r.x, r.y), r.width, r.height);
-            self.carve_room(&room);
-        }
-
-        for w in data.rooms.windows(2) {
-            let a = &w[0];
-            let b = &w[1];
-
-            let start = Point::new(a.x + a.width / 2, a.y + a.height / 2);
-            let end = Point::new(b.x + b.width / 2, b.y + b.height / 2);
-
-            self.carve_corridor(start, end);
-        }
-
-        for td in &data.tiles {
-            if td.x >= self.width || td.y >= self.height {
-                return Err("WorldData contains tile out of bounds");
-            }
-
-            let idx = self.index(td.x, td.y);
-
-            let tile_type = match td.tile_type {
-                TileTypeData::Floor => TileType::Floor,
-                TileTypeData::Wall => TileType::Wall,
-                TileTypeData::Door { open } => {
-                    TileType::Door(if open { DoorType::Open } else { DoorType::Closed })
-                }
-            };
-
-            self.tiles[idx] = Tile::new(tile_type);
-        }
-
-        self.add_walls_around_walkables();
-
-        Ok(())
     }
 }
 
@@ -352,10 +210,6 @@ impl Default for World {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
             tiles: [Tile::default(); WORLD_WIDTH * WORLD_HEIGHT],
-            npcs: Vec::new(),
-            npc_index: HashMap::new(),
-            item_sprites: Vec::new(),
-            item_sprites_index: HashMap::new(),
         }
     }
 }

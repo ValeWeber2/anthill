@@ -1,8 +1,19 @@
+#![allow(dead_code)]
+
+use std::fmt;
 use std::ops::{Add, Sub};
 
+use serde::{Deserialize, Serialize};
 use strum_macros::EnumIter;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash)]
+/// Basic coordinate point in the coordinate system.
+///
+/// `usize` has been chosen for the coordinates, so that negative space cannot be represented.
+///
+/// Forms a whole number vector space together with [PointVector], which allows basic algebraic operations:
+/// - Addition: ([Add]): `(Point, PointVector) -> Point`
+/// - Subtraction: ([Sub]): `(Point, Point) -> PointVector`
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub struct Point {
     pub x: usize,
     pub y: usize,
@@ -13,63 +24,111 @@ impl Point {
         Self { x, y }
     }
 
+    /// Retreives the neighbouring coordinates in the given [Direction].
     pub fn get_adjacent(self, direction: Direction) -> Point {
-        self + PointDelta::from(direction)
+        self + PointVector::from(direction)
     }
 
+    /// Calculates the distance squared to another `Point` using the Pythagorean Theorem: `a^2 + b^2`
+    ///
+    /// # Note
+    /// Returns the squared distance, because for this purpose the square root isn't needed. For the true Pythagorean distance, you need to take the square root.
     pub fn distance_squared_from(&self, other: Point) -> usize {
-        let dx = self.x as isize - other.x as isize;
-        let dy = self.y as isize - other.y as isize;
-        (dx * dx + dy * dy) as usize
+        let delta = *self - other;
+        delta.length_squared() as usize
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(usize) -> usize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
     }
 }
 
-impl Add for Point {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        Self { x: self.x + other.x, y: self.y + other.y }
-    }
-}
-
-impl Add<PointDelta> for Point {
+impl Add<PointVector> for Point {
     type Output = Point;
 
-    fn add(self, delta: PointDelta) -> Point {
-        let new_x = self.x as isize + delta.x;
-        let new_y = self.y as isize + delta.y;
+    /// Add a [PointVector] to a `Point`.
+    ///
+    /// # Returns
+    /// A `Point` at the end of the `PointVector`
+    ///
+    /// # Note
+    /// If the result would be negative, the coordinates are clamped at `0`, because negative positions are not representable.
+    fn add(self, vector: PointVector) -> Self::Output {
+        let new_x = self.x as isize + vector.x;
+        let new_y = self.y as isize + vector.y;
 
         Point { x: new_x.max(0) as usize, y: new_y.max(0) as usize }
     }
 }
 
-impl Sub for Point {
-    type Output = PointDelta;
+impl Add<Direction> for Point {
+    type Output = Point;
 
-    fn sub(self, other: Point) -> PointDelta {
-        let new_x = self.x as isize - other.x as isize;
-        let new_y = self.y as isize - other.y as isize;
-
-        PointDelta { x: new_x, y: new_y }
+    /// Add a [Direction] to a `Point`.
+    ///
+    /// # Returns
+    /// The neighbouring `Point` in the given `Direction`.
+    fn add(self, rhs: Direction) -> Self::Output {
+        self + PointVector::from(rhs)
     }
 }
 
-pub struct PointDelta {
+impl Sub for Point {
+    type Output = PointVector;
+
+    /// Subtract two `Points` to get their distance as a `PointVector`.
+    fn sub(self, other: Point) -> PointVector {
+        let new_x = self.x as isize - other.x as isize;
+        let new_y = self.y as isize - other.y as isize;
+
+        PointVector::new(new_x, new_y)
+    }
+}
+
+impl fmt::Display for Point {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "x:{} y:{}", self.x, self.y)
+    }
+}
+
+pub struct PointVector {
     pub x: isize,
     pub y: isize,
 }
 
-impl From<Direction> for PointDelta {
+impl PointVector {
+    pub fn new(x: isize, y: isize) -> Self {
+        Self { x, y }
+    }
+
+    /// Calculates the length of a PointVector using the Pythagorean Theorem: `a^2 + b^2`
+    ///
+    /// # Note
+    /// Returns the squared distance, because for this purpose the square root isn't needed. For the true Pythagorean distance, you need to take the square root (and convert to a float).
+    fn length_squared(&self) -> isize {
+        self.x * self.x + self.y * self.y
+    }
+
+    /// Implements map function to apply a transformation to both the x and y coordinate.
+    pub fn map(self, f: impl Fn(isize) -> isize) -> Self {
+        Self { x: f(self.x), y: f(self.y) }
+    }
+}
+
+impl From<Direction> for PointVector {
+    /// Creates a `PointVector` that indicates one step in the given [Direction]
     fn from(direction: Direction) -> Self {
         match direction {
-            Direction::Up => PointDelta { x: 0, y: -1 },
-            Direction::Right => PointDelta { x: 1, y: 0 },
-            Direction::Down => PointDelta { x: 0, y: 1 },
-            Direction::Left => PointDelta { x: -1, y: 0 },
+            Direction::Up => PointVector { x: 0, y: -1 },
+            Direction::Right => PointVector { x: 1, y: 0 },
+            Direction::Down => PointVector { x: 0, y: 1 },
+            Direction::Left => PointVector { x: -1, y: 0 },
         }
     }
 }
 
+/// Represents the 4 cardinal directions Up, Right, Down, Left.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, EnumIter)]
 pub enum Direction {
     Up,
@@ -78,16 +137,19 @@ pub enum Direction {
     Left,
 }
 
-impl TryFrom<PointDelta> for Direction {
+impl TryFrom<PointVector> for Direction {
     type Error = &'static str;
 
-    fn try_from(value: PointDelta) -> Result<Self, Self::Error> {
+    /// Creates a `Direction` from a given `PointVector`.
+    ///
+    /// Only works for `PointVector`s with a length of 1 and only works in 4 cardinal directions.
+    fn try_from(value: PointVector) -> Result<Self, Self::Error> {
         match value {
-            PointDelta { x: 0, y: -1 } => Ok(Direction::Up),
-            PointDelta { x: 1, y: 0 } => Ok(Direction::Right),
-            PointDelta { x: 0, y: 1 } => Ok(Direction::Down),
-            PointDelta { x: -1, y: 0 } => Ok(Direction::Left),
-            _ => Err("Can't coerce PointDelta into a cardinal direction"),
+            PointVector { x: 0, y: -1 } => Ok(Direction::Up),
+            PointVector { x: 1, y: 0 } => Ok(Direction::Right),
+            PointVector { x: 0, y: 1 } => Ok(Direction::Down),
+            PointVector { x: -1, y: 0 } => Ok(Direction::Left),
+            _ => Err("Can't coerce PointVector into a cardinal direction"),
         }
     }
 }

@@ -33,37 +33,6 @@ pub const STARTSCREEN_ASCII: &str = r#"┌────────────�
 └─────────────────────────────────────────────▒──────────────────────────────────────────────────────────────────────────────────────────────────────┘
 "#;
 
-pub const HELP_CONTENT: &str = "
-        === BASIC CONTROLS =======================================================================================
-
-        Start / Quit:     ENTER - start game        |        Q - quit game        |        ESC - close menus
-
-        Movement:         w - up    a - left    s - down    d - right        |        . - wait one turn
-
-        Interaction:      Walk into an NPC or item to interact with it
-
-        Inventory:        i - open inventory        |        a, b, c… - select item        |        ESC - close
-                          I - open inventory in drop mode
-
-        Actions:          W - unequip weapon        |        A - unequip armor
-
-        Command Input:    : - open command prompt        |        ENTER - run command        |        ESC - cancel
-
-
-        === COMMANDS =============================================================================================
-
-        quit - exit the game        |        help - list commands        |        playerinfo - show player stats
-
-        give <item> <amount> - add item to inventory        |        maxstats - boost all stats
-        maxequip - equip best gear (when implemented)
-
-        rngtest - test RNG engine        |        teleport <x> <y> - move to coordinates
-
-
-        ==========================================================================================================
-
-        Press ESC to close this window";
-
 pub const GRAVESTONE: &str = r#"
                     _______                
            ________/      \\_______        

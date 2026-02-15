@@ -7,32 +7,33 @@ use crate::{
     core::{entity_logic::Entity, game::GameState},
     world::{
         coordinate_system::{Direction, Point},
-        worldspace::{WORLD_HEIGHT, WORLD_WIDTH, World},
+        tiles::Opacity,
+        worldspace::World,
     },
 };
 
 type Rational = Ratio<isize>;
 
 #[derive(Clone, Copy, Debug)]
-pub struct IPoint {
+pub struct ViewPoint {
     x: isize,
     y: isize,
 }
 
-impl IPoint {
+impl ViewPoint {
     pub fn new(x: isize, y: isize) -> Self {
         Self { x, y }
     }
 }
 
-impl From<Point> for IPoint {
+impl From<Point> for ViewPoint {
     fn from(value: Point) -> Self {
-        IPoint { x: value.x as isize, y: value.y as isize }
+        ViewPoint { x: value.x as isize, y: value.y as isize }
     }
 }
 
-impl From<IPoint> for Point {
-    fn from(value: IPoint) -> Self {
+impl From<ViewPoint> for Point {
+    fn from(value: ViewPoint) -> Self {
         Point { x: value.x as usize, y: value.y as usize }
     }
 }
@@ -44,10 +45,8 @@ pub fn compute_fov(origin: Point, world: &mut World) {
     world.mark_explored(origin);
 
     // Make all tiles invisible
-    for i in 0..WORLD_WIDTH {
-        for j in 0..WORLD_HEIGHT {
-            world.tiles[world.index(i, j)].visible = false;
-        }
+    for tile in world.tiles.iter_mut() {
+        tile.make_invisible();
     }
 
     // Determine which tiles to make visible
@@ -61,19 +60,19 @@ pub fn compute_fov(origin: Point, world: &mut World) {
 
 /// Scan a row and recursively scan all of its children. If you think of each quadrant as a tree of rows, this essentially is a depth-first tree traversal.
 fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
-    let mut prev_tile: Option<IPoint> = None;
+    let mut prev_tile: Option<ViewPoint> = None;
     let mut row = row;
 
     let row_tiles: Vec<_> = row.tiles().collect(); // Cloning was required since I change values.
 
     for tile in row_tiles {
-        let tile_is_wall = world.is_blocking(quadrant.transform(tile).into());
+        let tile_is_wall = world.is_opaque(quadrant.transform(tile).into());
         let tile_is_floor = !tile_is_wall;
 
         let prev_tile_is_wall =
-            prev_tile.is_some_and(|prev| world.is_blocking(quadrant.transform(prev).into()));
+            prev_tile.is_some_and(|prev| world.is_opaque(quadrant.transform(prev).into()));
         let prev_tile_is_floor =
-            prev_tile.is_some_and(|prev| !world.is_blocking(quadrant.transform(prev).into()));
+            prev_tile.is_some_and(|prev| !world.is_opaque(quadrant.transform(prev).into()));
 
         // Vision Range = 30 tiles (commented out, so now vision range is infinite)
         // if (Point::from(quadrant.transform(tile)).distance_squared_from(origin) as f32).sqrt()
@@ -102,23 +101,23 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
         }
         prev_tile = Some(tile);
     }
-    if prev_tile.is_some_and(|tile| !world.is_blocking(quadrant.transform(tile).into())) {
+    if prev_tile.is_some_and(|tile| !world.is_opaque(quadrant.transform(tile).into())) {
         scan(_origin, row.next(), quadrant, world);
     }
 }
 
 trait FieldOfView {
-    fn is_blocking(&self, point: Point) -> bool;
+    fn is_opaque(&self, point: Point) -> bool;
     fn mark_visible(&mut self, point: Point);
 }
 
 impl FieldOfView for World {
-    fn is_blocking(&self, point: Point) -> bool {
-        let tile = self.get_tile(point.x, point.y);
+    fn is_opaque(&self, point: Point) -> bool {
+        let tile = self.get_tile(point);
         tile.tile_type.is_opaque()
     }
     fn mark_visible(&mut self, point: Point) {
-        self.get_tile_mut(point.x, point.y).visible = true;
+        self.get_tile_mut(point).make_visible();
     }
 }
 
@@ -128,43 +127,43 @@ trait FogOfWar {
 
 impl FogOfWar for World {
     fn mark_explored(&mut self, point: Point) {
-        self.get_tile_mut(point.x, point.y).explored = true;
+        self.get_tile_mut(point).make_explored();
     }
 }
 
 impl GameState {
     pub fn compute_fov(&mut self) {
-        compute_fov(*self.player.character.pos(), &mut self.world);
+        compute_fov(self.player.character.pos(), self.current_world_mut());
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 struct Quadrant {
     direction: Direction,
-    origin: IPoint,
+    origin: ViewPoint,
 }
 
 impl Quadrant {
-    pub fn new(direction: Direction, origin: IPoint) -> Self {
+    pub fn new(direction: Direction, origin: ViewPoint) -> Self {
         Self { direction, origin }
     }
     /// Convert a Point representing a position relative to the current quadrant into a Point representing an absolute position in the grid.
-    pub fn transform(&self, tile: IPoint) -> IPoint {
-        let IPoint { x: row, y: col } = tile;
+    pub fn transform(&self, tile: ViewPoint) -> ViewPoint {
+        let ViewPoint { x: row, y: col } = tile;
         match self.direction {
-            Direction::Up => IPoint {
+            Direction::Up => ViewPoint {
                 x: self.origin.x.saturating_add(col),
                 y: self.origin.y.saturating_sub(row),
             },
-            Direction::Right => IPoint {
+            Direction::Right => ViewPoint {
                 x: self.origin.x.saturating_add(row),
                 y: self.origin.y.saturating_add(col),
             },
-            Direction::Down => IPoint {
+            Direction::Down => ViewPoint {
                 x: self.origin.x.saturating_add(col),
                 y: self.origin.y.saturating_add(row),
             },
-            Direction::Left => IPoint {
+            Direction::Left => ViewPoint {
                 x: self.origin.x.saturating_sub(row),
                 y: self.origin.y.saturating_add(col),
             },
@@ -186,7 +185,7 @@ impl Row {
     }
 
     /// Returns an iterator over the tiles in the row. This function considers a tile to be in the row if the sector swept out by the row’s start and end slopes overlaps with a diamond inscribed in the tile. If the diamond is only tangent to the sector, it does not become part of the row.
-    fn tiles(&self) -> impl Iterator<Item = IPoint> {
+    fn tiles(&self) -> impl Iterator<Item = ViewPoint> {
         let depth_times_start = Rational::new(self.depth, 1) * self.start_slope;
         let depth_times_end = Rational::new(self.depth, 1) * self.end_slope;
 
@@ -196,7 +195,7 @@ impl Row {
 
         let depth = self.depth;
 
-        (min_col..=max_col).map(move |col| IPoint::new(depth, col))
+        (min_col..=max_col).map(move |col| ViewPoint::new(depth, col))
     }
 
     fn next(&self) -> Row {
@@ -205,17 +204,17 @@ impl Row {
 }
 
 /// Calculates new start and end slopes. It’s used in two situations:
-/// [1], if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
-/// [2], if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
+/// (1), if prev_tile (on the left) was a wall tile and tile (on the right) is a floor tile, then the slope represents a start slope and should be tangent to the right edge of the wall tile.
+/// (2), if prev_tile was a floor tile and tile is a wall tile, then the slope represents an end slope and should be tangent to the left edge of the wall tile.
 /// In both situations, the line is tangent to the left edge of the current tile, so we can use a single slope function for both start and end slopes.
-fn slope(tile: IPoint) -> Rational {
-    let IPoint { x: row_depth, y: col } = tile;
+fn slope(tile: ViewPoint) -> Rational {
+    let ViewPoint { x: row_depth, y: col } = tile;
     Rational::new(2 * (col) - 1, 2 * row_depth)
 }
 
 /// Checks if a given floor tile can be seen symmetrically from the origin. It returns true if the central point of the tile is in the sector swept out by the row’s start and end slopes. Otherwise, it returns false.
-fn is_symmetric(row: Row, tile: IPoint) -> bool {
-    let IPoint { x: _row_depth, y: col } = tile;
+fn is_symmetric(row: Row, tile: ViewPoint) -> bool {
+    let ViewPoint { x: _row_depth, y: col } = tile;
 
     let depth_times_start = Rational::new(row.depth, 1) * row.start_slope;
     let depth_times_end = Rational::new(row.depth, 1) * row.end_slope;

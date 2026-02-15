@@ -7,12 +7,13 @@ use crate::{
     },
     util::errors_results::{EngineError, GameError, GameOutcome, GameResult},
     world::{
-        coordinate_system::{Direction, Point, PointDelta},
+        coordinate_system::{Direction, Point, PointVector},
+        tiles::Collision,
         worldspace::MovementError,
     },
 };
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub enum NpcAiState {
     #[default]
     Inactive,
@@ -38,11 +39,10 @@ impl GameState {
         match npc_action {
             NpcActionKind::Wait => {}
             NpcActionKind::Move(direction) => {
-                let delta = PointDelta::from(direction);
-                let _ = self.world.move_npc(npc_id, delta.x, delta.y);
+                let delta = PointVector::from(direction);
+                let _ = self.move_npc(npc_id, delta.x, delta.y);
             }
             NpcActionKind::Attack => {
-                self.log.print("The NPC attacks".to_string());
                 let _ = self.npc_attack_player(npc_id);
             }
         }
@@ -51,8 +51,8 @@ impl GameState {
     }
 
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
-        let npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        let melee_area = self.world.get_points_in_radius(npc.pos(), 1);
+        let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+        let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
 
         let action = match npc.ai_state {
             NpcAiState::Inactive => NpcActionKind::Wait,
@@ -63,10 +63,10 @@ impl GameState {
             }
 
             NpcAiState::Aggressive => {
-                if melee_area.contains(self.player.character.pos()) {
+                if melee_area.contains(&self.player.character.pos()) {
                     NpcActionKind::Attack
                 } else if let Some(next_step) =
-                    self.world.next_step_toward(npc.pos(), self.player.character.pos())
+                    self.current_world().next_step_toward(npc.pos(), self.player.character.pos())
                 {
                     NpcActionKind::Move(next_step)
                 } else {
@@ -80,20 +80,24 @@ impl GameState {
 
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let npc_pos: Point = {
-            let npc: &Npc = self.world.get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-            *npc.pos()
+            let npc: &Npc =
+                self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+            npc.pos()
         };
 
-        let detectable_area: Vec<Point> = self.world.get_points_in_radius(&npc_pos, 10);
+        let player_pos: Point = self.player.character.pos();
+        let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 10);
+
+        let player_reachable = self.current_world().get_tile(player_pos).tile_type.is_walkable();
+        // Only aggressive if player in detection radius and player is on a reachable tile (e.g. not inside walls)
+        let should_be_agressive = detectable_area.contains(&player_pos) && player_reachable;
 
         let npc: &mut Npc =
-            self.world.get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
+            self.current_level_mut().get_npc_mut(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
 
-        if detectable_area.contains(self.player.character.pos()) {
-            npc.ai_state = NpcAiState::Aggressive;
-        } else {
-            npc.ai_state = NpcAiState::Wandering;
-        }
+        // If the detection radius contains the player AND the player position is reachable.
+        npc.ai_state =
+            if should_be_agressive { NpcAiState::Aggressive } else { NpcAiState::Wandering };
 
         Ok(())
     }
