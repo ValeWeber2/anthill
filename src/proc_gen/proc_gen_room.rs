@@ -6,7 +6,7 @@ use crate::{
     proc_gen::{bsp::GRID_SIZE, bsp_nodes::MapBSPNode},
     world::{
         coordinate_system::{Point, PointVector},
-        world_data::RoomData,
+        level_data::RoomData,
     },
 };
 

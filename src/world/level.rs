@@ -10,9 +10,9 @@ use crate::data::levels::level_paths;
 use crate::proc_gen::proc_gen_level::ProcGenLevel;
 use crate::util::errors_results::{DataError, EngineError};
 use crate::world::coordinate_system::Point;
+use crate::world::level_data::{LevelData, SpawnKind};
+use crate::world::level_loader::load_world_from_ron;
 use crate::world::tiles::Collision;
-use crate::world::world_data::{LevelData, SpawnKind};
-use crate::world::world_loader::load_world_from_ron;
 use crate::{
     core::{entity_logic::EntityId, game::GameState},
     util::errors_results::GameError,

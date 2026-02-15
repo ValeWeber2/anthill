@@ -2,7 +2,7 @@ use crate::{
     proc_gen::bsp::PADDING,
     world::{
         coordinate_system::Point,
-        world_data::RoomData,
+        level_data::RoomData,
         worldspace::{Room, WORLD_HEIGHT, WORLD_WIDTH},
     },
 };

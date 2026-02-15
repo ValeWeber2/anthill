@@ -7,7 +7,7 @@ use ron::de::from_reader;
 use ron::ser::{PrettyConfig, to_writer_pretty};
 
 use crate::util::errors_results::{GameError, IoError};
-use crate::world::world_data::LevelData;
+use crate::world::level_data::LevelData;
 
 pub fn load_world_from_ron(path: &str) -> Result<LevelData, GameError> {
     let file = File::open(path).map_err(IoError::FileReading)?;

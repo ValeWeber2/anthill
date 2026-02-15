@@ -11,7 +11,7 @@ use crate::{
     proc_gen::{proc_gen_level::ProcGenLevel, proc_gen_room::ProcGenRoom},
     world::{
         coordinate_system::Point,
-        world_data::{SpawnData, SpawnKind},
+        level_data::{SpawnData, SpawnKind},
     },
 };
 

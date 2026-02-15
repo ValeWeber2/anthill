@@ -4,7 +4,7 @@ use crate::{
     proc_gen::{bsp::MapBSPTree, proc_gen_world::ProcGenWorld},
     world::{
         coordinate_system::Point,
-        world_data::{LevelData, RoomData, SpawnData, TileData, TileTypeData},
+        level_data::{LevelData, RoomData, SpawnData, TileData, TileTypeData},
         worldspace::{WORLD_HEIGHT, WORLD_WIDTH},
     },
 };
