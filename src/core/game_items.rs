@@ -82,7 +82,10 @@ impl GameState {
 
     pub fn deregister_item(&mut self, item_id: GameItemId) -> Result<(), GameError> {
         match self.items.remove(&item_id) {
-            Some(_) => Ok(()),
+            Some(_) => {
+                self.log.debug_info(format!("Deregistered item {}", item_id));
+                Ok(())
+            }
             None => Err(GameError::from(EngineError::UnregisteredItem(item_id))),
         }
     }

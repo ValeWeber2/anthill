@@ -233,7 +233,28 @@ impl App {
                 self.game.player.character.stats.base.hp_max = 500;
                 self.game.player.character.stats.base.hp_current = 500;
             }
-            GameCommand::MaxEquip => todo!("Implement once items are finished"),
+            GameCommand::MaxEquip => {
+                self.execute_command(GameCommand::Give {
+                    item_def: "weapon_bow_long".to_string(),
+                    amount: 1,
+                });
+                self.execute_command(GameCommand::Give {
+                    item_def: "weapon_warhammer".to_string(),
+                    amount: 1,
+                });
+                self.execute_command(GameCommand::Give {
+                    item_def: "armor_plate".to_string(),
+                    amount: 1,
+                });
+                self.execute_command(GameCommand::Give {
+                    item_def: "food_meat".to_string(),
+                    amount: 5,
+                });
+                self.execute_command(GameCommand::Give {
+                    item_def: "potion_healing_small".to_string(),
+                    amount: 2,
+                });
+            }
 
             GameCommand::PlayerInfo => {
                 self.game.log.print(format!(
