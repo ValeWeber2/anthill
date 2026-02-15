@@ -113,6 +113,8 @@ pub enum LogData {
     UseStairsDown,
     UseStairsUp,
     NoInteraction,
+    Overdose,
+    PlayerHealed { amount: u16 },
 }
 
 impl fmt::Display for LogData {
@@ -129,35 +131,28 @@ impl LogData {
     pub fn display(&self) -> Line<'_> {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),
-
             LogData::DebugInfo(message) => Line::styled(message.to_string(), STYLE_DEBUG_INFO),
-
             LogData::DebugWarn(message) => Line::styled(message.to_string(), STYLE_DEBUG_WARN),
-
             LogData::PlayerAttackHit { npc_name, damage } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
-                Span::raw(" attack the "),
+                Span::raw(" attack "),
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" and deal "),
                 Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
-
             LogData::PlayerAttackMiss { npc_name } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
-                Span::raw(" attack the "),
+                Span::raw(" attack "),
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(", but miss."),
             ]),
-
             LogData::PlayerEats { item_name } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
-                Span::raw(" eat the "),
+                Span::raw(" eat "),
                 Span::styled(item_name, STYLE_ITEM),
             ]),
-
             LogData::NpcAttackHit { npc_name, damage } => Line::from(vec![
-                Span::raw("The "),
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" attacks "),
                 Span::styled("you", STYLE_YOU),
@@ -165,34 +160,30 @@ impl LogData {
                 Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
-
             LogData::NpcAttackMiss { npc_name } => Line::from(vec![
-                Span::raw("The "),
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" attacks "),
                 Span::styled("you", STYLE_YOU),
                 Span::raw(", but misses."),
             ]),
-
-            LogData::NpcDied { npc_name } => Line::from(vec![
-                Span::raw("The "),
-                Span::styled(npc_name, STYLE_NPC),
-                Span::raw(" died."),
-            ]),
-
+            LogData::NpcDied { npc_name } => {
+                Line::from(vec![Span::styled(npc_name, STYLE_NPC), Span::raw(" died.")])
+            }
             LogData::InventoryFull => {
                 Line::from("Your inventory is full. Cannot add another item.")
             }
-
             LogData::EquipmentSlotEmpty => {
                 Line::from("The equipment slot is already empty. Cannot unequip.")
             }
-
             LogData::UseStairsDown => Line::from("You go down the stairs..."),
-
             LogData::UseStairsUp => Line::from("You go back up the stairs..."),
-
             LogData::NoInteraction => Line::from("You cannot interact with that object."),
+            LogData::Overdose => Line::from("You are experiencing the effects of overdosing."),
+            LogData::PlayerHealed { amount } => Line::from(vec![
+                Span::raw("You regain "),
+                Span::styled(amount.to_string(), STYLE_NUMBER),
+                Span::raw(" hit points."),
+            ]),
         }
     }
 }

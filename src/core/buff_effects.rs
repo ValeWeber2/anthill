@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::core::game::GameState;
+use crate::{core::game::GameState, util::text_log::LogData};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum PotionType {
@@ -62,7 +62,7 @@ impl GameState {
         match effect {
             PotionEffectDef::Heal { amount } => {
                 self.player.character.heal(amount);
-                self.log.print(format!("You regain {} HP.", amount));
+                self.log.info(LogData::PlayerHealed { amount });
 
                 if usage_count >= 3 && rounds_since_last_use < 30 {
                     self.player.character.active_buffs.push(ActiveBuff {
@@ -70,7 +70,7 @@ impl GameState {
                         remaining_turns: 10,
                     });
 
-                    self.log.print("Overdose! You will take Poison damage".to_string());
+                    self.log.info(LogData::Overdose);
                 }
             }
             PotionEffectDef::Strength { amount, duration } => {
@@ -97,7 +97,7 @@ impl GameState {
                             effect: PotionEffectDef::Poison { damage_per_tick: 2, duration: 5 },
                             remaining_turns: 5,
                         });
-                        self.log.print("Overdose! You will take Poison damage.".to_string());
+                        self.log.info(LogData::Overdose);
                     }
                 }
             }
@@ -127,7 +127,7 @@ impl GameState {
                             effect: PotionEffectDef::Poison { damage_per_tick: 2, duration: 5 },
                             remaining_turns: 5,
                         });
-                        self.log.print("Overdose! You will take Poison damage.".to_string());
+                        self.log.info(LogData::Overdose);
                     }
                 }
             }
