@@ -4,14 +4,13 @@ LevelData(
 
   rooms: [
     RoomData(x: 10, y: 5, width: 14, height: 9), // Raum 1
-    RoomData(x: 35, y: 5, width: 19, height: 11), // Raum 2
+    RoomData(x: 35, y: 5, width: 19, height: 11), // sRaum 2
     RoomData(x: 65, y: 8, width: 17, height: 9), // Raum 3
     RoomData(x: 12, y: 17, width: 4, height: 4),  // Raum 4
   ],
 
-  tiles: [
-    TileData(x: 24, y: 10, tile_type: Door(Archway)), // Raum 1 -> Raum 2
-    TileData(x: 25, y: 10, tile_type: Hallway),
+  tiles: [ 
+    TileData(x: 25, y: 10, tile_type: Hallway), // Raum 1 -> Raum 2
     TileData(x: 26, y: 10, tile_type: Hallway),
     TileData(x: 27, y: 10, tile_type: Hallway),
     TileData(x: 28, y: 10, tile_type: Hallway),
@@ -21,7 +20,6 @@ LevelData(
     TileData(x: 32, y: 10, tile_type: Hallway),
     TileData(x: 33, y: 10, tile_type: Hallway),
     TileData(x: 34, y: 10, tile_type: Hallway),
-    TileData(x: 35, y: 10, tile_type: Door(Archway)),
 
     TileData(x: 30, y: 11, tile_type: Hallway), // Hallway 1/2 -> Hallway 2/4
     TileData(x: 30, y: 12, tile_type: Hallway),
@@ -76,6 +74,13 @@ LevelData(
     TileData(x: 64, y: 13, tile_type: Hallway),
     
     TileData(x: 12, y: 6, tile_type: StairsDown),
+
+    TileData(x: 24, y: 10, tile_type: Door(Archway)),
+    TileData(x: 35, y: 10, tile_type: Door(Archway)),
+    TileData(x: 39, y: 16, tile_type: Door(Archway)),
+    TileData(x: 16, y: 19, tile_type: Door(Archway)),
+    TileData(x: 54, y: 13, tile_type: Door(Archway)),
+    TileData(x: 65, y: 13, tile_type: Door(Archway)),
   ],
 
   entry: Point(x: 11, y: 6),
