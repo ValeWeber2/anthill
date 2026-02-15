@@ -66,7 +66,14 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
     let row_tiles: Vec<_> = row.tiles().collect(); // Cloning was required since I change values.
 
     for tile in row_tiles {
-        let tile_is_wall = world.is_opaque(quadrant.transform(tile).into());
+        let point: Point = quadrant.transform(tile).into();
+
+        // Points out of bounds are not rendered
+        if !world.is_in_bounds(point.x as isize, point.y as isize) {
+            continue;
+        }
+
+        let tile_is_wall = world.is_opaque(point);
         let tile_is_floor = !tile_is_wall;
 
         let prev_tile_is_wall =
