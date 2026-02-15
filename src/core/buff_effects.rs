@@ -1,7 +1,5 @@
 #![allow(dead_code)]
 
-use std::time::Instant;
-
 use crate::core::game::GameState;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
@@ -9,6 +7,9 @@ pub enum PotionType {
     Heal,
     Strength,
     Dexterity,
+    Poison,
+    Fatigue,
+    Cramp,
 }
 
 #[derive(Clone, Debug)]
@@ -24,7 +25,7 @@ pub enum PotionEffectDef {
 #[derive(Clone, Debug)]
 pub struct PotionUsage {
     pub count: u8,
-    pub last_used: Instant,
+    pub last_used: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -34,19 +35,28 @@ pub struct ActiveBuff {
 }
 
 impl GameState {
-    pub fn apply_potion_effect(&mut self, potion_type: PotionType, effect: PotionEffectDef) {
-        let (usage_count, elapsed) = {
+    pub fn apply_potion_effect(&mut self, effect: PotionEffectDef) {
+        let potion_type: PotionType = match effect {
+            PotionEffectDef::Heal { .. } => PotionType::Heal,
+            PotionEffectDef::Strength { .. } => PotionType::Strength,
+            PotionEffectDef::Dexterity { .. } => PotionType::Dexterity,
+            PotionEffectDef::Poison { .. } => PotionType::Poison,
+            PotionEffectDef::Fatigue { .. } => PotionType::Fatigue,
+            PotionEffectDef::Cramp { .. } => PotionType::Cramp,
+        };
+
+        let (usage_count, rounds_since_last_use) = {
             let usage = self
                 .player
                 .character
                 .potion_usage
                 .entry(potion_type)
-                .or_insert(PotionUsage { count: 0, last_used: Instant::now() });
+                .or_insert(PotionUsage { count: 0, last_used: self.round_nr });
 
-            let elapsed = usage.last_used.elapsed().as_secs();
+            let rounds_since_last_use = self.round_nr - usage.last_used;
             usage.count += 1;
-            usage.last_used = Instant::now();
-            (usage.count, elapsed)
+            usage.last_used = self.round_nr;
+            (usage.count, rounds_since_last_use)
         };
 
         match effect {
@@ -54,29 +64,15 @@ impl GameState {
                 self.player.character.heal(amount);
                 self.log.print(format!("You regain {} HP.", amount));
 
-                if usage_count >= 3 && elapsed < 30 {
-                    let poison_damage = match usage_count {
-                        3 => 20,
-                        4 => 35,
-                        5 => 45,
-                        _ => 0,
-                    };
-                    let tick_damage = poison_damage / 10;
+                if usage_count >= 3 && rounds_since_last_use < 30 {
                     self.player.character.active_buffs.push(ActiveBuff {
-                        effect: PotionEffectDef::Poison {
-                            damage_per_tick: tick_damage,
-                            duration: 10,
-                        },
+                        effect: PotionEffectDef::Poison { damage_per_tick: 2, duration: 10 },
                         remaining_turns: 10,
                     });
 
-                    self.log.print(format!(
-                        "Poisoned! You will take {} HP damage over time.",
-                        poison_damage
-                    ));
+                    self.log.print("Overdose! You will take Poison damage".to_string());
                 }
             }
-
             PotionEffectDef::Strength { amount, duration } => {
                 if usage_count < 3 {
                     self.player
@@ -101,55 +97,55 @@ impl GameState {
                             effect: PotionEffectDef::Poison { damage_per_tick: 2, duration: 5 },
                             remaining_turns: 5,
                         });
-                        self.log.print("Overworked! You will take Poison damage.".to_string());
+                        self.log.print("Overdose! You will take Poison damage.".to_string());
                     }
                 }
             }
-
             PotionEffectDef::Dexterity { amount, duration } => {
                 if usage_count < 3 {
-                    let dex_buff = ActiveBuff {
-                        effect: PotionEffectDef::Dexterity { amount, duration },
-                        remaining_turns: duration,
-                    };
-                    self.player.character.active_buffs.push(dex_buff);
+                    self.player
+                        .character
+                        .active_buffs
+                        .push(ActiveBuff { effect, remaining_turns: duration });
                     self.log.print(format!(
                         "Dexterity increased by {} for {} turns.",
                         amount, duration
                     ));
-                    return;
+                } else {
+                    let dexterity_penalty: u8 = amount / 2;
+                    self.player.character.active_buffs.push(ActiveBuff {
+                        effect: PotionEffectDef::Cramp { dexterity_penalty, duration },
+                        remaining_turns: duration,
+                    });
+                    self.log.print(format!(
+                        "You have cramps! Dexterity reduced by {} for {} turns.",
+                        dexterity_penalty, duration
+                    ));
+
+                    if usage_count >= 4 {
+                        self.player.character.active_buffs.push(ActiveBuff {
+                            effect: PotionEffectDef::Poison { damage_per_tick: 2, duration: 5 },
+                            remaining_turns: 5,
+                        });
+                        self.log.print("Overdose! You will take Poison damage.".to_string());
+                    }
                 }
-
-                let (penalty_turns, hp_loss) = match usage_count {
-                    3 => (2, 0),
-                    4 => (3, 2),
-                    _ => return,
-                };
-
-                let cramp_buff = ActiveBuff {
-                    effect: PotionEffectDef::Cramp {
-                        dexterity_penalty: amount,
-                        duration: penalty_turns,
-                    },
-                    remaining_turns: penalty_turns,
-                };
-
-                self.player.character.active_buffs.push(cramp_buff);
-
-                if hp_loss > 0 {
-                    let poison_buff = ActiveBuff {
-                        effect: PotionEffectDef::Poison {
-                            damage_per_tick: 2,
-                            duration: penalty_turns,
-                        },
-                        remaining_turns: penalty_turns,
-                    };
-                    self.player.character.active_buffs.push(poison_buff);
-                }
-
-                self.log.print("Overdose! Movement reduced.".to_string());
             }
-            _ => {}
+            PotionEffectDef::Poison { damage_per_tick: _, duration } => self
+                .player
+                .character
+                .active_buffs
+                .push(ActiveBuff { effect, remaining_turns: duration }),
+            PotionEffectDef::Fatigue { strength_penalty: _, duration } => self
+                .player
+                .character
+                .active_buffs
+                .push(ActiveBuff { effect, remaining_turns: duration }),
+            PotionEffectDef::Cramp { dexterity_penalty: _, duration } => self
+                .player
+                .character
+                .active_buffs
+                .push(ActiveBuff { effect, remaining_turns: duration }),
         }
     }
 }

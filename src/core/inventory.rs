@@ -2,7 +2,7 @@
 
 use crate::{
     core::{
-        buff_effects::{ActiveBuff, PotionEffectDef},
+        buff_effects::PotionEffectDef,
         game::GameState,
         game_items::{ArmorItem, GameItemId, GameItemKindDef, WeaponItem},
     },
@@ -136,30 +136,7 @@ impl GameState {
     }
 
     pub fn use_potion(&mut self, item_id: &GameItemId, effect: PotionEffectDef) -> GameResult {
-        match effect {
-            PotionEffectDef::Heal { amount } => {
-                self.player.character.stats.base.heal(amount);
-                self.log.print(format!("You regain {} HP.", amount));
-            }
-
-            PotionEffectDef::Strength { amount, duration } => {
-                self.player.character.active_buffs.push(ActiveBuff {
-                    effect: PotionEffectDef::Strength { amount, duration },
-                    remaining_turns: duration,
-                });
-                self.log.print(format!("Strength increased by {} for {} turns.", amount, duration));
-            }
-
-            PotionEffectDef::Dexterity { amount, duration } => {
-                self.player.character.active_buffs.push(ActiveBuff {
-                    effect: PotionEffectDef::Dexterity { amount, duration },
-                    remaining_turns: duration,
-                });
-                self.log
-                    .print(format!("Dexterity increased by {} for {} turns.", amount, duration));
-            }
-            _ => {}
-        }
+        self.apply_potion_effect(effect);
 
         self.remove_item_from_inv(*item_id)?;
         Ok(GameOutcome::Success)
