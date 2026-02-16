@@ -3,7 +3,10 @@ use std::sync::OnceLock;
 
 use ratatui::style::{Color, Style};
 
-use crate::core::{buff_effects::PotionEffectDef, game_items::GameItemKindDef};
+use crate::{
+    core::{buff_effects::PotionEffectDef, game_items::GameItemKindDef},
+    util::rng::{DieSize, Roll},
+};
 
 pub type GameItemDefId = String;
 
@@ -25,7 +28,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Rusty Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 5, crit_chance: 5, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D10),
+                    crit_chance: 5,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -34,7 +41,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Shortbow",
                 glyph: 'D',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 3, crit_chance: 5, ranged: true },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D6),
+                    crit_chance: 5,
+                    ranged: true,
+                },
             },
         );
         m.insert(
@@ -43,7 +54,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Longbow",
                 glyph: 'D',
                 style: Style::default().fg(Color::DarkGray),
-                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 7, ranged: true },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D10),
+                    crit_chance: 7,
+                    ranged: true,
+                },
             },
         );
         m.insert(
@@ -52,7 +67,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Iron Mace",
                 glyph: '/',
                 style: Style::default().fg(Color::Yellow),
-                kind: GameItemKindDef::Weapon { damage: 10, crit_chance: 5, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D10),
+                    crit_chance: 5,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -61,7 +80,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Iron Axe",
                 glyph: '/',
                 style: Style::default().fg(Color::DarkGray),
-                kind: GameItemKindDef::Weapon { damage: 8, crit_chance: 7, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D6),
+                    crit_chance: 7,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -70,7 +93,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Sharp Dagger",
                 glyph: '\\',
                 style: Style::default().fg(Color::White),
-                kind: GameItemKindDef::Weapon { damage: 4, crit_chance: 15, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D8),
+                    crit_chance: 15,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -79,7 +106,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Warhammer",
                 glyph: '/',
                 style: Style::default().fg(Color::Red),
-                kind: GameItemKindDef::Weapon { damage: 12, crit_chance: 5, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D12),
+                    crit_chance: 5,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -88,7 +119,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Short Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Weapon { damage: 6, crit_chance: 10, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D10).add_modifier(1),
+                    crit_chance: 10,
+                    ranged: false,
+                },
             },
         );
         m.insert(
@@ -97,7 +132,11 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Spear",
                 glyph: '/',
                 style: Style::default().fg(Color::White),
-                kind: GameItemKindDef::Weapon { damage: 7, crit_chance: 8, ranged: false },
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D6),
+                    crit_chance: 8,
+                    ranged: false,
+                },
             },
         );
         m.insert(

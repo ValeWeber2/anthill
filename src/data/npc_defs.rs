@@ -3,7 +3,10 @@ use std::sync::OnceLock;
 
 use ratatui::style::{Color, Style};
 
-use crate::core::entity_logic::{BaseStats, NpcStats};
+use crate::{
+    core::entity_logic::{BaseStats, NpcStats},
+    util::rng::{DieSize, Roll},
+};
 
 pub type NpcDefId = String;
 
@@ -27,7 +30,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Green),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 10, hp_current: 10 },
-                    damage: 2,
+                    damage: Roll::new(1, DieSize::D4),
                     dodge: 10,
                     mitigation: 0,
                 },
@@ -41,7 +44,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::LightGreen),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 5, hp_current: 5 },
-                    damage: 0,
+                    damage: Roll::new(0, DieSize::D4),
                     dodge: 20,
                     mitigation: 0,
                 },
@@ -55,7 +58,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Gray),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 20, hp_current: 20 },
-                    damage: 5,
+                    damage: Roll::new(1, DieSize::D10),
                     dodge: 0,
                     mitigation: 2,
                 },
@@ -69,7 +72,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Gray),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 12, hp_current: 12 },
-                    damage: 3,
+                    damage: Roll::new(1, DieSize::D6),
                     dodge: 5,
                     mitigation: 1,
                 },
@@ -83,7 +86,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::White),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 8, hp_current: 8 },
-                    damage: 2,
+                    damage: Roll::new(1, DieSize::D4),
                     dodge: 15,
                     mitigation: 0,
                 },
@@ -97,7 +100,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Yellow),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 16, hp_current: 16 },
-                    damage: 4,
+                    damage: Roll::new(1, DieSize::D6).add_modifier(1),
                     dodge: 10,
                     mitigation: 1,
                 },
@@ -111,7 +114,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Magenta),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 10, hp_current: 10 },
-                    damage: 6,
+                    damage: Roll::new(2, DieSize::D4).add_modifier(1),
                     dodge: 5,
                     mitigation: 0,
                 },
@@ -125,7 +128,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Gray),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 14, hp_current: 14 },
-                    damage: 4,
+                    damage: Roll::new(1, DieSize::D6).add_modifier(1),
                     dodge: 20,
                     mitigation: 0,
                 },
@@ -139,7 +142,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Blue),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 18, hp_current: 18 },
-                    damage: 3,
+                    damage: Roll::new(1, DieSize::D6),
                     dodge: 0,
                     mitigation: 3,
                 },
@@ -153,7 +156,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Green),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 22, hp_current: 22 },
-                    damage: 4,
+                    damage: Roll::new(1, DieSize::D8),
                     dodge: 0,
                     mitigation: 2,
                 },
@@ -167,7 +170,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Red),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 12, hp_current: 12 },
-                    damage: 7,
+                    damage: Roll::new(2, DieSize::D6),
                     dodge: 25,
                     mitigation: 0,
                 },
@@ -181,7 +184,7 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                 style: Style::default().fg(Color::Red),
                 stats: NpcStats {
                     base: BaseStats { hp_max: 14, hp_current: 14 },
-                    damage: 5,
+                    damage: Roll::new(2, DieSize::D6).add_modifier(3),
                     dodge: 8,
                     mitigation: 1,
                 },

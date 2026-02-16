@@ -22,11 +22,12 @@ impl GameState {
 
         // Damage
         let base_damage = self.player.character.attack_damage_bonus();
-        let (weapon_damage, crit_chance): (u16, u8) = self.get_player_weapon_damage()?;
+        let (weapon_damage, crit_chance): (Roll, u8) = self.get_player_weapon_damage()?;
+        let rolled_damage = self.roll(&weapon_damage) as u16;
 
         // Calculate resulting damage (if any)
         let attack_result = self.resolve_attack(
-            base_damage + weapon_damage,
+            base_damage + rolled_damage,
             crit_chance,
             npc_dodge_chance,
             npc_mitigation,
@@ -89,8 +90,10 @@ impl GameState {
             (npc.base.name.to_string(), npc.stats.damage)
         };
 
+        let rolled_damage = self.roll(&npc_damage) as u16;
+
         let attack_result = self.resolve_attack(
-            npc_damage,
+            rolled_damage,
             5,
             self.player.character.dodge_chance(),
             self.get_player_armor_mitigation().unwrap_or(0),
@@ -142,7 +145,7 @@ impl GameState {
         Some(damage_mitigated)
     }
 
-    fn get_player_weapon_damage(&self) -> Result<(u16, u8), GameError> {
+    fn get_player_weapon_damage(&self) -> Result<(Roll, u8), GameError> {
         if let Some(weapon) = &self.player.character.weapon {
             let item_id =
                 self.get_item_by_id(weapon.0).ok_or(EngineError::UnregisteredItem(weapon.0))?;
@@ -157,7 +160,7 @@ impl GameState {
                 _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {
-            Ok((1, 5)) // If no weapon is equipped, fist damage is just 1.
+            Ok((Roll::new(1, DieSize::D4), 5)) // If no weapon is equipped, fist damage is just 1.
         }
     }
 

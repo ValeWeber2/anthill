@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::{fmt, ops::Range};
+
 use rand::Rng;
 
 use crate::{core::game::GameState, world::coordinate_system::Direction};
@@ -11,13 +13,32 @@ pub enum DieSize {
     D6 = 6,
     D8 = 8,
     D10 = 10,
+    D12 = 12,
     D20 = 20,
     D100 = 100,
 }
 
 impl DieSize {
+    /// Returns the highest possible result that can be rolled with the die.
     fn upper_bound(self) -> u8 {
         self as u8
+    }
+    fn range(self) -> Range<u8> {
+        1..(self.upper_bound())
+    }
+}
+
+impl fmt::Display for DieSize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DieSize::D4 => write!(f, "d4"),
+            DieSize::D6 => write!(f, "d6"),
+            DieSize::D8 => write!(f, "d8"),
+            DieSize::D10 => write!(f, "d10"),
+            DieSize::D12 => write!(f, "d12"),
+            DieSize::D20 => write!(f, "d20"),
+            DieSize::D100 => write!(f, "d100"),
+        }
     }
 }
 
@@ -60,8 +81,23 @@ impl Roll {
     }
 
     pub fn roll<R: Rng + ?Sized>(&self, rng: &mut R) -> i16 {
-        let roll = rng.random_range(1..=self.dice_size.upper_bound()) as i16;
-        roll + self.modifier
+        let mut rolled_numbers: i16 = 0;
+        for _ in 0..self.dice_amount {
+            rolled_numbers += rng.random_range(self.dice_size.range()) as i16;
+        }
+        rolled_numbers.saturating_add(self.modifier)
+    }
+}
+
+impl fmt::Display for Roll {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.modifier == 0 {
+            write!(f, "{}{}", self.dice_amount, self.dice_size)
+        } else if self.modifier.is_positive() {
+            write!(f, "{}{}+{}", self.dice_amount, self.dice_size, self.modifier)
+        } else {
+            write!(f, "{}{}{}", self.dice_amount, self.dice_size, self.modifier)
+        }
     }
 }
 

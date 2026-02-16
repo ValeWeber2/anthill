@@ -8,6 +8,7 @@ use crate::data::npc_defs::{NpcDef, NpcDefId, npc_defs};
 use crate::util::errors_results::{
     DataError, EngineError, FailReason, GameError, GameOutcome, GameResult,
 };
+use crate::util::rng::Roll;
 use crate::world::coordinate_system::Point;
 use crate::world::tiles::{Collision, Drawable};
 
@@ -154,7 +155,7 @@ impl Npc {
 #[derive(Clone)]
 pub struct NpcStats {
     pub base: BaseStats,
-    pub damage: u16,
+    pub damage: Roll,
     pub dodge: u8,
     pub mitigation: u16,
 }

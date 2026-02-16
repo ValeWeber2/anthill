@@ -10,7 +10,10 @@ use crate::{
         game::GameState,
     },
     data::item_defs::{GameItemDef, GameItemDefId, item_defs},
-    util::errors_results::{DataError, EngineError, GameError},
+    util::{
+        errors_results::{DataError, EngineError, GameError},
+        rng::Roll,
+    },
     world::coordinate_system::Point,
 };
 
@@ -19,7 +22,7 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum GameItemKindDef {
-    Weapon { damage: u16, crit_chance: u8, ranged: bool },
+    Weapon { damage: Roll, crit_chance: u8, ranged: bool },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
     Potion { effect: PotionEffectDef },
