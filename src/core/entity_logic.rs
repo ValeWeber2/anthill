@@ -221,7 +221,7 @@ mod tests {
         level.world.carve_room(&Room::new(Point { x: 35, y: 5 }, 30, 15));
 
         let item_def_id: GameItemDefId = "armor_leather".to_string();
-        let item_id = game.register_item(&item_def_id);
+        let item_id = game.register_item(&item_def_id).unwrap();
         let item_sprite = game.create_item_sprite(item_id, Point::new(50, 7)).unwrap();
         let item_sprite_id = item_sprite.id();
 

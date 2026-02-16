@@ -279,7 +279,7 @@ impl GameState {
                     level.spawn_npc(npc)?;
                 }
                 SpawnKind::Item { def_id } => {
-                    let item_id = self.register_item(def_id);
+                    let item_id = self.register_item(def_id)?;
                     let item_sprite = self.create_item_sprite(item_id, pos)?;
                     level.spawn_item_sprite(item_sprite)?;
                 }
@@ -317,7 +317,7 @@ impl GameState {
                     level.spawn_npc(npc)?;
                 }
                 SpawnKind::Item { def_id } => {
-                    let item_id = self.register_item(def_id);
+                    let item_id = self.register_item(def_id)?;
                     let item_sprite = self.create_item_sprite(item_id, pos)?;
                     level.spawn_item_sprite(item_sprite)?;
                 }

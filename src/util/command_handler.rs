@@ -209,20 +209,27 @@ impl App {
                     return;
                 }
 
+                let mut amount_given: u32 = 0;
                 for _ in 0..amount {
-                    let item_id = self.game.register_item(&item_def_id);
-
-                    match self.game.add_item_to_inv(item_id) {
-                        Ok(GameOutcome::Success) => self.game.log.print(format!(
-                            "Added {} {} to player's inventory",
-                            item_def_id, amount
-                        )),
-                        _ => {
-                            self.game.log.info(LogData::InventoryFull);
-                            let _ = self.game.deregister_item(item_id);
-                            break;
+                    if let Ok(item_id) = self.game.register_item(&item_def_id) {
+                        match self.game.add_item_to_inv(item_id) {
+                            Ok(GameOutcome::Success) => {
+                                amount_given += 1;
+                            }
+                            _ => {
+                                self.game.log.info(LogData::InventoryFull);
+                                let _ = self.game.deregister_item(item_id);
+                                break;
+                            }
                         }
                     }
+                }
+
+                if amount_given > 0 {
+                    self.game.log.print(format!(
+                        "Added {} (x{}) to player's inventory",
+                        item_def_id, amount
+                    ));
                 }
             }
             GameCommand::MaxStats => {

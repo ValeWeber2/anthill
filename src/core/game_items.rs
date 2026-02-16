@@ -73,14 +73,24 @@ pub struct GameItem {
     pub def_id: GameItemDefId,
 }
 
-// Implementation into Game State
 impl GameState {
-    pub fn register_item(&mut self, def_id: &GameItemDefId) -> GameItemId {
+    /// Adds an item to the game's item register.
+    ///
+    /// # Note
+    /// This step is necessary to work with an item (either spawn it or add it to inventory).
+    ///
+    /// # Returns
+    /// If the item def_id does not have a corresponding definition in [item_defs], returns [DataError::MissingItemDefinition].
+    /// Otherwise returns the item's id in the register.
+    pub fn register_item(&mut self, def_id: &GameItemDefId) -> Result<GameItemId, GameError> {
+        // Check if item exists, returns Err otherwise.
+        item_defs().get(def_id).ok_or(DataError::MissingItemDefinition(def_id.to_string()))?;
+
         let id: GameItemId = self.id_system.next_item_id();
         self.items.insert(id, GameItem { def_id: def_id.clone() });
         self.log.debug_info(format!("Registered item {} (ID: {})", def_id, id));
 
-        id
+        Ok(id)
     }
 
     pub fn deregister_item(&mut self, item_id: GameItemId) -> Result<(), GameError> {
