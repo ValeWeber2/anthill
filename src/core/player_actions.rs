@@ -4,8 +4,10 @@ use crate::{
         game::{GameRules, GameState},
         game_items::GameItemId,
     },
-    util::errors_results::{EngineError, FailReason, GameOutcome, GameResult},
-    util::text_log::LogData,
+    util::{
+        errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
+        text_log::LogData,
+    },
     world::{
         coordinate_system::{Direction, Point, PointVector},
         tiles::{Collision, DoorType, Interactable, TileType},
@@ -37,34 +39,6 @@ pub enum ActionKind {
 }
 
 impl GameState {
-    fn tile_interaction(&mut self, point: Point) -> GameResult {
-        let tile = self.current_world_mut().get_tile_mut(point);
-
-        match tile.tile_type {
-            TileType::Door(DoorType::Closed) => {
-                tile.tile_type = TileType::Door(DoorType::Open);
-                self.log.print("You open the door".to_string());
-                Ok(GameOutcome::Success)
-            }
-
-            TileType::StairsDown => {
-                self.log.info(LogData::UseStairsDown);
-                self.goto_level_next()
-                    .expect("Failed to load/generate level. Game cannot continue.");
-                Ok(GameOutcome::Success)
-            }
-
-            TileType::StairsUp => {
-                self.log.info(LogData::UseStairsUp);
-                self.goto_level_previous()
-                    .expect("Failed to load/generate level, even though previous levels are always generated. Game cannot continue.");
-                Ok(GameOutcome::Success)
-            }
-
-            _ => Ok(GameOutcome::Fail(FailReason::NoInteraction)),
-        }
-    }
-
     pub fn resolve_player_action(&mut self, input: PlayerInput) {
         if let Some(intended_action) = self.interpret_player_input(input) {
             let action_result: GameResult = match intended_action {
@@ -92,8 +66,26 @@ impl GameState {
                     }
                 }
                 Err(error) => {
-                    // Log for Debugging
-                    self.log.debug_warn(error.to_string());
+                    match error {
+                        // Game cannot be played without world files. Should crash.
+                        GameError::Data(DataError::StaticWorldNotFound(index)) => {
+                            panic!(
+                                "Fatal game error: Static level {} could not be loaded. {}",
+                                index, error
+                            );
+                        }
+                        // Game cannot be played with corrupt world files or corrupt procedural world. Should crash.
+                        GameError::Data(DataError::InvalidWorldFormat(index)) => {
+                            panic!(
+                                "Fatal game error: Data of level {} could not be applied. Data corrupt. {}",
+                                index, error
+                            );
+                        }
+                        error => {
+                            // Log for Debugging
+                            self.log.debug_warn(error.to_string());
+                        }
+                    }
                 }
             }
         }
@@ -161,7 +153,7 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
-    pub fn move_player_character(&mut self, dx: isize, dy: isize) -> GameResult {
+    fn move_player_character(&mut self, dx: isize, dy: isize) -> GameResult {
         let point_vector = PointVector::new(dx, dy);
         let new_pos = self.player.character.pos() + point_vector;
 
@@ -178,5 +170,31 @@ impl GameState {
         self.player.character.move_to(new_pos);
 
         Ok(GameOutcome::Success)
+    }
+
+    fn tile_interaction(&mut self, point: Point) -> GameResult {
+        let tile = self.current_world_mut().get_tile_mut(point);
+
+        match tile.tile_type {
+            TileType::Door(DoorType::Closed) => {
+                tile.tile_type = TileType::Door(DoorType::Open);
+                self.log.print("You open the door".to_string());
+                Ok(GameOutcome::Success)
+            }
+
+            TileType::StairsDown => {
+                self.log.info(LogData::UseStairsDown);
+                self.goto_level_next()?;
+                Ok(GameOutcome::Success)
+            }
+
+            TileType::StairsUp => {
+                self.log.info(LogData::UseStairsUp);
+                self.goto_level_previous()?;
+                Ok(GameOutcome::Success)
+            }
+
+            _ => Ok(GameOutcome::Fail(FailReason::NoInteraction)),
+        }
     }
 }

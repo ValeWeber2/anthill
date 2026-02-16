@@ -72,10 +72,16 @@ impl MapBSPTree {
     /// Initiates the BSp algorithm by subdividing the root [MapNode].
     pub fn divide<R: Rng + ?Sized>(&mut self, rng: &mut R) {
         let mut rooms: usize = 1;
+        let mut iterations = 0;
 
         while rooms < self.num_rooms {
             if self.divide_node(self.root, rng) {
                 rooms += 1;
+            }
+
+            iterations += 1;
+            if iterations > 10_000 {
+                break;
             }
         }
     }

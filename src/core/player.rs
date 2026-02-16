@@ -53,21 +53,32 @@ impl PlayerCharacter {
             potion_usage: HashMap::new(),
         }
     }
-    pub fn attack_damage_bonus(&self) -> u16 {
-        let mut bonus = self.stats.strength;
+    pub fn attack_damage_bonus_melee(&self) -> i16 {
+        let mut bonus: i16 = self.stats.strength as i16;
 
         for buff in &self.active_buffs {
             match buff.effect {
                 PotionEffectDef::Strength { amount, .. } => {
-                    bonus += amount;
+                    bonus += amount as i16;
                 }
                 PotionEffectDef::Fatigue { strength_penalty, .. } => {
-                    bonus = bonus.saturating_sub(strength_penalty);
+                    bonus = bonus.saturating_sub(strength_penalty as i16);
                 }
                 _ => {}
             }
         }
-        bonus as u16
+        bonus
+    }
+
+    pub fn attack_damage_bonus_ranged(&self) -> i16 {
+        let mut bonus: i16 = self.stats.perception as i16;
+
+        for buff in &self.active_buffs {
+            if let PotionEffectDef::Fatigue { strength_penalty, .. } = buff.effect {
+                bonus = bonus.saturating_sub(strength_penalty as i16);
+            }
+        }
+        bonus
     }
 
     pub fn dodge_chance(&self) -> u8 {

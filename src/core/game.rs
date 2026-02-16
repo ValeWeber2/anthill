@@ -44,7 +44,7 @@ pub struct GameState {
 impl GameState {
     pub fn new() -> Self {
         let rng_seed: u64 = 73;
-        let mut rng = StdRng::seed_from_u64(73);
+        let mut rng = StdRng::seed_from_u64(rng_seed);
 
         let proc_gen_seed: u64 = rng.next_u64();
         let proc_gen = StdRng::seed_from_u64(proc_gen_seed);
@@ -65,11 +65,14 @@ impl GameState {
 
         state.log.debug_info(format!("Current RNG Seed: {}", rng_seed));
         state.log.debug_info(format!("Current Level-Gen Seed: {}", proc_gen_seed));
+        state.log.print_lore();
 
         let player_id = state.id_system.next_entity_id();
         state.player = Player::new(player_id);
 
-        let _ = state.goto_level(state.level_nr, LevelEntrance::Entry);
+        state
+            .goto_level(state.level_nr, LevelEntrance::Entry)
+            .expect("Failed to load initial level. The game cannot start this way.");
         state
     }
 

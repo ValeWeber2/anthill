@@ -9,6 +9,7 @@ use crate::core::game_items::GameItemSprite;
 use crate::data::levels::level_paths;
 use crate::proc_gen::proc_gen_level::ProcGenLevel;
 use crate::util::errors_results::{DataError, EngineError};
+use crate::util::text_log::LogData;
 use crate::world::coordinate_system::Point;
 use crate::world::level_data::{LevelData, SpawnKind};
 use crate::world::level_loader::load_world_from_ron;
@@ -19,11 +20,17 @@ use crate::{
     world::worldspace::World,
 };
 
-// /// The game has procedurally generated levels, but also at some fixed points, there are handmade pre-defined levels.
-// /// This constant defines at what interval these levels are supposed to appear.
-// ///
-// /// Example with default interval of `4`: Static level appears at levels 2, 6, 10, 14, 18, ...
-// const STATIC_LEVEL_INTERVAL: usize = 4;
+/// The game has procedurally generated levels, but also at some fixed points, there are handmade pre-defined levels.
+/// This constant defines at what interval these levels are supposed to appear.
+///
+/// Example with default interval of `8`: Static level appears at levels 2, 10, 18, 26, 34, ...
+const STATIC_LEVEL_INTERVAL: usize = 8;
+
+/// Checks if a given level is a gauntlet (=handcrafted level with extra challenge)
+/// Gauntlets occur at an interval of [STATIC_LEVEL_INTERVAL]
+fn is_gauntlet_level(level: usize) -> bool {
+    level % STATIC_LEVEL_INTERVAL == 2
+}
 
 pub struct Level {
     pub world: World,
@@ -236,15 +243,22 @@ impl GameState {
     }
 
     pub fn initialize_level(&mut self, index: usize) -> Result<(), GameError> {
-        // If current level is a static level
-        // if index % STATIC_LEVEL_INTERVAL == 2 {
-        let new_level: Level = if index == 0 || index == 1 {
-            self.load_static_level(index).map_err(|error| {
+        let new_level: Level = match index {
+            0 => self.load_static_level(0).map_err(|error| {
                 self.log.debug_warn(format!("Couldn't load level {}", error));
                 error
-            })?
-        } else {
-            self.load_generated_level(index).expect("Generating a new level failed. With the given ruleset, generating a level should always be possible")
+            })?,
+            level_index if is_gauntlet_level(level_index) => {
+                self.log.info(LogData::GauntletGreeting);
+                self.load_static_level(1).map_err(|error| {
+                    self.log.debug_warn(format!("Couldn't load level {}", error));
+                    error
+                })?
+            }
+            level_index => self.load_generated_level(level_index).map_err(|error| {
+                self.log.debug_warn(format!("Couldn't generate level {}", error));
+                error
+            })?,
         };
 
         self.levels.insert(index, new_level);

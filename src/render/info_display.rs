@@ -120,7 +120,7 @@ impl InfoDisplay {
                 // extract stats from GameItemKindDef
                 match def.kind {
                     GameItemKindDef::Weapon { damage, crit_chance, ranged: _ranged } => {
-                        format!("{} <{} DMG, {}% CRIT>", def.name, damage, crit_chance * 10)
+                        format!("{} <{} DMG, {}% CRIT>", def.name, damage, crit_chance)
                     }
                     _ => "Invalid weapon".to_string(),
                 }

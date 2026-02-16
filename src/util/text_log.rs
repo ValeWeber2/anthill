@@ -81,6 +81,16 @@ impl Log {
             self.info(LogData::DebugWarn(line.to_string()));
         }
     }
+
+    pub fn print_lore(&mut self) {
+        self.info(LogData::Plain("It is written in the books of old:".into()));
+        self.info(LogData::Lore("..The depths are like an anthill.".into()));
+        self.info(LogData::Lore("..Dangerous. Ever-twisting. Dark.".into()));
+        self.info(LogData::Lore("..Those who venture into this forsaken place".into()));
+        self.info(LogData::Lore("..place must truly be mad.".into()));
+        self.info(LogData::Lore("..And if they aren't, the anthill will make them.".into()));
+        self.info(LogData::Lore("..May you find what you are looking for.".into()));
+    }
 }
 
 /// Creates a log file in the OS's local data directory (./local/share on Linux)
@@ -102,6 +112,7 @@ pub enum LogData {
     DebugInfo(String),
     DebugWarn(String),
     Plain(String),
+    Lore(String),
     PlayerAttackHit { npc_name: String, damage: u16 },
     PlayerAttackMiss { npc_name: String },
     PlayerEats { item_name: String },
@@ -115,6 +126,7 @@ pub enum LogData {
     NoInteraction,
     Overdose,
     PlayerHealed { amount: u16 },
+    GauntletGreeting,
 }
 
 impl fmt::Display for LogData {
@@ -133,6 +145,9 @@ impl LogData {
             LogData::Plain(message) => Line::from(message.to_string()),
             LogData::DebugInfo(message) => Line::styled(message.to_string(), STYLE_DEBUG_INFO),
             LogData::DebugWarn(message) => Line::styled(message.to_string(), STYLE_DEBUG_WARN),
+            LogData::Lore(message) => {
+                Line::styled(message.to_string(), Style::new().add_modifier(Modifier::ITALIC))
+            }
             LogData::PlayerAttackHit { npc_name, damage } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
                 Span::raw(" attack "),
@@ -183,6 +198,17 @@ impl LogData {
                 Span::raw("You regain "),
                 Span::styled(amount.to_string(), STYLE_NUMBER),
                 Span::raw(" hit points."),
+            ]),
+            LogData::GauntletGreeting => Line::from(vec![
+                Span::styled("Welcome to the ", Style::new().add_modifier(Modifier::ITALIC)),
+                Span::styled(
+                    "Gauntlet",
+                    Style::new()
+                        .fg(Color::Red)
+                        .add_modifier(Modifier::UNDERLINED)
+                        .add_modifier(Modifier::ITALIC),
+                ),
+                Span::styled(". Prove your worth!", Style::new().add_modifier(Modifier::ITALIC)),
             ]),
         }
     }
