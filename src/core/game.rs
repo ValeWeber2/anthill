@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use rand::Rng;
+use rand::RngCore;
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;
 
@@ -43,8 +43,11 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> Self {
+        let rng_seed: u64 = 73;
         let mut rng = StdRng::seed_from_u64(73);
-        let proc_gen = StdRng::seed_from_u64(rng.random());
+
+        let proc_gen_seed: u64 = rng.next_u64();
+        let proc_gen = StdRng::seed_from_u64(proc_gen_seed);
 
         let mut state = Self {
             levels: Vec::new(),
@@ -55,10 +58,13 @@ impl GameState {
             level_nr: 0,
             id_system: IdSystem::default(),
             items: HashMap::new(),
-            rng: StdRng::seed_from_u64(73),
+            rng,
             proc_gen,
             game_rules: GameRules::empty(),
         };
+
+        state.log.debug_info(format!("Current RNG Seed: {}", rng_seed));
+        state.log.debug_info(format!("Current Level-Gen Seed: {}", proc_gen_seed));
 
         let player_id = state.id_system.next_entity_id();
         state.player = Player::new(player_id);

@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::{Rng, SeedableRng, rngs::StdRng};
 
 /// Binary Space Partitioning to procedurally generate rooms
 /// Inspired by: https://www.youtube.com/watch?v=Pj4owFPH1Hw (Java)
@@ -51,9 +51,11 @@ impl Default for MapBSPTree {
 }
 
 impl MapBSPTree {
-    pub fn generate_bsp<R: Rng + ?Sized>(rng: &mut R) -> MapBSPTree {
+    pub fn generate_bsp(bsp_seed: u64) -> MapBSPTree {
+        let mut rng = StdRng::seed_from_u64(bsp_seed);
+
         let mut bsp = MapBSPTree::default();
-        bsp.divide(rng);
+        bsp.divide(&mut rng);
         bsp
     }
 

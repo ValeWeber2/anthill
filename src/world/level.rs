@@ -290,8 +290,12 @@ impl GameState {
     }
 
     pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
-        let proc_gen = ProcGenLevel::generate(self.proc_gen.next_u64());
+        let level_seed = self.proc_gen.next_u64();
+        self.log.debug_info(format!("Current Level Seed: {}", level_seed));
+
+        let proc_gen = ProcGenLevel::generate(level_seed);
         let data = LevelData::from(proc_gen);
+        self.log.debug_info(format!("RNG State after Proc-Gen: {}", self.proc_gen.next_u64()));
 
         let mut level = Level::new();
 
@@ -303,7 +307,7 @@ impl GameState {
             let pos = Point::new(spawn.x, spawn.y);
 
             if !level.is_available(pos) {
-                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
+                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y));
                 continue;
             }
 

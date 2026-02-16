@@ -1,4 +1,4 @@
-use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
+use rand::{Rng, RngCore, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 use crate::{
     proc_gen::{bsp::MapBSPTree, proc_gen_world::ProcGenWorld},
@@ -30,11 +30,16 @@ impl ProcGenLevel {
     /// Generates a new RNG instance with the given seed. This way the world generation remains deterministic.
     pub fn generate(seed: u64) -> Self {
         let mut rng = StdRng::seed_from_u64(seed);
+        let bsp_seed = rng.next_u64();
+        let room_shrinking_seed = rng.next_u64();
+        let corridor_seed = rng.next_u64();
+        let population_seed = rng.next_u64();
 
-        let bsp = MapBSPTree::generate_bsp(&mut rng);
-        let proc_gen_world = ProcGenWorld::generate_from_bsp(bsp, &mut rng);
+        let bsp = MapBSPTree::generate_bsp(bsp_seed);
+        let proc_gen_world =
+            ProcGenWorld::generate_from_bsp(bsp, room_shrinking_seed, corridor_seed);
 
-        ProcGenLevel::generate_from_world(proc_gen_world, &mut rng)
+        ProcGenLevel::generate_from_world(proc_gen_world, population_seed)
     }
 
     /// Function to extend a [ProcGenWorld] into a [ProcGenLevel].
@@ -43,7 +48,9 @@ impl ProcGenLevel {
     ///
     /// # Usage
     /// Call [ProcGenLevel::generate] with a seed to start the world generation.
-    fn generate_from_world<R: Rng + ?Sized>(world: ProcGenWorld, rng: &mut R) -> Self {
+    fn generate_from_world(world: ProcGenWorld, population_seed: u64) -> Self {
+        let mut rng = StdRng::seed_from_u64(population_seed);
+
         let mut level = ProcGenLevel {
             world,
             entry: Point::default(),
@@ -51,8 +58,8 @@ impl ProcGenLevel {
             spawns: Vec::new(),
         };
 
-        level.populate(rng);
-        level.add_entry_exit(rng);
+        level.populate(&mut rng);
+        level.add_entry_exit(&mut rng);
 
         level
     }

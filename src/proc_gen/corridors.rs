@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use rand::{Rng, seq::IndexedRandom};
+use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 use crate::{
     ai::pathfinding::a_star,
@@ -69,8 +69,10 @@ impl ProcGenWorld {
         connections
     }
 
-    pub fn a_star_corridors<R: Rng + ?Sized>(&mut self, rng: &mut R) {
-        let connections = self.find_room_connections(rng);
+    pub fn a_star_corridors(&mut self, corridor_seed: u64) {
+        let mut rng = StdRng::seed_from_u64(corridor_seed);
+
+        let connections = self.find_room_connections(&mut rng);
 
         let mut room_corners: HashSet<Point> = HashSet::new();
         let mut room_walls: HashSet<Point> = HashSet::new();
@@ -86,9 +88,9 @@ impl ProcGenWorld {
             let room_b = &self.rooms[connection.destination];
 
             let room_a_point =
-                room_a.floor_points().choose(rng).copied().unwrap_or(room_a.center());
+                room_a.floor_points().choose(&mut rng).copied().unwrap_or(room_a.center());
             let room_b_point =
-                room_b.floor_points().choose(rng).copied().unwrap_or(room_b.center());
+                room_b.floor_points().choose(&mut rng).copied().unwrap_or(room_b.center());
 
             let cost_function = |p| {
                 if room_corners.contains(&p) {
