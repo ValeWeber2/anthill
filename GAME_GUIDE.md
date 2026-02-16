@@ -28,7 +28,7 @@ Anthill is a turn-based roguelike played in a modern terminal UI.
 Every action you take — moving, attacking, using an item — advances the game by one turn.  
 Enemies only act when you act, giving you time to think and plan.
 
-Your goal is simple: explore deeper into the Anthill, survive its dangers, and gather whatever treasures you can find.
+Your goal is simple: **explore deeper into the Anthill, survive its dangers, and gather whatever treasures you can find**.
 
 ---
 
@@ -127,7 +127,7 @@ It includes:
 | **EXP**              | Experience points |
 | **Round**            | Number of turns taken |
 | **Coordinates**      | Your position in the dungeon |
-| **Stats**            | STR, DEX, VIT, PER |
+| **Stats**            | Strength, Dexterity, Vitality, Perception |
 | **Dungeon Floor**    | Current level of the Anthill |
 
 ---
@@ -159,10 +159,10 @@ When HP reaches **0**, the run ends.
 
 # 6. Exploration
 
+The Anthill is infinite — but certain depth thresholds contain special challenge floors known as **Gauntlets**.
+
 ### Vision & Fog of War
 You cannot see through walls. Your field of view updates as you move, revealing new parts of the dungeon.
-
-The Anthill is infinite — but certain depth thresholds contain special challenge floors known as **Gauntlets**.
 
 ---
 
@@ -177,6 +177,16 @@ If you have a ranged weapon equipped, you can attack from a distance by using Ra
 ## 7.3 Damage & Mitigation
 Stats, armor, and weapon types influence how effective your attacks are.
 
+## 7.4 Randomness & Dice Rolls
+Anthill uses a dice‑style RNG system.  
+Some actions include a small random component.
+
+This means:
+- attacks can deal slightly more or less damage than expected  
+- some hits may miss due to chance  
+
+The system is designed to feel fair and consistent, while still adding unpredictability to each run.
+
 ---
 
 # 8. Inventory & Equipment
@@ -188,11 +198,11 @@ Stats, armor, and weapon types influence how effective your attacks are.
 - Inventory capacity is limited to 26 items — choose wisely.
 
 ## 8.2 Equipment
+To equip an item (armor and weapon), simply **use** it from the inventory (<kbd>i</kbd>). 
+
 You can unequip gear at any time:
 - <kbd>SHIFT</kbd> + <kbd>w</kbd> → unequip weapon  
 - <kbd>SHIFT</kbd> + <kbd>a</kbd> → unequip armor  
-
-To equip an item, simply **use** it from the inventory (<kbd>i</kbd>). 
 
 ---
 
@@ -202,8 +212,8 @@ They come in several categories:
 
 - **Weapons** — used for melee or ranged combat  
 - **Armor** — reduces incoming damage  
-- **Food** — restores nutrition or health  
-- **Potions** — temporary effects or healing  
+- **Food** — restores health  
+- **Potions** — temporary effects or healing; drinking too many in a short time can trigger an **overdose**
 
 You can inspect items in Look Mode (<kbd>l</kbd>) or in the inventory (<kbd>i</kbd>).
 
