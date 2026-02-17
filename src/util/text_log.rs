@@ -10,6 +10,8 @@ use ratatui::{
     text::{Line, Span},
 };
 
+use crate::DEV_MODE;
+
 /// The game's text log. The events of the game are desribed for the user in the log.
 ///
 /// The log can also be used to display debug messages.
@@ -20,13 +22,13 @@ pub struct Log {
 }
 
 impl Log {
-    pub fn new(print_debug_info: bool) -> Self {
+    pub fn new() -> Self {
         let path = create_log_file();
 
         let file = File::create(path).ok();
         let writer = file.map(BufWriter::new);
 
-        Self { print_debug_info, messages: Vec::new(), file: writer }
+        Self { print_debug_info: DEV_MODE, messages: Vec::new(), file: writer }
     }
 
     /// Specific getter that returns all messages, but filetered by debug messages or not depending on [Log::print_debug_info]

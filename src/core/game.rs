@@ -43,8 +43,7 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> Self {
-        let rng_seed: u64 = 73;
-        let mut rng = StdRng::seed_from_u64(rng_seed);
+        let (mut rng, rng_seed) = rng_instance();
 
         let proc_gen_seed: u64 = rng.next_u64();
         let proc_gen = StdRng::seed_from_u64(proc_gen_seed);
@@ -53,7 +52,7 @@ impl GameState {
             levels: Vec::new(),
             player: Player::new(0),
             cursor: None,
-            log: Log::new(true),
+            log: Log::new(),
             round_nr: 0,
             level_nr: 0,
             id_system: IdSystem::default(),
@@ -99,7 +98,7 @@ impl Default for GameState {
             level_nr: 0,
             player: Player::default(),
             cursor: None,
-            log: Log::new(true),
+            log: Log::new(),
             round_nr: 0,
             id_system: IdSystem::default(),
             items: HashMap::new(),
@@ -107,6 +106,20 @@ impl Default for GameState {
             proc_gen: StdRng::seed_from_u64(42),
             game_rules: GameRules::empty(),
         }
+    }
+}
+
+fn rng_instance() -> (StdRng, u64) {
+    #[cfg(feature = "dev")]
+    {
+        let seed: u64 = 73;
+        (StdRng::seed_from_u64(seed), seed)
+    }
+
+    #[cfg(not(feature = "dev"))]
+    {
+        let seed: u64 = rand::rng().next_u64();
+        (StdRng::seed_from_u64(seed), seed)
     }
 }
 

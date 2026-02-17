@@ -1,7 +1,11 @@
 [package]
 name = "anthill"
-version = "0.1.0"
+version = "1.0.0-beta"
 edition = "2024"
+
+[features]
+default = []
+dev = []
 
 [dependencies]
 crossterm = "0.29.0"

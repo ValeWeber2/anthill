@@ -12,6 +12,11 @@ use ratatui::DefaultTerminal;
 
 use crate::{core::game::GameState, render::ui::UserInterface, util::input_handler::KeyboardFocus};
 
+#[cfg(feature = "dev")]
+pub const DEV_MODE: bool = true;
+#[cfg(not(feature = "dev"))]
+pub const DEV_MODE: bool = false;
+
 fn main() -> io::Result<()> {
     let terminal = ratatui::init();
     let app_result = App::new().run(terminal);
