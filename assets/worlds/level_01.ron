@@ -3,10 +3,12 @@ LevelData(
   height: 25,
 
   rooms: [
-    RoomData(x: 10, y: 5, width: 14, height: 9), // Raum 1
-    RoomData(x: 35, y: 5, width: 19, height: 11), // sRaum 2
-    RoomData(x: 65, y: 8, width: 17, height: 9), // Raum 3
-    RoomData(x: 12, y: 17, width: 4, height: 4),  // Raum 4
+    RoomData(x: 10, y: 5,  width: 14,  height: 9),  // Raum 1
+    RoomData(x: 35, y: 5,  width: 19,  height: 11), // Raum 2
+    RoomData(x: 65, y: 8,  width: 17,  height: 9),  // Raum 3
+    RoomData(x: 12, y: 17, width: 4,   height: 4),  // Raum 4
+    RoomData(x: 51, y: 20, width: 10,  height: 3),  // Raum 5
+    RoomData(x: 61, y: 1,  width: 15,  height: 4),  // Raum 6
   ],
 
   tiles: [ 
@@ -72,8 +74,38 @@ LevelData(
     TileData(x: 62, y: 13, tile_type: Hallway),
     TileData(x: 63, y: 13, tile_type: Hallway),
     TileData(x: 64, y: 13, tile_type: Hallway),
+
+    TileData(x: 53, y: 19, tile_type: Hallway),
+    TileData(x: 53, y: 18, tile_type: Hallway),
+    TileData(x: 54, y: 18, tile_type: Hallway),
+    TileData(x: 55, y: 18, tile_type: Hallway),
+    TileData(x: 56, y: 18, tile_type: Hallway),
+    TileData(x: 57, y: 18, tile_type: Hallway),
+    TileData(x: 57, y: 17, tile_type: Hallway),
+    TileData(x: 57, y: 16, tile_type: Hallway),
+    TileData(x: 57, y: 15, tile_type: Hallway),
+    TileData(x: 57, y: 14, tile_type: Hallway),
+
+    TileData(x: 77, y: 7, tile_type: Hallway),
+    TileData(x: 76, y: 7, tile_type: Hallway),
+    TileData(x: 75, y: 7, tile_type: Hallway),
+    TileData(x: 74, y: 7, tile_type: Hallway),
+    TileData(x: 73, y: 7, tile_type: Hallway),
+    TileData(x: 72, y: 7, tile_type: Hallway),
+    TileData(x: 71, y: 7, tile_type: Hallway),
+    TileData(x: 71, y: 6, tile_type: Hallway),
+    TileData(x: 71, y: 6, tile_type: Hallway),
+    TileData(x: 70, y: 6, tile_type: Hallway),
+    TileData(x: 69, y: 6, tile_type: Hallway),
+    TileData(x: 68, y: 6, tile_type: Hallway),
+    TileData(x: 67, y: 6, tile_type: Hallway),
+    TileData(x: 66, y: 6, tile_type: Hallway),
+    TileData(x: 65, y: 6, tile_type: Hallway),
+    TileData(x: 64, y: 6, tile_type: Hallway),
+
     
-    TileData(x: 12, y: 6, tile_type: StairsDown),
+    
+    TileData(x: 79, y: 11, tile_type: StairsDown),
 
     TileData(x: 24, y: 10, tile_type: Door(Archway)),
     TileData(x: 35, y: 10, tile_type: Door(Archway)),
@@ -81,10 +113,13 @@ LevelData(
     TileData(x: 16, y: 19, tile_type: Door(Archway)),
     TileData(x: 54, y: 13, tile_type: Door(Archway)),
     TileData(x: 65, y: 13, tile_type: Door(Archway)),
+    TileData(x: 53, y: 20, tile_type: Door(Archway)),
+    TileData(x: 64, y: 5,  tile_type: Door(Archway)),
+    TileData(x: 77, y: 8,  tile_type: Door(Archway)),
   ],
 
   entry: Point(x: 11, y: 6),
-  exit: Point(x: 12, y: 6),
+  exit: Point(x: 79, y: 11),
 
   spawns: [
     //NPCs
@@ -96,9 +131,45 @@ LevelData(
     ),
 
     SpawnData(
-      x: 15,
+      x: 22,
       y: 12,
       kind: Npc(def_id: "funny_frog"),
+    ),
+
+    SpawnData(
+      x: 12,
+      y: 13,
+      kind: Npc(def_id: "funny_frog"),
+    ),
+
+    SpawnData(
+      x: 48,
+      y: 15,
+      kind: Npc(def_id: "skeleton"),
+    ),
+
+    SpawnData(
+      x: 51,
+      y: 6,
+      kind: Npc(def_id: "skeleton"),
+    ),
+
+    SpawnData(
+      x: 60,
+      y: 22,
+      kind: Npc(def_id: "funny_frog"),
+    ),
+
+    SpawnData(
+      x: 78,
+      y: 14,
+      kind: Npc(def_id: "giant_rat"),
+    ),
+
+    SpawnData(
+      x: 73,
+      y: 2,
+      kind: Npc(def_id: "giant_rat"),
     ),
 
     //Items on ground
@@ -116,9 +187,58 @@ LevelData(
     ),
 
     SpawnData(
-      x: 37,
-      y: 8,
+      x: 42,
+      y: 12,
       kind: Item(def_id: "food_cake"),
+    ),
+
+    SpawnData(
+      x: 20,
+      y: 13,
+      kind: Item(def_id: "armor_shield"),
+    ),
+
+    SpawnData(
+      x: 52,
+      y: 8,
+      kind: Item(def_id: "food_fish"),
+    ),
+
+    SpawnData(
+      x: 56,
+      y: 21,
+      kind: Item(def_id: "food_meat"),
+    ),
+
+    SpawnData(
+      x: 59,
+      y: 22,
+      kind: Item(def_id: "potion_healing_small"),
+    ),
+
+    SpawnData(
+      x: 69,
+      y: 3,
+      kind: Item(def_id: "potion_strength"),
+    ),
+
+    SpawnData(
+      x: 73,
+      y: 4,
+      kind: Item(def_id: "food_fish"),
+    ),
+
+
+    SpawnData(
+      x: 69,
+      y: 10,
+      kind: Item(def_id: "food_mushroom"),
+    ),
+
+  SpawnData(
+      x: 71,
+      y: 11,
+      kind: Item(def_id: "food_mushroom"),
     ),
   ],
 )
