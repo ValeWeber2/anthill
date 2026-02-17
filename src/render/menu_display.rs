@@ -167,7 +167,7 @@ pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
             spans.push(Span::raw(" <"));
             spans.push(Span::raw(format!("{} DMG", damage)));
             spans.push(Span::raw(", "));
-            spans.push(Span::raw(format!("{:.0}% CRIT", crit_chance * 10)));
+            spans.push(Span::raw(format!("{:.0}% CRIT", crit_chance)));
             spans.push(Span::raw(">"));
         }
         GameItemKindDef::Food { nutrition } => {
