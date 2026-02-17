@@ -360,14 +360,14 @@ LevelData(
     //NPCs
     
     SpawnData(
-      x: 5,
+      x: 4,
       y: 7,
       kind: Npc(def_id: "funny_frog"),
     ),
 
     SpawnData(
       x: 15,
-      y: 3,
+      y: 5,
       kind: Npc(def_id: "funny_frog"),
     ),
 
@@ -402,7 +402,7 @@ LevelData(
     ),
 
     SpawnData(
-      x: 87,
+      x: 88,
       y: 22,
       kind: Npc(def_id: "bandit"),
     ),
@@ -497,8 +497,139 @@ LevelData(
       kind: Npc(def_id: "funny_frog"),
     ),
 
+    SpawnData(
+      x: 93,
+      y: 18,
+      kind: Npc(def_id: "bandit"),
+    ),
+
+    SpawnData(
+      x: 97,
+      y: 23,
+      kind: Npc(def_id: "bandit"),
+    ),
+
 
     //Items on ground
 
+    SpawnData(
+      x: 5,
+      y: 7,
+      kind: Item(def_id: "food_grapefruit"),
+    ),
+
+    SpawnData(
+      x: 15,
+      y: 3,
+      kind: Item(def_id: "food_cake"),
+    ),
+
+    SpawnData(
+      x: 14,
+      y: 13,
+      kind: Item(def_id: "food_honey"),
+    ),
+
+    SpawnData(
+      x: 15,
+      y: 17,
+      kind: Item(def_id: "food_cheese"),
+    ),
+
+    SpawnData(
+      x: 20,
+      y: 18,
+      kind: Item(def_id: "potion_dexterity"),
+    ),
+
+    SpawnData(
+      x: 19,
+      y: 5,
+      kind: Item(def_id: "potion_healing_small"),
+    ),
+
+    SpawnData(
+      x: 20,
+      y: 7,
+      kind: Item(def_id: "potion_strength"),
+    ),
+
+    SpawnData(
+      x: 38,
+      y: 16,
+      kind: Item(def_id: "food_bread"),
+    ),
+
+    SpawnData(
+      x: 39,
+      y: 21,
+      kind: Item(def_id: "food_mushroom"),
+    ),
+
+    SpawnData(
+      x: 53,
+      y: 22,
+      kind: Item(def_id: "food_apple"),
+    ),
+
+    SpawnData(
+      x: 64,
+      y: 22,
+      kind: Item(def_id: "food_cheese"),
+    ),
+
+    SpawnData(
+      x: 74,
+      y: 8,
+      kind: Item(def_id: "food_meat"),
+    ),
+
+    SpawnData(
+      x: 68,
+      y: 2,
+      kind: Item(def_id: "food_apple"),
+    ),
+
+    SpawnData(
+      x: 44,
+      y: 6,
+      kind: Item(def_id: "food_mushroom"),
+    ),
+
+    SpawnData(
+      x: 49,
+      y: 17,
+      kind: Item(def_id: "food_fish"),
+    ),
+
+    SpawnData(
+      x: 85,
+      y: 22,
+      kind: Item(def_id: "potion_healing_small"),
+    ),
+
+    SpawnData(
+      x: 87,
+      y: 22,
+      kind: Item(def_id: "potion_healing_small"),
+    ),
+
+    SpawnData(
+      x: 24,
+      y: 6,
+      kind: Item(def_id: "weapon_mace"),
+    ),
+
+    SpawnData(
+      x: 15,
+      y: 18,
+      kind: Item(def_id: "armor_chainmail"),
+    ),
+
+    SpawnData(
+      x: 86,
+      y: 22,
+      kind: Item(def_id: "weapon_bow_long"),
+    ),
   ],
 )
