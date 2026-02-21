@@ -3,6 +3,8 @@ _Welcome to the Anthill, an endless underground maze bustling with danger and tr
 
 This is a student project, created for the module "Practical Course on Software Development" in Rust. Our inspiration were games like _Rogue_ or _NetHack_.
 
+![Title Screen](/extra/anthill_main.jpg)
+
 ## Features
 Explore an endless amount of rooms full of monsters and loot.
 - Procedurally generated dungeon levels
@@ -45,3 +47,5 @@ The player interacts with the environment by "bumping" into it. This is done by 
 Press <kbd>i</kbd> to open the inventory in use mode. You can then select an item using the alphabetical index displayed next to your item slots.
 
 Press <kbd>Shift + d</kbd> to open the inventory in drop mode. This way you can drop items you no longer need.
+
+![In-Game Screenshot](/extra/anthill_game.jpg)
