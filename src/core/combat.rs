@@ -39,16 +39,22 @@ impl GameState {
         );
 
         let attack_message: LogData = match attack_result {
-            None => LogData::PlayerAttackMiss { npc_name },
-            Some(damage) => {
-                // Apply Damage
+            AttackDegree::Miss => LogData::PlayerAttackMiss { npc_name },
+            AttackDegree::Hit(damage) => {
                 let npc = self
                     .current_level_mut()
                     .get_npc_mut(npc_id)
                     .ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
-
                 LogData::PlayerAttackHit { npc_name, damage }
+            },
+            AttackDegree::CriticalHit(damage) => {
+                let npc = self
+                    .current_level_mut()
+                    .get_npc_mut(npc_id)
+                    .ok_or(EngineError::NpcNotFound(npc_id))?;
+                npc.stats.base.take_damage(damage);
+                LogData::PlayerAttackHitCritical { npc_name, damage }
             }
         };
 
@@ -60,7 +66,7 @@ impl GameState {
         if !npc.stats.base.is_alive() {
             self.log.info(LogData::NpcDied { npc_name });
             self.current_level_mut().despawn(npc_id);
-            self.player.character.gain_experience(25);
+            self.player_add_experience(25);
         }
 
         Ok(GameOutcome::Success)
@@ -106,12 +112,16 @@ impl GameState {
         );
 
         match attack_result {
-            None => {
+            AttackDegree::Miss => {
                 self.log.info(LogData::NpcAttackMiss { npc_name });
             }
-            Some(damage) => {
+            AttackDegree::Hit(damage) => {
                 self.player.character.take_damage(damage);
                 self.log.info(LogData::NpcAttackHit { npc_name, damage });
+            }
+            AttackDegree::CriticalHit(damage) => {
+                self.player.character.take_damage(damage);
+                self.log.info(LogData::NpcAttackHitCritical { npc_name, damage });
             }
         }
 
@@ -135,20 +145,23 @@ impl GameState {
         attacker_crit_chance: u8,
         defender_dodge_chance: u8,
         defender_mitigation: u16,
-    ) -> Option<u16> {
+    ) -> AttackDegree {
         if self.dodge_roll(defender_dodge_chance) {
-            return None;
+            return AttackDegree::Miss;
         }
 
-        let damage_unmitigated = if self.is_critical_strike(attacker_crit_chance) {
-            2 * attacker_damage
+        let is_critical_strike = self.is_critical_strike(attacker_crit_chance);
+
+        if is_critical_strike {
+            let damage_unmitigated = 2 * attacker_damage;
+            let damage_mitigated = damage_unmitigated.saturating_sub(defender_mitigation);
+            
+            AttackDegree::CriticalHit(damage_mitigated)
         } else {
-            attacker_damage
-        };
+            let damage_mitigated = attacker_damage.saturating_sub(defender_mitigation);
 
-        let damage_mitigated = damage_unmitigated.saturating_sub(defender_mitigation);
-
-        Some(damage_mitigated)
+            AttackDegree::Hit(damage_mitigated)
+        }
     }
 
     fn get_player_weapon_stats(&self) -> Result<(Roll, u8, bool), GameError> {
@@ -184,4 +197,10 @@ impl GameState {
             Ok(0)
         }
     }
+}
+
+enum AttackDegree {
+    Miss,
+    Hit(u16),
+    CriticalHit(u16),
 }

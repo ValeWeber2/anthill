@@ -134,10 +134,14 @@ impl GameState {
             .get_item_sprite(entity_id)
             .ok_or(EngineError::ItemSpriteNotFound(entity_id))?;
 
+        let item = self.get_item_by_id(item_sprite.item_id).ok_or(EngineError::UnregisteredItem(item_sprite.item_id))?;
+        let item_def = self.get_item_def_by_id(&item.def_id).ok_or(DataError::MissingItemDefinition(item.def_id))?;
+
         let result = self.add_item_to_inv(item_sprite.item_id);
 
         if let Ok(GameOutcome::Success) = result {
             self.current_level_mut().despawn(entity_id);
+            self.log.info(LogData::ItemPickUp { item_name: item_def.name.to_string() })
         }
 
         result

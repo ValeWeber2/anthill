@@ -116,9 +116,11 @@ pub enum LogData {
     Plain(String),
     Lore(String),
     PlayerAttackHit { npc_name: String, damage: u16 },
+    PlayerAttackHitCritical { npc_name: String, damage: u16 },
     PlayerAttackMiss { npc_name: String },
     PlayerEats { item_name: String },
     NpcAttackHit { npc_name: String, damage: u16 },
+    NpcAttackHitCritical { npc_name: String, damage: u16 },
     NpcAttackMiss { npc_name: String },
     NpcDied { npc_name: String },
     InventoryFull,
@@ -129,6 +131,8 @@ pub enum LogData {
     Overdose,
     PlayerHealed { amount: u16 },
     GauntletGreeting,
+    ItemPickUp { item_name: String },
+    LevelUp { new_level: u8 },
 }
 
 impl fmt::Display for LogData {
@@ -158,6 +162,14 @@ impl LogData {
                 Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
+            LogData::PlayerAttackHitCritical { npc_name, damage } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::styled(" critically hit ", STYLE_DANGER),
+                Span::styled(npc_name, STYLE_NPC),
+                Span::raw(" and deal "),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
+                Span::raw(" damage."),
+            ]),
             LogData::PlayerAttackMiss { npc_name } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
                 Span::raw(" attack "),
@@ -177,6 +189,14 @@ impl LogData {
                 Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
+            LogData::NpcAttackHitCritical { npc_name, damage } => Line::from(vec![
+                Span::styled(npc_name, STYLE_NPC),
+                Span::styled(" critically hits", STYLE_DANGER),
+                Span::styled(" you", STYLE_YOU),
+                Span::raw(" and deals "),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
+                Span::raw(" damage."),
+            ]),
             LogData::NpcAttackMiss { npc_name } => Line::from(vec![
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" attacks "),
@@ -186,9 +206,10 @@ impl LogData {
             LogData::NpcDied { npc_name } => {
                 Line::from(vec![Span::styled(npc_name, STYLE_NPC), Span::raw(" died.")])
             }
-            LogData::InventoryFull => {
-                Line::from("Your inventory is full. Cannot add another item.")
-            }
+            LogData::InventoryFull => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" inventory is full. Cannot add another item."),
+            ]),
             LogData::EquipmentSlotEmpty => {
                 Line::from("The equipment slot is already empty. Cannot unequip.")
             }
@@ -197,7 +218,8 @@ impl LogData {
             LogData::NoInteraction => Line::from("You cannot interact with that object."),
             LogData::Overdose => Line::from("You are experiencing the effects of overdosing."),
             LogData::PlayerHealed { amount } => Line::from(vec![
-                Span::raw("You regain "),
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" regain "),
                 Span::styled(amount.to_string(), STYLE_NUMBER),
                 Span::raw(" hit points."),
             ]),
@@ -212,6 +234,18 @@ impl LogData {
                 ),
                 Span::styled(". Prove your worth!", Style::new().add_modifier(Modifier::ITALIC)),
             ]),
+            LogData::ItemPickUp { item_name } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" picked up "),
+                Span::styled(item_name, STYLE_ITEM),
+            ]),
+            LogData::LevelUp { new_level } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::styled(" leveled up ", STYLE_NUMBER),
+                Span::raw("to level "),
+                Span::styled(new_level.to_string(), STYLE_NUMBER),
+                Span::raw("!"),
+            ]),
         }
     }
 }
@@ -223,3 +257,5 @@ const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
 const STYLE_NPC: Style = Style::new().fg(Color::Yellow).add_modifier(Modifier::ITALIC);
 const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);
 const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan);
+const STYLE_EMPHASIS: Style = Style::new().fg(Color::Green);
+const STYLE_DANGER: Style = Style::new().fg(Color::Red);
