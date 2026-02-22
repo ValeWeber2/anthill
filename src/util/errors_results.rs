@@ -56,6 +56,9 @@ pub enum FailReason {
 
     /// Action cannot be performed because the target is not the right kind for this action.
     InvalidTarget(EntityId),
+
+    /// Target of the given action is outside the defined range for that action (e.g. ranged attack)
+    OutOfRange,
 }
 
 impl FailReason {
@@ -71,6 +74,7 @@ impl FailReason {
             FailReason::TileNotVisible(_) => None,
             FailReason::InvalidTarget(_) => None,
             FailReason::NoInteraction => Some(LogData::NoInteraction),
+            FailReason::OutOfRange => Some(LogData::OutOfRange),
         }
     }
 }

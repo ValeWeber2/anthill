@@ -13,7 +13,7 @@ use crate::{
     },
 };
 
-const AGGRO_RADIUS: usize = 6;
+pub const AGGRO_RADIUS: usize = 6;
 
 #[derive(Default, Clone)]
 pub enum NpcAiState {

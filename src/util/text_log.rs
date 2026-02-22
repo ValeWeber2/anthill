@@ -135,6 +135,7 @@ pub enum LogData {
     LevelUp { new_level: u8 },
     LookAt { name: String },
     TileNotVisible,
+    OutOfRange,
 }
 
 impl fmt::Display for LogData {
@@ -254,6 +255,7 @@ impl LogData {
                 Span::styled(name, Style::new().add_modifier(Modifier::UNDERLINED)),
             ]),
             LogData::TileNotVisible => Line::from("You cannot see this tile."),
+            LogData::OutOfRange => Line::from("Target not in range."),
         }
     }
 }

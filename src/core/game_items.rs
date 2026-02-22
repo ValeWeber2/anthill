@@ -22,11 +22,16 @@ use crate::{
 
 #[derive(Clone, Debug)]
 pub enum GameItemKindDef {
-    Weapon { damage: Roll, crit_chance: u8, ranged: bool },
+    Weapon { damage: Roll, crit_chance: u8, range: AttackRange },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
     Potion { effect: PotionEffectDef },
 }
+
+// Type to denote the range of an attack (weapon).
+// - `None` means the range is Melee (equivalent to 1).
+// - `Some(range)` means the attack has greater range.
+pub type AttackRange = Option<usize>;
 
 #[derive(Clone, Copy)]
 pub struct ArmorItem(pub GameItemId);

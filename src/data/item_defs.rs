@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 use ratatui::style::{Color, Style};
 
 use crate::{
+    ai::npc_ai::AGGRO_RADIUS,
     core::{buff_effects::PotionEffectDef, game_items::GameItemKindDef},
     util::rng::{DieSize, Roll},
 };
@@ -31,7 +32,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D10),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -42,9 +43,9 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'D',
                 style: Style::default().fg(Color::Gray),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(1, DieSize::D6),
+                    damage: Roll::new(1, DieSize::D4),
                     crit_chance: 5,
-                    ranged: true,
+                    range: Some(AGGRO_RADIUS),
                 },
             },
         );
@@ -55,9 +56,22 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'D',
                 style: Style::default().fg(Color::DarkGray),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(1, DieSize::D10),
-                    crit_chance: 7,
-                    ranged: true,
+                    damage: Roll::new(1, DieSize::D6),
+                    crit_chance: 5,
+                    range: Some(AGGRO_RADIUS),
+                },
+            },
+        );
+        m.insert(
+            "weapon_bow_cross".to_string(),
+            GameItemDef {
+                name: "Crossbow",
+                glyph: 'B',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D4),
+                    crit_chance: 15,
+                    range: Some(AGGRO_RADIUS),
                 },
             },
         );
@@ -70,7 +84,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D10),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -83,7 +97,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D6),
                     crit_chance: 7,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -96,7 +110,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D8),
                     crit_chance: 15,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -109,7 +123,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D12),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -122,7 +136,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D10).add_modifier(1),
                     crit_chance: 10,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -133,9 +147,9 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: '/',
                 style: Style::default().fg(Color::White),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(2, DieSize::D6),
+                    damage: Roll::new(1, DieSize::D8),
                     crit_chance: 8,
-                    ranged: false,
+                    range: Some(2),
                 },
             },
         );

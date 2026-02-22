@@ -3,7 +3,7 @@ use crate::{
     core::{
         entity_logic::{Entity, EntityId},
         game::GameState,
-        game_items::GameItemKindDef,
+        game_items::{AttackRange, GameItemKindDef},
     },
     util::{
         errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
@@ -21,9 +21,9 @@ impl GameState {
         let npc_dodge_chance = npc.stats.dodge_chance();
 
         // Damage
-        let (weapon_damage, crit_chance, ranged): (Roll, u8, bool) =
+        let (weapon_damage, crit_chance, range): (Roll, u8, AttackRange) =
             self.get_player_weapon_stats()?;
-        let base_damage = if ranged {
+        let base_damage = if range.is_some() {
             self.player.character.attack_damage_bonus_ranged()
         } else {
             self.player.character.attack_damage_bonus_melee()
@@ -73,9 +73,9 @@ impl GameState {
     }
 
     pub fn player_ranged_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
-        if self.current_level().get_npc(npc_id).is_none() {
+        let Some(npc) = self.current_level().get_npc(npc_id) else {
             return Ok(GameOutcome::Fail(FailReason::InvalidTarget(npc_id))); // Target entity is not an npc
-        }
+        };
 
         let Some(weapon_id) = self.player.character.weapon else {
             return Ok(GameOutcome::Fail(FailReason::EquipmentSlotEmpty)); // No weapon equipped
@@ -88,9 +88,13 @@ impl GameState {
             .get_item_def_by_id(&weapon_item.def_id)
             .ok_or(DataError::MissingItemDefinition(weapon_item.def_id))?; // Weapon is not defined
 
-        let GameItemKindDef::Weapon { ranged: true, .. } = weapon_def.kind else {
+        let GameItemKindDef::Weapon { range: Some(range), .. } = weapon_def.kind else {
             return Err(GameError::from(EngineError::InvalidItem(weapon_def.kind))); // Weapon is not ranged
         };
+
+        if self.player.character.pos().distance_squared_from(npc.pos()) > range.pow(2) {
+            return Ok(GameOutcome::Fail(FailReason::OutOfRange)); // Bow attack out of range
+        }
 
         self.player_attack_npc(npc_id)
     }
@@ -164,7 +168,7 @@ impl GameState {
         }
     }
 
-    fn get_player_weapon_stats(&self) -> Result<(Roll, u8, bool), GameError> {
+    fn get_player_weapon_stats(&self) -> Result<(Roll, u8, AttackRange), GameError> {
         if let Some(weapon) = &self.player.character.weapon {
             let item_id =
                 self.get_item_by_id(weapon.0).ok_or(EngineError::UnregisteredItem(weapon.0))?;
@@ -173,13 +177,13 @@ impl GameState {
                 .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
 
             match item_def.kind {
-                GameItemKindDef::Weapon { damage, crit_chance, ranged } => {
-                    Ok((damage, crit_chance, ranged))
+                GameItemKindDef::Weapon { damage, crit_chance, range } => {
+                    Ok((damage, crit_chance, range))
                 }
                 _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {
-            Ok((Roll::new(1, DieSize::D4), 5, false)) // If no weapon is equipped, fist damage is just 1d4.
+            Ok((Roll::new(1, DieSize::D4), 5, None)) // If no weapon is equipped, fist damage is just 1d4.
         }
     }
 
