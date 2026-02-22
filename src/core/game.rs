@@ -186,10 +186,6 @@ impl GameState {
             return GameOutcome::Fail(FailReason::PointOutOfBounds(new_point));
         }
 
-        if !self.current_world().get_tile(new_point).visible {
-            return GameOutcome::Fail(FailReason::TileNotVisible(new_point));
-        }
-
         if let Some(cursor) = self.cursor.as_mut() {
             cursor.point = new_point;
         }

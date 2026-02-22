@@ -179,8 +179,6 @@ impl MapBSPTree {
         let mut leaf_ids = Vec::with_capacity(self.num_rooms);
         self.get_leaf_ids(self.root, &mut leaf_ids);
 
-        let leaves = leaf_ids.into_iter().map(|leaf_id| self.get_node(leaf_id).clone()).collect();
-
-        leaves
+        leaf_ids.into_iter().map(|leaf_id| self.get_node(leaf_id).clone()).collect()
     }
 }

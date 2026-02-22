@@ -47,7 +47,7 @@ impl GameState {
                     .ok_or(EngineError::NpcNotFound(npc_id))?;
                 npc.stats.base.take_damage(damage);
                 LogData::PlayerAttackHit { npc_name, damage }
-            },
+            }
             AttackDegree::CriticalHit(damage) => {
                 let npc = self
                     .current_level_mut()
@@ -155,7 +155,7 @@ impl GameState {
         if is_critical_strike {
             let damage_unmitigated = 2 * attacker_damage;
             let damage_mitigated = damage_unmitigated.saturating_sub(defender_mitigation);
-            
+
             AttackDegree::CriticalHit(damage_mitigated)
         } else {
             let damage_mitigated = attacker_damage.saturating_sub(defender_mitigation);

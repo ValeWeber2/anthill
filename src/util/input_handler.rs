@@ -12,6 +12,7 @@ use crate::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::{ModalInterface, SelectionAction},
     },
+    util::text_log::LogData,
     world::coordinate_system::Direction,
 };
 
@@ -299,13 +300,13 @@ impl App {
                         KeyCode::Esc => ModalAction::CloseModal,
                         KeyCode::Char(c) => {
                             // Getting the selected option
-                            if let Some(index) = App::letter_to_index(c) {
-                                if let Some(option) = options.get(index) {
-                                    // Appying the selection action to the selected option
-                                    match selection_action {
-                                        SelectionAction::Debug => {
-                                            self.game.log.debug_info(option.to_string())
-                                        }
+                            if let Some(index) = App::letter_to_index(c)
+                                && let Some(option) = options.get(index)
+                            {
+                                // Appying the selection action to the selected option
+                                match selection_action {
+                                    SelectionAction::Debug => {
+                                        self.game.log.debug_info(option.to_string())
                                     }
                                 }
                             }
@@ -346,19 +347,19 @@ impl App {
                 }
             }
             KeyCode::Char(c) => {
-                if let Some(index) = App::letter_to_index(c) {
-                    if let Some(item_id) = self.game.player.character.inventory.get(index) {
-                        match self.ui.menu.mode {
-                            MenuMode::Inventory(InventoryAction::Use) => {
-                                self.ui.modal =
-                                    Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
-                            }
-                            MenuMode::Inventory(InventoryAction::Drop) => {
-                                self.ui.modal =
-                                    Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
-                            }
-                            _ => {}
+                if let Some(index) = App::letter_to_index(c)
+                    && let Some(item_id) = self.game.player.character.inventory.get(index)
+                {
+                    match self.ui.menu.mode {
+                        MenuMode::Inventory(InventoryAction::Use) => {
+                            self.ui.modal =
+                                Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
                         }
+                        MenuMode::Inventory(InventoryAction::Drop) => {
+                            self.ui.modal =
+                                Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -388,37 +389,54 @@ impl App {
                 }
 
                 // Run cursor action
-                KeyCode::Enter => match cursor.kind {
-                    CursorKind::Look => {
-                        if let Some(entity_id) = self.game.current_level().get_npc_at(cursor.point)
-                        {
-                            if let Some(npc) = self.game.current_level().get_npc(entity_id) {
-                                self.game.log.print(format!("You see: {}", npc.name()));
-                            }
-                            return;
-                        }
+                KeyCode::Enter => {
+                    // Non-visible target points can't be interacted with.
+                    if !self.game.current_world().get_tile(cursor.point).visible {
+                        self.game.log.info(LogData::TileNotVisible);
+                        return;
+                    }
 
-                        if let Some(entity_id) =
-                            self.game.current_level().get_item_sprite_at(cursor.point)
-                        {
-                            if let Some(item_sprite) =
-                                self.game.current_level().get_item_sprite(entity_id)
+                    match cursor.kind {
+                        CursorKind::Look => {
+                            // Unoccupied target points only output tile type.
+                            if !self.game.current_level().is_occupied(cursor.point) {
+                                let tile = self.game.current_world().get_tile(cursor.point);
+                                self.game
+                                    .log
+                                    .info(LogData::LookAt { name: tile.tile_type.to_string() });
+                                return;
+                            }
+
+                            // Otherwise, a target point is occupied, so info about NPCs and/or Item Sprites is displayed.
+                            if let Some(entity_id) =
+                                self.game.current_level().get_npc_at(cursor.point)
+                                && let Some(npc) = self.game.current_level().get_npc(entity_id)
                             {
-                                self.game.log.print(format!("You see: {}", item_sprite.name()));
+                                self.game
+                                    .log
+                                    .info(LogData::LookAt { name: npc.name().to_string() });
                             }
-                            return;
-                        }
 
-                        let tile = self.game.current_world().get_tile(cursor.point);
-                        self.game.log.print(format!("You see: {}", tile.tile_type));
-                    }
-                    CursorKind::RangedAttack => {
-                        if let Some(entity_id) = self.game.current_level().get_npc_at(cursor.point)
-                        {
-                            self.game.resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                            if let Some(entity_id) =
+                                self.game.current_level().get_item_sprite_at(cursor.point)
+                                && let Some(item_sprite) =
+                                    self.game.current_level().get_item_sprite(entity_id)
+                            {
+                                self.game
+                                    .log
+                                    .info(LogData::LookAt { name: item_sprite.name().to_string() });
+                            }
+                        }
+                        CursorKind::RangedAttack => {
+                            if let Some(entity_id) =
+                                self.game.current_level().get_npc_at(cursor.point)
+                            {
+                                self.game
+                                    .resolve_player_action(PlayerInput::RangedAttack(entity_id));
+                            }
                         }
                     }
-                },
+                }
 
                 KeyCode::Esc => self.game.cursor = None,
                 _ => {}

@@ -133,6 +133,8 @@ pub enum LogData {
     GauntletGreeting,
     ItemPickUp { item_name: String },
     LevelUp { new_level: u8 },
+    LookAt { name: String },
+    TileNotVisible,
 }
 
 impl fmt::Display for LogData {
@@ -207,11 +209,11 @@ impl LogData {
                 Line::from(vec![Span::styled(npc_name, STYLE_NPC), Span::raw(" died.")])
             }
             LogData::InventoryFull => Line::from(vec![
-                Span::styled("You", STYLE_YOU),
+                Span::styled("Your", STYLE_YOU),
                 Span::raw(" inventory is full. Cannot add another item."),
             ]),
             LogData::EquipmentSlotEmpty => {
-                Line::from("The equipment slot is already empty. Cannot unequip.")
+                Line::from("Action not possible. Required equipment slot empty.")
             }
             LogData::UseStairsDown => Line::from("You go down the stairs..."),
             LogData::UseStairsUp => Line::from("You go back up the stairs..."),
@@ -246,6 +248,12 @@ impl LogData {
                 Span::styled(new_level.to_string(), STYLE_NUMBER),
                 Span::raw("!"),
             ]),
+            LogData::LookAt { name } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" see: "),
+                Span::styled(name, Style::new().add_modifier(Modifier::UNDERLINED)),
+            ]),
+            LogData::TileNotVisible => Line::from("You cannot see this tile."),
         }
     }
 }
@@ -257,5 +265,4 @@ const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
 const STYLE_NPC: Style = Style::new().fg(Color::Yellow).add_modifier(Modifier::ITALIC);
 const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);
 const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan);
-const STYLE_EMPHASIS: Style = Style::new().fg(Color::Green);
 const STYLE_DANGER: Style = Style::new().fg(Color::Red);

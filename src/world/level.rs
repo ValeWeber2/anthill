@@ -112,11 +112,17 @@ impl Level {
     /// - Walkable
     pub fn is_available(&self, point: Point) -> bool {
         let in_bounds = self.world.is_in_bounds(point.x as isize, point.y as isize);
-        let free_of_npcs = self.npcs.iter().all(|npc| npc.base.pos != point);
-        let free_of_item_sprites = self.item_sprites.iter().all(|item| item.base.pos != point);
+        let not_occupied = !self.is_occupied(point);
         let walkable = self.world.get_tile(point).tile_type.is_walkable();
 
-        in_bounds && free_of_npcs && free_of_item_sprites && walkable
+        in_bounds && not_occupied && walkable
+    }
+
+    /// Checks if a given point is occupied by an NPC or Item Sprite.
+    pub fn is_occupied(&self, point: Point) -> bool {
+        let occupied_by_npc = self.npcs.iter().any(|npc| npc.base.pos == point);
+        let occupied_by_item_sprite = self.item_sprites.iter().any(|item| item.base.pos == point);
+        occupied_by_npc || occupied_by_item_sprite
     }
 
     /// Spawns an NPC on the map.
