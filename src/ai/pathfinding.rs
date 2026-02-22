@@ -34,25 +34,30 @@ impl PartialOrd for Node {
 }
 
 fn heuristic(a: Point, b: Point) -> usize {
-    a.distance_squared_from(b)
+    let distance = a.distance_squared_from(b);
+
+    if distance > 1 {
+        distance
+    } else {
+        let distance_exact = (distance as f64).sqrt();
+        if distance_exact > 1.0 { 2 } else { 1 }
+    }
 }
 
 impl GameState {
     /// Uses the A* algorithm to find the next direction to move in.
     pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
         let a_star_path: Vec<Point> = a_star(start, goal, |point| {
-            if self.current_world().get_tile(point).tile_type.is_walkable() {
-                Some(1)
-            } else {
-                None
+            if !self.current_world().get_tile(point).tile_type.is_walkable() {
+                return None;
             }
+            if self.current_level().get_npc_at(point).is_some() {
+                return None;
+            }
+
+            Some(1)
         })?;
         let next = a_star_path.get(1)?;
-
-        // If the next point is occupied by an npc, do not move.
-        if self.current_level().get_npc_at(*next).is_some() {
-            return None;
-        }
 
         let delta = *next - start;
 
@@ -73,9 +78,6 @@ where
 
     // Best-known cost to reach given tile
     let mut g_score = HashMap::new();
-
-    // Previously covered nodes.
-    let mut closed_list = HashMap::new();
 
     // Reconstructible path
     let mut came_from = HashMap::new();
@@ -101,8 +103,6 @@ where
             return Some(path);
         }
 
-        closed_list.insert(current.point, current.g);
-
         let neighbors = [
             Point { x: current.point.x.saturating_sub(1), y: current.point.y },
             Point { x: current.point.x + 1, y: current.point.y },
@@ -111,10 +111,6 @@ where
         ];
 
         for neighbor in neighbors {
-            if closed_list.contains_key(&neighbor) {
-                continue;
-            }
-
             let tile_cost = match cost(neighbor) {
                 Some(c) => c,
                 None => continue,
@@ -129,12 +125,6 @@ where
             if !is_better_than_best {
                 continue;
             }
-
-            // if let Some(&existing_g) = closed_list.get(&neighbor) {
-            //     if tentative_g >= existing_g {
-            //         continue;
-            //     }
-            // }
 
             open_list.push(Node { point: neighbor, g: tentative_g, h: heuristic(neighbor, goal) });
 

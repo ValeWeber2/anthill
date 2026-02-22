@@ -13,6 +13,8 @@ use crate::{
     },
 };
 
+const AGGRO_RADIUS: usize = 6;
+
 #[derive(Default, Clone)]
 pub enum NpcAiState {
     #[default]
@@ -52,7 +54,14 @@ impl GameState {
 
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
         let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
-        let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
+        // let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
+        let npc_pos = npc.pos();
+        let melee_area: Vec<Point> = vec![
+            npc_pos + Direction::Up,
+            npc_pos + Direction::Right,
+            npc_pos + Direction::Down,
+            npc_pos + Direction::Left,
+        ];
 
         let action = match npc.ai_state {
             NpcAiState::Inactive => NpcActionKind::Wait,
@@ -86,7 +95,7 @@ impl GameState {
         };
 
         let player_pos: Point = self.player.character.pos();
-        let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 10);
+        let detectable_area: Vec<Point> = self.current_world().get_points_in_radius(npc_pos, 6);
 
         let player_reachable = self.current_world().get_tile(player_pos).tile_type.is_walkable();
         // Only aggressive if player in detection radius and player is on a reachable tile (e.g. not inside walls)
