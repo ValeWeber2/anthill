@@ -112,7 +112,8 @@ impl Default for GameState {
 fn rng_instance() -> (StdRng, u64) {
     #[cfg(feature = "dev")]
     {
-        let seed: u64 = 73;
+        // let seed: u64 = 73;
+        let seed: u64 = 8694791637633420993;
         (StdRng::seed_from_u64(seed), seed)
     }
 
