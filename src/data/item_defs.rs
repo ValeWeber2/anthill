@@ -24,9 +24,9 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
     ITEM_DEFS.get_or_init(|| {
         let mut m = HashMap::new();
         m.insert(
-            "weapon_sword_rusty".to_string(),
+            "weapon_sword_dull".to_string(),
             GameItemDef {
-                name: "Rusty Sword",
+                name: "Dull Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
                 kind: GameItemKindDef::Weapon {
@@ -154,6 +154,19 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
             },
         );
         m.insert(
+            "weapon_sword_rust".to_string(),
+            GameItemDef {
+                name: "Sword of the Rustacean",
+                glyph: '/',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D8),
+                    crit_chance: 15,
+                    range: None,
+                },
+            },
+        );
+        m.insert(
             "armor_leather".to_string(),
             GameItemDef {
                 name: "Leather Armor",
@@ -177,7 +190,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Plate Armor",
                 glyph: 'A',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Armor { mitigation: 6 },
+                kind: GameItemKindDef::Armor { mitigation: 5 },
             },
         );
         m.insert(
@@ -214,6 +227,15 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'A',
                 style: Style::default().fg(Color::Black),
                 kind: GameItemKindDef::Armor { mitigation: 2 },
+            },
+        );
+        m.insert(
+            "armor_rustacean".to_string(),
+            GameItemDef {
+                name: "Rustacean Armor",
+                glyph: 'A',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Armor { mitigation: 6 },
             },
         );
         m.insert(
