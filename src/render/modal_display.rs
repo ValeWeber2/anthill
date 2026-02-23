@@ -182,24 +182,42 @@ fn render_help(area: Rect, buf: &mut Buffer) {
     // Data
 
     const CONTROLS_WIDTHS: [Constraint; 4] = [
-        Constraint::Percentage(19),
-        Constraint::Percentage(27),
-        Constraint::Percentage(27),
-        Constraint::Percentage(27),
+        Constraint::Percentage(13),
+        Constraint::Percentage(29),
+        Constraint::Percentage(29),
+        Constraint::Percentage(29),
     ];
 
     let controls_rows = [
         Row::new(vec![""]),
-        Row::new(vec!["Start / Quit:", "ENTER - start game", "Q - quit game", "ESC - close menus"]),
+        Row::new(vec![
+            "Start / Quit:",
+            "ENTER - start game",
+            "SHIFT + q - quit game",
+            "ESC - close menus",
+        ]),
         Row::new(vec!["Movement:", "w - up, a - left, s - down, d - right", ". - wait one turn"]),
-        Row::new(vec!["Interaction:", "Walk into an NPC or item to interact"]),
         Row::new(vec![
             "Inventory:",
             "i - open inventory",
-            "D - open inventory in drop mode",
+            "SHIFT + d - open inventory in drop mode",
             "a, b, c… - select item",
         ]),
-        Row::new(vec!["Actions:", "W - unequip weapon", "A - unequip armor"]),
+        Row::new(vec!["Actions:", "SHIFT + w - unequip weapon", "SHIFT + a - unequip armor"]),
+        Row::new(vec![
+            "Look Mode:",
+            "l - enter look mode",
+            "w/a/s/d - move cursor",
+            "ENTER - inspect selected tile",
+            "ESC - exit look mode",
+        ]),
+        Row::new(vec![
+            "Ranged Attack:",
+            "r - enter ranged attack mode",
+            "w/a/s/d - move cursor",
+            "ENTER - fire at target",
+            "ESC - exit ranged attack mode",
+        ]),
         Row::new(vec![
             "Command Input:",
             ": - open command prompt",
@@ -210,7 +228,7 @@ fn render_help(area: Rect, buf: &mut Buffer) {
     ];
 
     const COMMAND_WIDTHS: [Constraint; 2] =
-        [Constraint::Percentage(19), Constraint::Percentage(81)];
+        [Constraint::Percentage(13), Constraint::Percentage(87)];
 
     let player_commands =
         [GameCommand::Quit, GameCommand::Help, GameCommand::PlayerInfo, GameCommand::Legend];
@@ -245,7 +263,6 @@ fn render_help(area: Rect, buf: &mut Buffer) {
             .push(Row::new(vec![cmd.name().to_string(), cmd.description().to_string()]));
     }
 
-    dev_command_rows.push(Row::new(vec![""]));
     dev_command_rows.push(Row::new(vec![""]));
 
     // Layout
