@@ -59,6 +59,9 @@ pub enum FailReason {
 
     /// Target of the given action is outside the defined range for that action (e.g. ranged attack)
     OutOfRange,
+
+    /// The target position is occupied by an NPC or Item.
+    TileOccupied(Point),
 }
 
 impl FailReason {
@@ -75,6 +78,7 @@ impl FailReason {
             FailReason::InvalidTarget(_) => None,
             FailReason::NoInteraction => Some(LogData::NoInteraction),
             FailReason::OutOfRange => Some(LogData::OutOfRange),
+            FailReason::TileOccupied(_) => Some(LogData::TileOccupied),
         }
     }
 }

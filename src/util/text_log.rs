@@ -133,6 +133,7 @@ pub enum LogData {
     LookAt { name: String },
     TileNotVisible,
     OutOfRange,
+    TileOccupied,
 }
 
 impl fmt::Display for LogData {
@@ -253,6 +254,7 @@ impl LogData {
             ]),
             LogData::TileNotVisible => Line::from("You cannot see this tile."),
             LogData::OutOfRange => Line::from("Target not in range."),
+            LogData::TileOccupied => Line::from("Position is occupied."),
         }
     }
 }

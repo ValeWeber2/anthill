@@ -152,9 +152,14 @@ impl GameState {
     }
 
     fn drop_item(&mut self, item_id: GameItemId) -> GameResult {
+        let player_pos = self.player.character.pos();
+
+        if self.current_level().is_occupied(player_pos) {
+            return Ok(GameOutcome::Fail(FailReason::TileOccupied(player_pos)));
+        }
+
         self.remove_item_from_inv(item_id)?;
 
-        let player_pos = self.player.character.pos();
         let item_sprite = self.create_item_sprite(item_id, player_pos)?;
         self.current_level_mut().spawn_item_sprite(item_sprite)?;
 
