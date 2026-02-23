@@ -253,7 +253,7 @@ impl App {
             }
             GameCommand::MaxEquip => {
                 self.execute_command(GameCommand::Give {
-                    item_def: "weapon_bow_long".to_string(),
+                    item_def: "weapon_bow_cross".to_string(),
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {
@@ -261,7 +261,7 @@ impl App {
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {
-                    item_def: "armor_plate".to_string(),
+                    item_def: "armor_rustacean".to_string(),
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {

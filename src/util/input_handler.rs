@@ -252,9 +252,6 @@ impl App {
                     KeyCode::Char('y') | KeyCode::Enter => {
                         self.game.resolve_player_action(PlayerInput::UseItem(*item_id));
 
-                        // close inventory after using
-                        self.focus_reset();
-
                         ModalAction::CloseModal
                     }
                     KeyCode::Char('n') | KeyCode::Esc => ModalAction::CloseModal,
@@ -263,9 +260,6 @@ impl App {
                 ModalInterface::ConfirmDropItem { item_id } => match key_event.code {
                     KeyCode::Char('y') | KeyCode::Enter => {
                         self.game.resolve_player_action(PlayerInput::DropItem(*item_id));
-
-                        // close inventory after using
-                        self.focus_reset();
 
                         ModalAction::CloseModal
                     }
