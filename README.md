@@ -22,7 +22,13 @@ Explore an endless amount of rooms full of monsters and loot.
 ```bash
 git clone https://github.com/ValeWeber2/anthill
 cd anthill
+```
+
+```bash
+# Development Version (includes dev tools)
 cargo run
+# Production Version
+cargo run --no-default-features
 ```
 
 ## How to Play (Basics)

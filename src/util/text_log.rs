@@ -10,13 +10,9 @@ use ratatui::{
     text::{Line, Span},
 };
 
-use crate::DEV_MODE;
-
 /// The game's text log. The events of the game are desribed for the user in the log.
-///
-/// The log can also be used to display debug messages.
+/// This is not a typical console log, but part of the game that describes what's happening.
 pub struct Log {
-    pub print_debug_info: bool,
     pub messages: Vec<LogData>,
     file: Option<BufWriter<File>>,
 }
@@ -28,21 +24,22 @@ impl Log {
         let file = File::create(path).ok();
         let writer = file.map(BufWriter::new);
 
-        Self { print_debug_info: DEV_MODE, messages: Vec::new(), file: writer }
+        Self { messages: Vec::new(), file: writer }
     }
 
-    /// Specific getter that returns all messages, but filetered by debug messages or not depending on [Log::print_debug_info]
+    /// Specific getter that returns all messages, but filetered by debug messages.
+    #[cfg(feature = "dev")]
     pub fn get_messages_for_display(&self) -> Vec<&LogData> {
-        if self.print_debug_info {
-            self.messages.iter().collect()
-        } else {
-            self.messages
-                .iter()
-                .filter(|&message| {
-                    !matches!(message, LogData::DebugInfo(_) | LogData::DebugWarn(_))
-                })
-                .collect()
-        }
+        self.messages.iter().collect()
+    }
+
+    /// Specific getter that returns all messages, but filetered by debug messages.
+    #[cfg(not(feature = "dev"))]
+    pub fn get_messages_for_display(&self) -> Vec<&LogData> {
+        self.messages
+            .iter()
+            .filter(|&message| !matches!(message, LogData::DebugInfo(_) | LogData::DebugWarn(_)))
+            .collect()
     }
 
     /// Add information about a new log event to the log.
