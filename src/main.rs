@@ -8,6 +8,11 @@ mod world;
 
 use std::io;
 
+use crossterm::{
+    event::{DisableMouseCapture, EnableMouseCapture},
+    execute,
+    terminal::enable_raw_mode,
+};
 use ratatui::DefaultTerminal;
 
 use crate::{core::game::GameState, render::ui::UserInterface, util::input_handler::KeyboardFocus};
@@ -53,6 +58,9 @@ impl App {
     }
 
     fn run(mut self, mut terminal: DefaultTerminal) -> io::Result<()> {
+        enable_raw_mode()?;
+        execute!(std::io::stdout(), EnableMouseCapture,)?;
+
         while !self.should_quit {
             if self.state == State::Playing && !self.game.player.character.is_alive() {
                 self.state = State::GameOver;
@@ -60,6 +68,9 @@ impl App {
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
             self.handle_events()?;
         }
+
+        execute!(std::io::stdout(), DisableMouseCapture,)?;
+
         Ok(())
     }
 
