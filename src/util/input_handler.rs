@@ -300,13 +300,13 @@ impl App {
                         KeyCode::Esc => ModalAction::CloseModal,
                         KeyCode::Char(c) => {
                             // Getting the selected option
-                            if let Some(index) = App::letter_to_index(c)
-                                && let Some(option) = options.get(index)
-                            {
-                                // Appying the selection action to the selected option
-                                match selection_action {
-                                    SelectionAction::Debug => {
-                                        self.game.log.debug_info(option.to_string())
+                            if let Some(index) = App::letter_to_index(c) {
+                                if let Some(option) = options.get(index) {
+                                    // Appying the selection action to the selected option
+                                    match selection_action {
+                                        SelectionAction::Debug => {
+                                            self.game.log.debug_info(option.to_string())
+                                        }
                                     }
                                 }
                             }
@@ -347,19 +347,19 @@ impl App {
                 }
             }
             KeyCode::Char(c) => {
-                if let Some(index) = App::letter_to_index(c)
-                    && let Some(item_id) = self.game.player.character.inventory.get(index)
-                {
-                    match self.ui.menu.mode {
-                        MenuMode::Inventory(InventoryAction::Use) => {
-                            self.ui.modal =
-                                Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                if let Some(index) = App::letter_to_index(c) {
+                    if let Some(item_id) = self.game.player.character.inventory.get(index) {
+                        match self.ui.menu.mode {
+                            MenuMode::Inventory(InventoryAction::Use) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmUseItem { item_id: *item_id });
+                            }
+                            MenuMode::Inventory(InventoryAction::Drop) => {
+                                self.ui.modal =
+                                    Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
+                            }
+                            _ => {}
                         }
-                        MenuMode::Inventory(InventoryAction::Drop) => {
-                            self.ui.modal =
-                                Some(ModalInterface::ConfirmDropItem { item_id: *item_id });
-                        }
-                        _ => {}
                     }
                 }
             }
@@ -410,21 +410,24 @@ impl App {
                             // Otherwise, a target point is occupied, so info about NPCs and/or Item Sprites is displayed.
                             if let Some(entity_id) =
                                 self.game.current_level().get_npc_at(cursor.point)
-                                && let Some(npc) = self.game.current_level().get_npc(entity_id)
                             {
-                                self.game
-                                    .log
-                                    .info(LogData::LookAt { name: npc.name().to_string() });
+                                if let Some(npc) = self.game.current_level().get_npc(entity_id) {
+                                    self.game
+                                        .log
+                                        .info(LogData::LookAt { name: npc.name().to_string() });
+                                }
                             }
 
                             if let Some(entity_id) =
                                 self.game.current_level().get_item_sprite_at(cursor.point)
-                                && let Some(item_sprite) =
-                                    self.game.current_level().get_item_sprite(entity_id)
                             {
-                                self.game
-                                    .log
-                                    .info(LogData::LookAt { name: item_sprite.name().to_string() });
+                                if let Some(item_sprite) =
+                                    self.game.current_level().get_item_sprite(entity_id)
+                                {
+                                    self.game.log.info(LogData::LookAt {
+                                        name: item_sprite.name().to_string(),
+                                    });
+                                }
                             }
                         }
                         CursorKind::RangedAttack => {

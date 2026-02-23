@@ -96,11 +96,11 @@ fn random_npcs<R: Rng + ?Sized>(available_points: &mut Vec<Point>, rng: &mut R) 
         let mut npcs: Vec<&String> = npc_defs().keys().collect();
         npcs.sort(); // The definitions need to be sorted because apparently HashMaps are random.
 
-        if let Some(npc_def_id) = npcs.choose(rng)
-            && let Some(point) = available_points.pop()
-        {
-            let spawn_kind = SpawnKind::Npc { def_id: npc_def_id.to_string() };
-            spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+        if let Some(npc_def_id) = npcs.choose(rng) {
+            if let Some(point) = available_points.pop() {
+                let spawn_kind = SpawnKind::Npc { def_id: npc_def_id.to_string() };
+                spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+            }
         }
     }
 
@@ -116,11 +116,11 @@ fn random_items<R: Rng + ?Sized>(available_points: &mut Vec<Point>, rng: &mut R)
         let mut item_defs: Vec<&String> = item_defs().keys().collect();
         item_defs.sort(); // The definitions need to be sorted because apparently HashMaps are random.
 
-        if let Some(item_def_id) = item_defs.choose(rng)
-            && let Some(point) = available_points.pop()
-        {
-            let spawn_kind = SpawnKind::Item { def_id: item_def_id.to_string() };
-            spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+        if let Some(item_def_id) = item_defs.choose(rng) {
+            if let Some(point) = available_points.pop() {
+                let spawn_kind = SpawnKind::Item { def_id: item_def_id.to_string() };
+                spawns.push(SpawnData { kind: spawn_kind, x: point.x, y: point.y });
+            }
         }
     }
 
