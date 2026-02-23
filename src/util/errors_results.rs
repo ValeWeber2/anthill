@@ -56,6 +56,12 @@ pub enum FailReason {
 
     /// Action cannot be performed because the target is not the right kind for this action.
     InvalidTarget(EntityId),
+
+    /// Target of the given action is outside the defined range for that action (e.g. ranged attack)
+    OutOfRange,
+
+    /// The target position is occupied by an NPC or Item.
+    TileOccupied(Point),
 }
 
 impl FailReason {
@@ -71,6 +77,8 @@ impl FailReason {
             FailReason::TileNotVisible(_) => None,
             FailReason::InvalidTarget(_) => None,
             FailReason::NoInteraction => Some(LogData::NoInteraction),
+            FailReason::OutOfRange => Some(LogData::OutOfRange),
+            FailReason::TileOccupied(_) => Some(LogData::TileOccupied),
         }
     }
 }
@@ -143,6 +151,9 @@ pub enum EngineError {
 
     /// No level with the given index exists.
     LevelNotFound(usize),
+
+    /// Tried to access a cursor, but cursor wasn't found.
+    CursorNotSet,
 }
 
 impl fmt::Display for EngineError {
@@ -176,6 +187,9 @@ impl fmt::Display for EngineError {
             }
             EngineError::LevelNotFound(level_nr) => {
                 write!(f, "Could not find a level with id {}", level_nr)
+            }
+            EngineError::CursorNotSet => {
+                write!(f, "Could not find a cursor instance")
             }
         }
     }

@@ -122,6 +122,7 @@ pub trait Opacity {
 
 /// A trait for defining if an object is interactable and what game interaction it creates.
 pub trait Interactable {
+    /// Returns a boolean denoting whether something is interactable (`true`) or has no defined interactions (`false`).
     fn is_interactable(&self) -> bool;
 }
 

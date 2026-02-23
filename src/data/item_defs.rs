@@ -4,6 +4,7 @@ use std::sync::OnceLock;
 use ratatui::style::{Color, Style};
 
 use crate::{
+    ai::npc_ai::AGGRO_RADIUS,
     core::{buff_effects::PotionEffectDef, game_items::GameItemKindDef},
     util::rng::{DieSize, Roll},
 };
@@ -18,20 +19,23 @@ pub struct GameItemDef {
     pub kind: GameItemKindDef,
 }
 
+// Careful when making long item names. Item names longer than 12 characters may wrap in the inventory view!
+
+/// Lazy loads the collection of item definitions in the game.
 pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
     static ITEM_DEFS: OnceLock<HashMap<GameItemDefId, GameItemDef>> = OnceLock::new();
     ITEM_DEFS.get_or_init(|| {
         let mut m = HashMap::new();
         m.insert(
-            "weapon_sword_rusty".to_string(),
+            "weapon_sword_dull".to_string(),
             GameItemDef {
-                name: "Rusty Sword",
+                name: "Dull Sword",
                 glyph: '/',
                 style: Style::default().fg(Color::Gray),
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D10),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -42,9 +46,9 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'D',
                 style: Style::default().fg(Color::Gray),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(1, DieSize::D6),
+                    damage: Roll::new(1, DieSize::D4),
                     crit_chance: 5,
-                    ranged: true,
+                    range: Some(AGGRO_RADIUS),
                 },
             },
         );
@@ -55,9 +59,22 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'D',
                 style: Style::default().fg(Color::DarkGray),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(1, DieSize::D10),
-                    crit_chance: 7,
-                    ranged: true,
+                    damage: Roll::new(1, DieSize::D6),
+                    crit_chance: 5,
+                    range: Some(AGGRO_RADIUS),
+                },
+            },
+        );
+        m.insert(
+            "weapon_bow_cross".to_string(),
+            GameItemDef {
+                name: "Crossbow",
+                glyph: 'B',
+                style: Style::default().fg(Color::Yellow),
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(1, DieSize::D4),
+                    crit_chance: 15,
+                    range: Some(AGGRO_RADIUS),
                 },
             },
         );
@@ -70,7 +87,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D10),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -83,7 +100,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D6),
                     crit_chance: 7,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -96,7 +113,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D8),
                     crit_chance: 15,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -109,7 +126,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(2, DieSize::D12),
                     crit_chance: 5,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -122,7 +139,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 kind: GameItemKindDef::Weapon {
                     damage: Roll::new(1, DieSize::D10).add_modifier(1),
                     crit_chance: 10,
-                    ranged: false,
+                    range: None,
                 },
             },
         );
@@ -133,9 +150,22 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: '/',
                 style: Style::default().fg(Color::White),
                 kind: GameItemKindDef::Weapon {
-                    damage: Roll::new(2, DieSize::D6),
+                    damage: Roll::new(1, DieSize::D8),
                     crit_chance: 8,
-                    ranged: false,
+                    range: Some(2),
+                },
+            },
+        );
+        m.insert(
+            "weapon_claw_rustacean".to_string(),
+            GameItemDef {
+                name: "Rustacean Claw",
+                glyph: '/',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Weapon {
+                    damage: Roll::new(2, DieSize::D8),
+                    crit_chance: 15,
+                    range: None,
                 },
             },
         );
@@ -163,7 +193,7 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 name: "Plate Armor",
                 glyph: 'A',
                 style: Style::default().fg(Color::Gray),
-                kind: GameItemKindDef::Armor { mitigation: 6 },
+                kind: GameItemKindDef::Armor { mitigation: 5 },
             },
         );
         m.insert(
@@ -200,6 +230,15 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 glyph: 'A',
                 style: Style::default().fg(Color::Black),
                 kind: GameItemKindDef::Armor { mitigation: 2 },
+            },
+        );
+        m.insert(
+            "armor_rustacean".to_string(),
+            GameItemDef {
+                name: "Rustacean Armor",
+                glyph: 'A',
+                style: Style::default().fg(Color::Red),
+                kind: GameItemKindDef::Armor { mitigation: 6 },
             },
         );
         m.insert(

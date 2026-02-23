@@ -10,13 +10,9 @@ use ratatui::{
     text::{Line, Span},
 };
 
-use crate::DEV_MODE;
-
 /// The game's text log. The events of the game are desribed for the user in the log.
-///
-/// The log can also be used to display debug messages.
+/// This is not a typical console log, but part of the game that describes what's happening.
 pub struct Log {
-    pub print_debug_info: bool,
     pub messages: Vec<LogData>,
     file: Option<BufWriter<File>>,
 }
@@ -28,21 +24,22 @@ impl Log {
         let file = File::create(path).ok();
         let writer = file.map(BufWriter::new);
 
-        Self { print_debug_info: DEV_MODE, messages: Vec::new(), file: writer }
+        Self { messages: Vec::new(), file: writer }
     }
 
-    /// Specific getter that returns all messages, but filetered by debug messages or not depending on [Log::print_debug_info]
+    /// Specific getter that returns all messages, but filetered by debug messages.
+    #[cfg(feature = "dev")]
     pub fn get_messages_for_display(&self) -> Vec<&LogData> {
-        if self.print_debug_info {
-            self.messages.iter().collect()
-        } else {
-            self.messages
-                .iter()
-                .filter(|&message| {
-                    !matches!(message, LogData::DebugInfo(_) | LogData::DebugWarn(_))
-                })
-                .collect()
-        }
+        self.messages.iter().collect()
+    }
+
+    /// Specific getter that returns all messages, but filetered by debug messages.
+    #[cfg(not(feature = "dev"))]
+    pub fn get_messages_for_display(&self) -> Vec<&LogData> {
+        self.messages
+            .iter()
+            .filter(|&message| !matches!(message, LogData::DebugInfo(_) | LogData::DebugWarn(_)))
+            .collect()
     }
 
     /// Add information about a new log event to the log.
@@ -67,7 +64,7 @@ impl Log {
         }
     }
 
-    /// Add plain text to the log as long as [Log::print_debug_info] is true.
+    /// Add plain debug text to the log.
     ///
     /// Use this for printing debug and development information to the log.
     pub fn debug_info(&mut self, message: String) {
@@ -77,6 +74,9 @@ impl Log {
         }
     }
 
+    /// Add plain debug text to the log.
+    ///
+    /// Use this for printing debug and development warnings to the log.
     pub fn debug_warn(&mut self, message: String) {
         let lines: Vec<&str> = message.split("\n").collect();
         for line in lines {
@@ -84,6 +84,7 @@ impl Log {
         }
     }
 
+    /// Prints the game's opening text to the console.
     pub fn print_lore(&mut self) {
         self.info(LogData::Plain("It is written in the books of old:".into()));
         self.info(LogData::Lore("..The depths are like an anthill.".into()));
@@ -111,24 +112,66 @@ fn create_log_file() -> PathBuf {
 
 #[derive(Clone)]
 pub enum LogData {
+    /// Used for plain-text debug information in the log.
     DebugInfo(String),
+
+    /// Used for plain-text debug warnings in the log.
     DebugWarn(String),
+
+    /// Used for plain-text in the log.
     Plain(String),
+
     Lore(String),
-    PlayerAttackHit { npc_name: String, damage: u16 },
-    PlayerAttackMiss { npc_name: String },
-    PlayerEats { item_name: String },
-    NpcAttackHit { npc_name: String, damage: u16 },
-    NpcAttackMiss { npc_name: String },
-    NpcDied { npc_name: String },
+    PlayerAttackHit {
+        npc_name: String,
+        damage: u16,
+    },
+    PlayerAttackHitCritical {
+        npc_name: String,
+        damage: u16,
+    },
+    PlayerAttackMiss {
+        npc_name: String,
+    },
+    PlayerEats {
+        item_name: String,
+    },
+    NpcAttackHit {
+        npc_name: String,
+        damage: u16,
+    },
+    NpcAttackHitCritical {
+        npc_name: String,
+        damage: u16,
+    },
+    NpcAttackMiss {
+        npc_name: String,
+    },
+    NpcDied {
+        npc_name: String,
+    },
     InventoryFull,
     EquipmentSlotEmpty,
     UseStairsDown,
     UseStairsUp,
     NoInteraction,
     Overdose,
-    PlayerHealed { amount: u16 },
+    PlayerHealed {
+        amount: u16,
+    },
     GauntletGreeting,
+    ItemPickUp {
+        item_name: String,
+    },
+    LevelUp {
+        new_level: u8,
+    },
+    LookAt {
+        name: String,
+    },
+    TileNotVisible,
+    OutOfRange,
+    TileOccupied,
 }
 
 impl fmt::Display for LogData {
@@ -142,6 +185,7 @@ impl fmt::Display for LogData {
 }
 
 impl LogData {
+    /// Converts LogData into a representation used in the Ratatui component for the game's log.
     pub fn display(&self) -> Line<'_> {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),
@@ -153,6 +197,14 @@ impl LogData {
             LogData::PlayerAttackHit { npc_name, damage } => Line::from(vec![
                 Span::styled("You", STYLE_YOU),
                 Span::raw(" attack "),
+                Span::styled(npc_name, STYLE_NPC),
+                Span::raw(" and deal "),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
+                Span::raw(" damage."),
+            ]),
+            LogData::PlayerAttackHitCritical { npc_name, damage } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::styled(" critically hit ", STYLE_DANGER),
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" and deal "),
                 Span::styled(damage.to_string(), STYLE_NUMBER),
@@ -177,6 +229,14 @@ impl LogData {
                 Span::styled(damage.to_string(), STYLE_NUMBER),
                 Span::raw(" damage."),
             ]),
+            LogData::NpcAttackHitCritical { npc_name, damage } => Line::from(vec![
+                Span::styled(npc_name, STYLE_NPC),
+                Span::styled(" critically hits", STYLE_DANGER),
+                Span::styled(" you", STYLE_YOU),
+                Span::raw(" and deals "),
+                Span::styled(damage.to_string(), STYLE_NUMBER),
+                Span::raw(" damage."),
+            ]),
             LogData::NpcAttackMiss { npc_name } => Line::from(vec![
                 Span::styled(npc_name, STYLE_NPC),
                 Span::raw(" attacks "),
@@ -186,18 +246,20 @@ impl LogData {
             LogData::NpcDied { npc_name } => {
                 Line::from(vec![Span::styled(npc_name, STYLE_NPC), Span::raw(" died.")])
             }
-            LogData::InventoryFull => {
-                Line::from("Your inventory is full. Cannot add another item.")
-            }
+            LogData::InventoryFull => Line::from(vec![
+                Span::styled("Your", STYLE_YOU),
+                Span::raw(" inventory is full. Cannot add another item."),
+            ]),
             LogData::EquipmentSlotEmpty => {
-                Line::from("The equipment slot is already empty. Cannot unequip.")
+                Line::from("Action not possible. Required equipment slot empty.")
             }
             LogData::UseStairsDown => Line::from("You go down the stairs..."),
             LogData::UseStairsUp => Line::from("You go back up the stairs..."),
             LogData::NoInteraction => Line::from("You cannot interact with that object."),
             LogData::Overdose => Line::from("You are experiencing the effects of overdosing."),
             LogData::PlayerHealed { amount } => Line::from(vec![
-                Span::raw("You regain "),
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" regain "),
                 Span::styled(amount.to_string(), STYLE_NUMBER),
                 Span::raw(" hit points."),
             ]),
@@ -212,6 +274,26 @@ impl LogData {
                 ),
                 Span::styled(". Prove your worth!", Style::new().add_modifier(Modifier::ITALIC)),
             ]),
+            LogData::ItemPickUp { item_name } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" picked up "),
+                Span::styled(item_name, STYLE_ITEM),
+            ]),
+            LogData::LevelUp { new_level } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::styled(" leveled up ", STYLE_NUMBER),
+                Span::raw("to level "),
+                Span::styled(new_level.to_string(), STYLE_NUMBER),
+                Span::raw("!"),
+            ]),
+            LogData::LookAt { name } => Line::from(vec![
+                Span::styled("You", STYLE_YOU),
+                Span::raw(" see: "),
+                Span::styled(name, Style::new().add_modifier(Modifier::UNDERLINED)),
+            ]),
+            LogData::TileNotVisible => Line::from("You cannot see this tile."),
+            LogData::OutOfRange => Line::from("Target not in range."),
+            LogData::TileOccupied => Line::from("Position is occupied."),
         }
     }
 }
@@ -223,3 +305,4 @@ const STYLE_YOU: Style = Style::new().add_modifier(Modifier::ITALIC);
 const STYLE_NPC: Style = Style::new().fg(Color::Yellow).add_modifier(Modifier::ITALIC);
 const STYLE_ITEM: Style = Style::new().fg(Color::Magenta).add_modifier(Modifier::BOLD);
 const STYLE_NUMBER: Style = Style::new().fg(Color::Cyan);
+const STYLE_DANGER: Style = Style::new().fg(Color::Red);

@@ -9,7 +9,7 @@ use bitflags::bitflags;
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
-use crate::util::errors_results::{FailReason, GameOutcome};
+use crate::util::errors_results::{EngineError, FailReason, GameError, GameOutcome, GameResult};
 use crate::util::text_log::Log;
 use crate::world::coordinate_system::{Direction, Point};
 use crate::world::level::{Level, LevelEntrance};
@@ -24,20 +24,31 @@ pub struct GameState {
     /// Points to the [Level] the player is on.
     pub level_nr: usize,
 
+    /// Contains data on the player (as well as player character)
     pub player: Player,
 
     /// Represents the character on screen that is being controlled. (Usually on the Player character, but can be detached.)
     pub cursor: Option<CursorState>,
 
+    /// Contains the game log, which describes the game's events.
     pub log: Log,
+
+    /// Counts the round number.
     pub round_nr: u64,
 
+    /// Contains the system which generates new Ids for [Npc] and [GameItem]s
     pub id_system: IdSystem,
+
+    /// Tracks all items currently in play.
     pub items: HashMap<GameItemId, GameItem>, // stores all items that are currently in the game
 
+    /// Rng instance that is used for everything in the game.
     pub rng: StdRng,
+
+    /// Rng instance that is generated once from [GameState::rng] and is used exclusively for Procedural Generation.
     pub proc_gen: StdRng,
 
+    /// Game Rules, specific toggles changing the way the game handles some events.
     pub game_rules: GameRules,
 }
 
@@ -75,7 +86,10 @@ impl GameState {
         state
     }
 
-    // This is the routine of operations that need to be called every round.
+    /// Advances the Game to the next round.
+    /// This is the routine of operations that need to be called every round.
+    ///
+    /// This function is exclusively called by the user's input, meaning the "game loop" is not a while loop, but ticked by the player's actions.
     pub fn next_round(&mut self) {
         self.player.character.tick_buffs();
         let npc_ids: Vec<EntityId> = self.current_level().npc_index.keys().copied().collect();
@@ -91,7 +105,8 @@ impl GameState {
 }
 
 impl Default for GameState {
-    // placeholder, only for tests
+    /// Default for GameState
+    /// Used in tests.
     fn default() -> Self {
         Self {
             levels: Vec::new(),
@@ -109,10 +124,16 @@ impl Default for GameState {
     }
 }
 
+/// Generates an RNG instance
+///
+/// # Returns
+/// * 0 - A [StdRng] instance
+/// * 1 - The seed of the rng instance
 fn rng_instance() -> (StdRng, u64) {
     #[cfg(feature = "dev")]
     {
-        let seed: u64 = 73;
+        // let seed: u64 = 73;
+        let seed: u64 = 8694791637633420993;
         (StdRng::seed_from_u64(seed), seed)
     }
 
@@ -127,6 +148,8 @@ fn rng_instance() -> (StdRng, u64) {
 //                  ID System
 // ----------------------------------------------
 
+/// Contains the counters for entity ids and item ids.
+/// Accessed through [IdSystem::next_entity_id] and [IdSystem::next_item_id]
 #[derive(Default)]
 pub struct IdSystem {
     entity_id_counter: EntityId,
@@ -154,9 +177,11 @@ impl IdSystem {
 // ----------------------------------------------
 
 bitflags! {
+    /// Bitflag collection for game rules.
     pub struct GameRules: u8 {
         // This disables collision detection for the player, allowing them to walk through walls.
         const NO_CLIP = 0b00000001;
+        const GOD_MODE = 0b00000010;
     }
 }
 
@@ -164,36 +189,50 @@ bitflags! {
 //                Cursor System
 // ----------------------------------------------
 
+/// Tracks the cursor mode in the game.
+///
+/// Usually the player controls the player character in the world, but if a Cursor State is set in [GameState], then the player controls the cursor.
 pub struct CursorState {
-    pub kind: CursorKind,
+    /// Mode of the Cursor. Determins which actions can be taken with the cursor.
+    pub kind: CursorMode,
+
+    /// Coordinates of the Cursor.
     pub point: Point,
 }
 
-pub enum CursorKind {
+/// Contains all modes for a cursor.
+pub enum CursorMode {
+    /// Look mode is used to get a description of what the cursor is pointing at.
     Look,
+
+    /// Ranged attack mode allows the player to attack at long range (provided a ranged weapon is equipped)
     RangedAttack,
 }
 
 impl GameState {
-    pub fn move_cursor(&mut self, direction: Direction) -> GameOutcome {
+    /// Moves the cursor's position in the given direction.
+    ///
+    /// # Errors
+    /// * [EngineError::CursorNotSet] if no cursor instance could be found. This happens when [GameState::cursor] == `None`.
+    ///
+    /// # Returns
+    /// * [GameOutcome::Success] if the movement was successful
+    /// * [GameOutcome::Fail] with [FailReason::PointOutOfBounds] if the movement was successful
+    pub fn move_cursor(&mut self, direction: Direction) -> GameResult {
         let Some(point) = self.cursor.as_ref().map(|cursor_state| cursor_state.point) else {
-            return GameOutcome::Success;
+            return Err(GameError::from(EngineError::CursorNotSet));
         };
 
         let new_point = point + direction;
 
         if !self.current_world().is_in_bounds(new_point.x as isize, new_point.y as isize) {
-            return GameOutcome::Fail(FailReason::PointOutOfBounds(new_point));
-        }
-
-        if !self.current_world().get_tile(new_point).visible {
-            return GameOutcome::Fail(FailReason::TileNotVisible(new_point));
+            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
         }
 
         if let Some(cursor) = self.cursor.as_mut() {
             cursor.point = new_point;
         }
 
-        GameOutcome::Success
+        Ok(GameOutcome::Success)
     }
 }

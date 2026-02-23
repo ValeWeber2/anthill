@@ -288,4 +288,5 @@ Below is a concise summary of the most important controls and commands.
 | `give <item> <amount>` | Add item to player's inventory |
 | `revealall` | Reveal entire map for 1 round |
 | `noclip` | Walk through walls |
+| `godmode` | Become immortal |
 

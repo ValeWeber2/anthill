@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use crate::core::buff_effects::{ActiveBuff, PotionEffectDef, PotionType, PotionUsage};
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
+use crate::core::game::{GameRules, GameState};
 use crate::core::game_items::{ArmorItem, GameItemId, WeaponItem};
+use crate::util::text_log::LogData;
 use crate::world::coordinate_system::Point;
 use ratatui::style::Color;
 
@@ -108,14 +110,23 @@ impl PlayerCharacter {
         self.stats.base.is_alive()
     }
 
-    pub fn gain_experience(&mut self, amount: u32) {
+    /// Add experience points to the player's experience counter. If the experience points are
+    /// enough to level up, level up the character.
+    ///
+    /// # Returns
+    /// `true` if the experience resulted in a level-up
+    /// `false` if the experience didn't result in a level-up
+    pub fn gain_experience(&mut self, amount: u32) -> bool {
         self.stats.experience += amount;
 
         let required_xp = self.stats.level as u32 * 100;
         if self.stats.experience >= required_xp {
             self.stats.experience -= required_xp;
             self.level_up();
+            return true;
         }
+
+        false
     }
 
     fn level_up(&mut self) {
@@ -123,6 +134,7 @@ impl PlayerCharacter {
         self.stats.strength += 1;
         self.stats.dexterity += 1;
         self.stats.vitality += 1;
+        self.stats.perception += 1;
 
         self.stats.base.hp_max += 10;
         self.stats.base.hp_current = self.stats.base.hp_max;
@@ -146,6 +158,22 @@ impl PlayerCharacter {
 impl Default for PlayerCharacter {
     fn default() -> Self {
         Self::new(999999) // placeholder, never inserted inro world
+    }
+}
+
+impl GameState {
+    pub fn player_add_experience(&mut self, amount: u32) {
+        let did_level_up = self.player.character.gain_experience(amount);
+        if did_level_up {
+            self.log.info(LogData::LevelUp { new_level: self.player.character.stats.level });
+        }
+    }
+
+    pub fn player_is_alive(&self) -> bool {
+        if self.game_rules.contains(GameRules::GOD_MODE) {
+            return true;
+        }
+        self.player.character.is_alive()
     }
 }
 

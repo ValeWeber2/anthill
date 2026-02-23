@@ -40,23 +40,31 @@ impl ProcGenLevel {
     ///
     /// Populating a room requires its data, which is why populate is a method on room as well.
     pub fn populate<R: Rng + ?Sized>(&mut self, rng: &mut R) {
+        let blocked_points: Vec<Point> = vec![self.entry, self.exit];
         for room in &mut self.world.rooms {
             let encounter: RoomEncounter = rng.random();
 
-            let mut population = room.populate(encounter, rng);
+            let mut population = room.populate(encounter, &blocked_points, rng);
             self.spawns.append(&mut population);
         }
     }
 }
 
 impl ProcGenRoom {
-    /// Creates spawn points for randomly determined items/npcs within the bounds of the given room.
+    /// Populates the room with spawn points for NPCs and Data
+    ///
+    /// # Arguments
+    /// * `encounter`: Type of encounter. Defines what should be spawned.
+    /// * `blocked_points`: Points that cannot be spawn points.
+    /// * `rng`: Rng Instance.
     pub fn populate<R: Rng + ?Sized>(
         &mut self,
         encounter: RoomEncounter,
+        blocked_points: &[Point],
         rng: &mut R,
     ) -> Vec<SpawnData> {
         let mut available_points = self.floor_points();
+        available_points.retain(|point| !blocked_points.contains(point));
         available_points.shuffle(rng);
 
         let mut population = Vec::new();

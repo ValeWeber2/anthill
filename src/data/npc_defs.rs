@@ -18,6 +18,7 @@ pub struct NpcDef {
     pub stats: NpcStats,
 }
 
+/// Lazy loads the collection of npc definitions in the game.
 pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
     static NPC_DEFS: OnceLock<HashMap<NpcDefId, NpcDef>> = OnceLock::new();
     NPC_DEFS.get_or_init(|| {
@@ -187,6 +188,48 @@ pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
                     damage: Roll::new(2, DieSize::D6).add_modifier(3),
                     dodge: 8,
                     mitigation: 1,
+                },
+            },
+        );
+        m.insert(
+            "ferris".to_string(),
+            NpcDef {
+                name: "Ferris, the Rustacean",
+                glyph: 'U',
+                style: Style::default().fg(Color::Red),
+                stats: NpcStats {
+                    base: BaseStats { hp_max: 10, hp_current: 10 },
+                    damage: Roll::new(1, DieSize::D10),
+                    dodge: 0,
+                    mitigation: 4,
+                },
+            },
+        );
+        m.insert(
+            "martin".to_string(),
+            NpcDef {
+                name: "Martin, the Explorer",
+                glyph: 'M',
+                style: Style::default().fg(Color::Blue),
+                stats: NpcStats {
+                    base: BaseStats { hp_max: 25, hp_current: 25 },
+                    damage: Roll::new(2, DieSize::D12).add_modifier(1),
+                    dodge: 5,
+                    mitigation: 6,
+                },
+            },
+        );
+        m.insert(
+            "borrowchecker".to_string(),
+            NpcDef {
+                name: "Borrow Checker",
+                glyph: '&',
+                style: Style::default().fg(Color::Blue),
+                stats: NpcStats {
+                    base: BaseStats { hp_max: 1, hp_current: 1 },
+                    damage: Roll::new(1, DieSize::D6),
+                    dodge: 50,
+                    mitigation: 0,
                 },
             },
         );

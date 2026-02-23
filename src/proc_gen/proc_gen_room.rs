@@ -62,17 +62,33 @@ impl ProcGenRoom {
         let height = self.point_b.y - self.point_a.y;
 
         // Shrunk width
-        let new_width = shrink_dimension(width, rng.random_range(SHRINK_FACTOR_RANGE));
-        // Shrunk height. Max 1.5 times as large as the width. This avoids weird long rooms (due to terminal grid not being 1:1)
-        let new_height = cmp::min(
-            shrink_dimension(height, rng.random_range(SHRINK_FACTOR_RANGE)),
-            (new_width as f32 * 1.5) as usize,
-        );
+        let max_width = width.saturating_sub(2); // Guarantees shrinking by at least 1.
+        let new_width =
+            shrink_dimension(width, rng.random_range(SHRINK_FACTOR_RANGE)).min(max_width);
 
-        let new_origin_x =
-            rng.random_range((self.point_a.x + 1)..=(self.point_b.x - new_width - 1));
-        let new_origin_y =
-            rng.random_range((self.point_a.y + 1)..=(self.point_b.y - new_height - 1));
+        // Shrunk height. Max 1.5 times as large as the width. This avoids weird long rooms (due to terminal grid not being 1:1)
+        let max_height = height.saturating_sub(2); // Guarantees shrinking by at least 1.
+        let mut new_height =
+            shrink_dimension(height, rng.random_range(SHRINK_FACTOR_RANGE)).min(max_height);
+        new_height = cmp::min(new_height, (new_width as f32 * 1.5) as usize); // Incrase size to make rooms less vertically long
+
+        let min_origin_x = self.point_a.x + 1;
+        let max_origin_x = self.point_b.x - new_width - 1;
+        let new_origin_x = if min_origin_x <= max_origin_x {
+            // The room fits within the padded area
+            rng.random_range(min_origin_x..=max_origin_x)
+        } else {
+            min_origin_x
+        };
+
+        let min_origin_y = self.point_a.y + 1;
+        let max_origin_y = self.point_b.y - new_height - 1;
+        let new_origin_y = if min_origin_y <= max_origin_y {
+            // The room fits within the padded area
+            rng.random_range(min_origin_y..=max_origin_y)
+        } else {
+            min_origin_y
+        };
 
         self.point_a.x = new_origin_x;
         self.point_b.x = new_origin_x + new_width;

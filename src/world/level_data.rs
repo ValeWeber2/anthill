@@ -79,7 +79,13 @@ pub enum SpawnKind {
 }
 
 impl World {
-    pub fn apply_world_data(&mut self, data: &LevelData, index: usize) -> Result<(), GameError> {
+    /// Applies level data to a world.
+    ///
+    /// This level data might come from one of the world level files or a procedurally generated world.
+    ///
+    /// # Errors
+    /// * [DataError::InvalidWorldFormat] if the world format is corrupted and cannot be read.
+    pub fn apply_level_data(&mut self, data: &LevelData, index: usize) -> Result<(), GameError> {
         if data.width != self.width || data.height != self.height {
             return Err(GameError::from(DataError::InvalidWorldFormat(index)));
         }
@@ -123,9 +129,6 @@ impl World {
 
             self.get_tile_mut(*corridor_point).tile_type = updated_tile;
         }
-
-        // self.open_room_for_hallway();
-        // self.add_walls_around_walkables();
 
         Ok(())
     }

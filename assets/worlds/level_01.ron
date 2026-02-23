@@ -177,7 +177,7 @@ LevelData(
     SpawnData(
       x: 14,
       y: 19,
-      kind: Item(def_id: "weapon_sword_rusty"),
+      kind: Item(def_id: "weapon_sword_dull"),
     ),
 
     SpawnData(

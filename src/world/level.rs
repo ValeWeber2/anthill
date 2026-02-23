@@ -112,11 +112,17 @@ impl Level {
     /// - Walkable
     pub fn is_available(&self, point: Point) -> bool {
         let in_bounds = self.world.is_in_bounds(point.x as isize, point.y as isize);
-        let free_of_npcs = self.npcs.iter().all(|npc| npc.base.pos != point);
-        let free_of_item_sprites = self.item_sprites.iter().all(|item| item.base.pos != point);
+        let not_occupied = !self.is_occupied(point);
         let walkable = self.world.get_tile(point).tile_type.is_walkable();
 
-        in_bounds && free_of_npcs && free_of_item_sprites && walkable
+        in_bounds && not_occupied && walkable
+    }
+
+    /// Checks if a given point is occupied by an NPC or Item Sprite.
+    pub fn is_occupied(&self, point: Point) -> bool {
+        let occupied_by_npc = self.npcs.iter().any(|npc| npc.base.pos == point);
+        let occupied_by_item_sprite = self.item_sprites.iter().any(|item| item.base.pos == point);
+        occupied_by_npc || occupied_by_item_sprite
     }
 
     /// Spawns an NPC on the map.
@@ -211,6 +217,10 @@ impl GameState {
         &mut self.current_level_mut().world
     }
 
+    /// Moves the player to a different level of number `index`.
+    ///
+    /// Lazily loads/generates a level.
+    /// The player will be placed at the level's entry or exit, as defined by `entrance_point`.
     pub fn goto_level(
         &mut self,
         index: usize,
@@ -234,14 +244,21 @@ impl GameState {
         Ok(())
     }
 
+    /// Calls [GameState::goto_level] for the next relative level.
     pub fn goto_level_next(&mut self) -> Result<(), GameError> {
         self.goto_level(self.level_nr + 1, LevelEntrance::Entry)
     }
 
+    /// Calls [GameState::goto_level] for the previous relative level.
     pub fn goto_level_previous(&mut self) -> Result<(), GameError> {
         self.goto_level(self.level_nr - 1, LevelEntrance::Exit)
     }
 
+    /// Initializes a new level of the given index.
+    ///
+    /// - Level 0 is loaded from the level file "level_01.ron" (Tutorial level).
+    /// - Level 1 and every [STATIC_LEVEL_INTERVAL] levels thereafter are loaded from the level file "level_02.ron" (Gauntlet level)
+    /// - All other levels are procedurally generated.
     pub fn initialize_level(&mut self, index: usize) -> Result<(), GameError> {
         let new_level: Level = match index {
             0 => self.load_static_level(0).map_err(|error| {
@@ -266,6 +283,11 @@ impl GameState {
         Ok(())
     }
 
+    /// Loads a static level from a file, transforms it into a [Level] and returns it.
+    ///
+    /// # Errors
+    /// * [DataError::StaticWorldNotFound] if the file could not be loaded.
+    /// * [DataError::InvalidWorldFormat] if the world format is corrupted and cannot be read.
     pub fn load_static_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
         if level_nr > level_paths().len() {
             return Err(GameError::from(DataError::StaticWorldNotFound(level_nr)));
@@ -275,7 +297,7 @@ impl GameState {
 
         let mut level = Level::new();
 
-        level.world.apply_world_data(&data, level_nr)?;
+        level.world.apply_level_data(&data, level_nr)?;
         level.entry = data.entry;
         level.exit = data.exit;
 
@@ -283,7 +305,7 @@ impl GameState {
             let pos = Point::new(spawn.x, spawn.y);
 
             if !level.is_available(pos) {
-                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y)); // debugging purposes only
+                self.log.debug_warn(format!("Spawn blocked at ({}, {})", spawn.x, spawn.y));
                 continue;
             }
 
@@ -303,6 +325,11 @@ impl GameState {
         Ok(level)
     }
 
+    /// Procedurally generates a level, transforms it into a [Level] and returns it.
+    ///
+    /// # Errors
+    /// * [DataError::StaticWorldNotFound] if the file could not be loaded.
+    /// * [DataError::InvalidWorldFormat] if the world format is corrupted and cannot be read.
     pub fn load_generated_level(&mut self, level_nr: usize) -> Result<Level, GameError> {
         let level_seed = self.proc_gen.next_u64();
         self.log.debug_info(format!("Current Level Seed: {}", level_seed));
@@ -313,7 +340,7 @@ impl GameState {
 
         let mut level = Level::new();
 
-        level.world.apply_world_data(&data, level_nr)?;
+        level.world.apply_level_data(&data, level_nr)?;
         level.entry = data.entry;
         level.exit = data.exit;
 

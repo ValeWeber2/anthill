@@ -91,6 +91,12 @@ pub enum GameCommand {
     /// # GameCommand Syntax
     /// `noclip`
     NoClip,
+
+    /// Toggles god mode for the player, making them immortal.
+    ///
+    /// # GameCommand Syntax
+    /// `godmode`
+    GodMode,
 }
 
 impl GameCommand {
@@ -111,6 +117,7 @@ impl GameCommand {
             GameCommand::Suicide => "Set HP to zero to test game over state",
             GameCommand::Legend => "Show list of all map symbols",
             GameCommand::NoClip => "Toggle to walk through impassable terrain",
+            GameCommand::GodMode => "Toggle invulnerability",
         }
     }
 
@@ -129,6 +136,7 @@ impl GameCommand {
             GameCommand::RevealAll => "revealall",
             GameCommand::Legend => "legend",
             GameCommand::NoClip => "noclip",
+            GameCommand::GodMode => "godmode",
         }
     }
 }
@@ -180,6 +188,7 @@ impl TryFrom<String> for GameCommand {
             "revealall" => Ok(GameCommand::RevealAll),
             "legend" => Ok(GameCommand::Legend),
             "noclip" => Ok(GameCommand::NoClip),
+            "godmode" => Ok(GameCommand::GodMode),
             _ => Err(format!("Unknown Command {}", command)),
         }
     }
@@ -233,16 +242,18 @@ impl App {
                 }
             }
             GameCommand::MaxStats => {
+                self.game.player.character.stats.level = 100;
                 self.game.player.character.stats.dexterity = 100;
                 self.game.player.character.stats.perception = 100;
                 self.game.player.character.stats.strength = 100;
                 self.game.player.character.stats.vitality = 100;
                 self.game.player.character.stats.base.hp_max = 500;
                 self.game.player.character.stats.base.hp_current = 500;
+                self.game.log.print("Advanced Player to Level 100.".to_string());
             }
             GameCommand::MaxEquip => {
                 self.execute_command(GameCommand::Give {
-                    item_def: "weapon_bow_long".to_string(),
+                    item_def: "weapon_bow_cross".to_string(),
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {
@@ -250,7 +261,7 @@ impl App {
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {
-                    item_def: "armor_plate".to_string(),
+                    item_def: "armor_rustacean".to_string(),
                     amount: 1,
                 });
                 self.execute_command(GameCommand::Give {
@@ -299,14 +310,16 @@ impl App {
                 }
 
                 self.game.player.character.base.pos = point;
+                self.game.log.print("You were teleported.".to_string());
             }
 
             GameCommand::Suicide => {
+                self.game.log.print("Player committed suicide".to_string());
                 self.game.player.character.stats.base.hp_current = 0;
             }
 
             GameCommand::RevealAll => {
-                self.game.log.print("Revealing all Tiles".to_string());
+                self.game.log.print("Revealing all tiles.".to_string());
 
                 for tile in self.game.current_world_mut().tiles.iter_mut() {
                     tile.make_visible();
@@ -328,6 +341,12 @@ impl App {
 
             GameCommand::NoClip => {
                 self.game.game_rules.toggle(GameRules::NO_CLIP);
+                self.game.log.print("Toggled No-Clip Mode.".to_string());
+            }
+
+            GameCommand::GodMode => {
+                self.game.game_rules.toggle(GameRules::GOD_MODE);
+                self.game.log.print("Toggled God Mode.".to_string());
             }
         }
     }

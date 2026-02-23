@@ -25,109 +25,14 @@ impl Widget for &App {
     fn render(self, area: Rect, buf: &mut Buffer) {
         // Size Check
         if area.width < MIN_WIDTH || area.height < MIN_HEIGHT {
-            render_warning(
-                format!(
-                    "Your Terminal window is too small.\nIn order to play the game, your Terminal must at least have the dimensions of {}x{} characters.\n(Current {}x{})",
-                    MIN_WIDTH, MIN_HEIGHT, area.width, area.height,
-                ),
-                area,
-                buf,
-            );
+            render_window_size_warning(area, buf);
         } else {
             match self.state {
                 State::StartScreen => {
                     render_start_screen(area, buf);
                 }
                 State::Playing => {
-                    // Normal
-                    let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
-                    let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
-
-                    // Layout from top to bottom. Divided into:
-                    // +-------------------------+
-                    // |                         |
-                    // | World + Menu            |
-                    // |                         |
-                    // +-------------------------+
-                    // | Info Display            |
-                    // +-------------------------+
-                    let layout_top_bottom =
-                        Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
-                    let [area_game, area_info] = layout_top_bottom.areas(area);
-
-                    // +----------------+--------+
-                    // |                |        |
-                    // | World          | Menu   |
-                    // |                |        |
-                    // +----------------+--------+
-                    let layout_left_right = Layout::horizontal([
-                        Constraint::Percentage(70),
-                        Constraint::Length(1),
-                        Constraint::Percentage(30),
-                    ]);
-                    let [area_world, _empty, area_menu] = layout_left_right.areas(area_game);
-
-                    // Calculating automatic padding for fixed-size worldspace
-                    let outer_width = world_width_u16 + 2;
-                    let outer_height = world_height_u16 + 2;
-                    let area_worldspace = Layout::vertical([Constraint::Length(outer_height)])
-                        .horizontal_margin((area_world.width.saturating_sub(outer_width)) / 2)
-                        .vertical_margin((area_world.height.saturating_sub(outer_height)) / 2)
-                        .split(area_world)[0];
-
-                    // AREA: Character Info
-                    let block_info =
-                        Block::default().title(" Character Info ").borders(Borders::ALL);
-                    let block_info_inner = block_info.inner(area_info);
-                    block_info.render(area_info, buf);
-
-                    self.ui.info.render(&self.game, block_info_inner, buf);
-
-                    // AREA: World
-                    let block_world = Block::default()
-                        .title(" World ")
-                        .border_style(if self.keyboard_focus == KeyboardFocus::FocusWorld {
-                            Style::default().fg(Color::LightBlue)
-                        } else {
-                            Style::default()
-                        })
-                        .borders(Borders::ALL);
-                    block_world.render(area_world, buf);
-
-                    // AREA: World Space
-                    // (Space actually occupied by tiles)
-                    let block_world = Block::default().title(" World Space ").borders(Borders::ALL);
-                    let block_world_inner = block_world.inner(area_worldspace);
-                    block_world.render(area_worldspace, buf);
-
-                    // Z-layer 0
-                    self.ui.world_display.render(&self.game, block_world_inner, buf);
-                    // Z-layer 1
-                    self.ui.world_display.render_items(&self.game, block_world_inner, buf);
-                    // Z-layer 2
-                    self.ui.world_display.render_npcs(&self.game, block_world_inner, buf);
-                    // Z-layer 3
-                    self.ui.world_display.render_player(
-                        &self.game.player.character,
-                        block_world_inner,
-                        buf,
-                    );
-                    // Z-layer 4
-                    self.ui.world_display.render_cursor(&self.game, block_world_inner, buf);
-
-                    // AREA: Menu (Log, menus, tables)
-                    let block_menu = Block::default()
-                        .title(format!(" Menu:{} ", self.ui.menu.mode))
-                        .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
-                            Style::default().fg(Color::LightBlue)
-                        } else {
-                            Style::default()
-                        })
-                        .borders(Borders::ALL);
-                    let block_menu_inner = block_menu.inner(area_menu);
-                    block_menu.render(area_menu, buf);
-
-                    self.ui.menu.render(&self.game, block_menu_inner, buf);
+                    self.render_game(area, buf);
                 }
                 State::GameOver => {
                     render_game_over(area, buf, &self.game);
@@ -142,12 +47,101 @@ impl Widget for &App {
     }
 }
 
+impl App {
+    /// Renders the game's main UI.
+    fn render_game(&self, rect: Rect, buf: &mut Buffer) {
+        // Normal
+        let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();
+        let world_height_u16: u16 = WORLD_HEIGHT.try_into().unwrap();
+
+        // Layout from top to bottom. Divided into:
+        // +-------------------------+
+        // |                         |
+        // | World + Menu            |
+        // |                         |
+        // +-------------------------+
+        // | Info Display            |
+        // +-------------------------+
+        let layout_top_bottom = Layout::vertical([Constraint::Min(0), Constraint::Length(4)]);
+        let [area_game, area_info] = layout_top_bottom.areas(rect);
+
+        // +----------------+--------+
+        // |                |        |
+        // | World          | Menu   |
+        // |                |        |
+        // +----------------+--------+
+        let layout_left_right = Layout::horizontal([
+            Constraint::Percentage(70),
+            Constraint::Length(1),
+            Constraint::Percentage(30),
+        ]);
+        let [area_world, _empty, area_menu] = layout_left_right.areas(area_game);
+
+        // Calculating automatic padding for fixed-size worldspace
+        let outer_width = world_width_u16 + 2;
+        let outer_height = world_height_u16 + 2;
+        let area_worldspace = Layout::vertical([Constraint::Length(outer_height)])
+            .horizontal_margin((area_world.width.saturating_sub(outer_width)) / 2)
+            .vertical_margin((area_world.height.saturating_sub(outer_height)) / 2)
+            .split(area_world)[0];
+
+        // AREA: Character Info
+        let block_info = Block::default().title(" Character Info ").borders(Borders::ALL);
+        let block_info_inner = block_info.inner(area_info);
+        block_info.render(area_info, buf);
+
+        self.ui.info.render(&self.game, block_info_inner, buf);
+
+        // AREA: World
+        let block_world = Block::default()
+            .title(" World ")
+            .border_style(if self.keyboard_focus == KeyboardFocus::FocusWorld {
+                Style::default().fg(Color::LightBlue)
+            } else {
+                Style::default()
+            })
+            .borders(Borders::ALL);
+        block_world.render(area_world, buf);
+
+        // AREA: World Space
+        // (Space actually occupied by tiles)
+        let block_world = Block::default().title(" World Space ").borders(Borders::ALL);
+        let block_world_inner = block_world.inner(area_worldspace);
+        block_world.render(area_worldspace, buf);
+
+        // Z-layer 0
+        self.ui.world_display.render(&self.game, block_world_inner, buf);
+        // Z-layer 1
+        self.ui.world_display.render_items(&self.game, block_world_inner, buf);
+        // Z-layer 2
+        self.ui.world_display.render_npcs(&self.game, block_world_inner, buf);
+        // Z-layer 3
+        self.ui.world_display.render_player(&self.game.player.character, block_world_inner, buf);
+        // Z-layer 4
+        self.ui.world_display.render_cursor(&self.game, block_world_inner, buf);
+
+        // AREA: Menu (Log, menus, tables)
+        let block_menu = Block::default()
+            .title(format!(" Menu:{} ", self.ui.menu.mode))
+            .border_style(if self.keyboard_focus == KeyboardFocus::FocusMenu {
+                Style::default().fg(Color::LightBlue)
+            } else {
+                Style::default()
+            })
+            .borders(Borders::ALL);
+        let block_menu_inner = block_menu.inner(area_menu);
+        block_menu.render(area_menu, buf);
+
+        self.ui.menu.render(&self.game, block_menu_inner, buf);
+    }
+}
+
 /// Renders a text warning in the middle of the screen, which also blanks the background.
 ///
 /// # Note
 /// The game is still accessible while a warning is displayed, meaning a player can still make inputs (e.g. 'q', 'wasd')
 fn render_warning(text: String, rect: Rect, buf: &mut Buffer) {
-    let center_rect = get_centered_rect(50, 8, rect);
+    let center_rect = get_centered_rect(50, 10, rect);
     let paragraph = Paragraph::new(Text::from(text))
         .wrap(Wrap { trim: true })
         .alignment(Alignment::Center)
@@ -159,6 +153,17 @@ fn render_warning(text: String, rect: Rect, buf: &mut Buffer) {
         );
 
     paragraph.render(center_rect, buf);
+}
+
+fn render_window_size_warning(rect: Rect, buf: &mut Buffer) {
+    render_warning(
+        format!(
+            "Your Terminal window is too small.\nIn order to play the game, your Terminal must at least have the dimensions of {}x{} characters.\n(Current {}x{})\n\nIncrease window size of your terminal or decrease your font size (Ctrl + -) to continue.",
+            MIN_WIDTH, MIN_HEIGHT, rect.width, rect.height,
+        ),
+        rect,
+        buf,
+    );
 }
 
 /// Struct representing the UI state.
@@ -255,9 +260,14 @@ fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {
     let lines = [
         format!("Goodbye, {}", game.player.character.name()),
         "You have died in the Anthill".into(),
+        format!("You reached floor {}", game.level_nr),
+        format!(
+            "You were level {} with {} EXP",
+            game.player.character.stats.level, game.player.character.stats.experience
+        ),
         "".into(),
         "Press ENTER to start a new game".into(),
-        "Press Q to quit".into(),
+        "Press SHIFT + q to quit".into(),
     ];
 
     let text = Text::from(lines.iter().map(|l| Line::from(l.as_str())).collect::<Vec<Line>>());

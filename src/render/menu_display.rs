@@ -149,6 +149,7 @@ impl Menu {
     }
 }
 
+/// Formats an item's definition for display in the UI.
 pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
     let mut spans = vec![
         Span::raw("["),

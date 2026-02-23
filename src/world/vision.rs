@@ -39,7 +39,7 @@ impl From<ViewPoint> for Point {
 }
 
 /// The entrypoint to the program. Call this function to compute the field of view from an origin tile.
-pub fn compute_fov(origin: Point, world: &mut World) {
+fn compute_fov(origin: Point, world: &mut World) {
     // Make the tile of origin (where player is) visible and explored
     world.mark_visible(origin);
     world.mark_explored(origin);
@@ -113,8 +113,12 @@ fn scan(_origin: Point, row: Row, quadrant: Quadrant, world: &mut World) {
     }
 }
 
+/// Trait for implementing Field of View mechanics into the game.
 trait FieldOfView {
+    // Returns true if the given point blocks vision.
     fn is_opaque(&self, point: Point) -> bool;
+
+    // Marks the given point as visible.
     fn mark_visible(&mut self, point: Point);
 }
 
@@ -128,6 +132,7 @@ impl FieldOfView for World {
     }
 }
 
+/// Trait for implementing Fog of War mechanics into the game.
 trait FogOfWar {
     fn mark_explored(&mut self, point: Point);
 }
@@ -139,14 +144,20 @@ impl FogOfWar for World {
 }
 
 impl GameState {
+    /// Compute the field of view at the current point in time of the game.
     pub fn compute_fov(&mut self) {
         compute_fov(self.player.character.pos(), self.current_world_mut());
     }
 }
 
+/// Data structure which is part of the shadowcasting algorithm.
+/// Denotes a quadrant of vision in each of the cardinal directions.
 #[derive(Clone, Copy, Debug)]
 struct Quadrant {
+    /// Facing of the quadrant.
     direction: Direction,
+
+    /// Point of origin.
     origin: ViewPoint,
 }
 
