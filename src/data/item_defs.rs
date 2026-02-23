@@ -19,6 +19,8 @@ pub struct GameItemDef {
     pub kind: GameItemKindDef,
 }
 
+// Careful when making long item names. Item names longer than 12 characters may wrap in the inventory view!
+
 pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
     static ITEM_DEFS: OnceLock<HashMap<GameItemDefId, GameItemDef>> = OnceLock::new();
     ITEM_DEFS.get_or_init(|| {
@@ -154,9 +156,9 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
             },
         );
         m.insert(
-            "weapon_sword_rust".to_string(),
+            "weapon_claw_rustacean".to_string(),
             GameItemDef {
-                name: "Sword of the Rustacean",
+                name: "Rustacean Claw",
                 glyph: '/',
                 style: Style::default().fg(Color::Red),
                 kind: GameItemKindDef::Weapon {
