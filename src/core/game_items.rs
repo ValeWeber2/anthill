@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use core::fmt;
 use ratatui::style::Style;
 
@@ -38,24 +36,6 @@ pub struct ArmorItem(pub GameItemId);
 
 #[derive(Clone, Copy)]
 pub struct WeaponItem(pub GameItemId);
-
-impl ArmorItem {
-    pub fn try_new(def: GameItemDef, id: GameItemId) -> Option<Self> {
-        match def.kind {
-            GameItemKindDef::Armor { .. } => Some(Self(id)),
-            _ => None,
-        }
-    }
-}
-
-impl WeaponItem {
-    pub fn try_new(def: GameItemDef, id: GameItemId) -> Option<Self> {
-        match def.kind {
-            GameItemKindDef::Weapon { .. } => Some(Self(id)),
-            _ => None,
-        }
-    }
-}
 
 impl fmt::Display for ArmorItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
