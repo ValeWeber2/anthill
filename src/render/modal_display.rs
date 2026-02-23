@@ -295,6 +295,7 @@ pub enum SelectionAction {
     Debug,
 }
 
+/// Renders a prompt that allows the user to select from a collection of items.
 fn render_select_prompt(
     rect: Rect,
     buf: &mut Buffer,

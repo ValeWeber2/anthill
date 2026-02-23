@@ -64,7 +64,7 @@ impl Log {
         }
     }
 
-    /// Add plain text to the log as long as [Log::print_debug_info] is true.
+    /// Add plain debug text to the log.
     ///
     /// Use this for printing debug and development information to the log.
     pub fn debug_info(&mut self, message: String) {
@@ -74,6 +74,9 @@ impl Log {
         }
     }
 
+    /// Add plain debug text to the log.
+    ///
+    /// Use this for printing debug and development warnings to the log.
     pub fn debug_warn(&mut self, message: String) {
         let lines: Vec<&str> = message.split("\n").collect();
         for line in lines {
@@ -81,6 +84,7 @@ impl Log {
         }
     }
 
+    /// Prints the game's opening text to the console.
     pub fn print_lore(&mut self) {
         self.info(LogData::Plain("It is written in the books of old:".into()));
         self.info(LogData::Lore("..The depths are like an anthill.".into()));
@@ -108,29 +112,63 @@ fn create_log_file() -> PathBuf {
 
 #[derive(Clone)]
 pub enum LogData {
+    /// Used for plain-text debug information in the log.
     DebugInfo(String),
+
+    /// Used for plain-text debug warnings in the log.
     DebugWarn(String),
+
+    /// Used for plain-text in the log.
     Plain(String),
+
     Lore(String),
-    PlayerAttackHit { npc_name: String, damage: u16 },
-    PlayerAttackHitCritical { npc_name: String, damage: u16 },
-    PlayerAttackMiss { npc_name: String },
-    PlayerEats { item_name: String },
-    NpcAttackHit { npc_name: String, damage: u16 },
-    NpcAttackHitCritical { npc_name: String, damage: u16 },
-    NpcAttackMiss { npc_name: String },
-    NpcDied { npc_name: String },
+    PlayerAttackHit {
+        npc_name: String,
+        damage: u16,
+    },
+    PlayerAttackHitCritical {
+        npc_name: String,
+        damage: u16,
+    },
+    PlayerAttackMiss {
+        npc_name: String,
+    },
+    PlayerEats {
+        item_name: String,
+    },
+    NpcAttackHit {
+        npc_name: String,
+        damage: u16,
+    },
+    NpcAttackHitCritical {
+        npc_name: String,
+        damage: u16,
+    },
+    NpcAttackMiss {
+        npc_name: String,
+    },
+    NpcDied {
+        npc_name: String,
+    },
     InventoryFull,
     EquipmentSlotEmpty,
     UseStairsDown,
     UseStairsUp,
     NoInteraction,
     Overdose,
-    PlayerHealed { amount: u16 },
+    PlayerHealed {
+        amount: u16,
+    },
     GauntletGreeting,
-    ItemPickUp { item_name: String },
-    LevelUp { new_level: u8 },
-    LookAt { name: String },
+    ItemPickUp {
+        item_name: String,
+    },
+    LevelUp {
+        new_level: u8,
+    },
+    LookAt {
+        name: String,
+    },
     TileNotVisible,
     OutOfRange,
     TileOccupied,
@@ -147,6 +185,7 @@ impl fmt::Display for LogData {
 }
 
 impl LogData {
+    /// Converts LogData into a representation used in the Ratatui component for the game's log.
     pub fn display(&self) -> Line<'_> {
         match self {
             LogData::Plain(message) => Line::from(message.to_string()),

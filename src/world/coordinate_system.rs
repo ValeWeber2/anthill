@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::fmt;
 use std::ops::{Add, Sub};
 
@@ -39,6 +37,7 @@ impl Point {
     }
 
     /// Implements map function to apply a transformation to both the x and y coordinate.
+    #[allow(dead_code)]
     pub fn map(self, f: impl Fn(usize) -> usize) -> Self {
         Self { x: f(self.x), y: f(self.y) }
     }
@@ -92,6 +91,11 @@ impl fmt::Display for Point {
     }
 }
 
+/// Vector relating to a difference in [Point] coordinates.
+///
+/// Forms a whole number vector space together with [Point], which allows basic algebraic operations:
+/// - Addition: ([Add]): `(Point, PointVector) -> Point`
+/// - Subtraction: ([Sub]): `(Point, Point) -> PointVector`
 pub struct PointVector {
     pub x: isize,
     pub y: isize,

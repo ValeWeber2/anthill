@@ -21,6 +21,7 @@ pub struct GameItemDef {
 
 // Careful when making long item names. Item names longer than 12 characters may wrap in the inventory view!
 
+/// Lazy loads the collection of item definitions in the game.
 pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
     static ITEM_DEFS: OnceLock<HashMap<GameItemDefId, GameItemDef>> = OnceLock::new();
     ITEM_DEFS.get_or_init(|| {

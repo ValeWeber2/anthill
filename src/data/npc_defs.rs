@@ -18,6 +18,7 @@ pub struct NpcDef {
     pub stats: NpcStats,
 }
 
+/// Lazy loads the collection of npc definitions in the game.
 pub fn npc_defs() -> &'static HashMap<NpcDefId, NpcDef> {
     static NPC_DEFS: OnceLock<HashMap<NpcDefId, NpcDef>> = OnceLock::new();
     NPC_DEFS.get_or_init(|| {

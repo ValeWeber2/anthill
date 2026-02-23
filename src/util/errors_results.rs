@@ -151,6 +151,9 @@ pub enum EngineError {
 
     /// No level with the given index exists.
     LevelNotFound(usize),
+
+    /// Tried to access a cursor, but cursor wasn't found.
+    CursorNotSet,
 }
 
 impl fmt::Display for EngineError {
@@ -184,6 +187,9 @@ impl fmt::Display for EngineError {
             }
             EngineError::LevelNotFound(level_nr) => {
                 write!(f, "Could not find a level with id {}", level_nr)
+            }
+            EngineError::CursorNotSet => {
+                write!(f, "Could not find a cursor instance")
             }
         }
     }

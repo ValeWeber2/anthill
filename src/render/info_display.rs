@@ -140,6 +140,7 @@ impl InfoDisplay {
         }
     }
 
+    /// Format the player's current hit points for display.
     pub fn format_hp(&self, game: &GameState) -> Span<'_> {
         let hp_current = game.player.character.stats.base.hp_current;
         let hp_max = game.player.character.stats.base.hp_max;

@@ -48,6 +48,7 @@ impl Widget for &App {
 }
 
 impl App {
+    /// Renders the game's main UI.
     fn render_game(&self, rect: Rect, buf: &mut Buffer) {
         // Normal
         let world_width_u16: u16 = WORLD_WIDTH.try_into().unwrap();

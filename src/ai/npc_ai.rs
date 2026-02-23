@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::{
     core::{
         entity_logic::{Entity, EntityId, Npc},
@@ -9,27 +7,42 @@ use crate::{
     world::{
         coordinate_system::{Direction, Point, PointVector},
         tiles::Collision,
-        worldspace::MovementError,
     },
 };
 
 pub const AGGRO_RADIUS: usize = 6;
 
+/// State tracked for each NPC. This dictates the actions the NPC will take.
 #[derive(Default, Clone)]
 pub enum NpcAiState {
+    /// Default state, doesn't occur normally. Will result in [NpcActionKind::Wait].
     #[default]
     Inactive,
+
+    /// This is the state most NPCs are in before encountering the player. The NPC will take a step in a random direction.
     Wandering,
+
+    /// The NPC spotted the player. It will chase them and attack them.
     Aggressive,
 }
 
 pub enum NpcActionKind {
+    /// The NPC stands still and does nothing.
     Wait,
+
+    /// The NPC moves in the given Direction.
     Move(Direction),
+
+    /// The NPC attacks the player.
     Attack,
 }
 
 impl GameState {
+    /// This routine updates the NPC's [NpcAiState] and decides on a [NpcActionKind] to take according to the situation.
+    ///
+    /// # Returns
+    /// * [EngineError::NpcNotFound] if the NPC is no longer in the Level data structure.
+    /// * Ok([GameOutcome::Success]) if the action was successful.
     pub fn npc_take_turn(&mut self, npc_id: EntityId) -> GameResult {
         // Update NpcAiState
         self.npc_refresh_ai_state(npc_id)?;
@@ -52,6 +65,13 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
+    /// Decides on a [NpcActionKind] to take according to the NPC's [NpcAiState]
+    /// # Side Effect
+    /// The NPC's AI state is updated.
+    ///
+    /// # Returns
+    /// * Ok([NpcActionKind]) if an action could be decided.
+    /// * [EngineError::NpcNotFound] if the NPC is no longer in the Level data structure.
     fn npc_choose_action(&mut self, npc_id: EntityId) -> Result<NpcActionKind, GameError> {
         let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
         // let melee_area = self.current_world().get_points_in_radius(npc.pos(), 1);
@@ -87,6 +107,13 @@ impl GameState {
         Ok(action)
     }
 
+    /// Refreshes the NPC's AI state according to the situation.
+    /// # Side Effect
+    /// The NPC's AI state is updated.
+    ///
+    /// # Returns
+    /// * [EngineError::NpcNotFound] if the NPC is no longer in the Level data structure.
+    /// * [Ok] if the ai state was successfully updated.
     fn npc_refresh_ai_state(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let npc_pos: Point = {
             let npc: &Npc =
@@ -110,9 +137,4 @@ impl GameState {
 
         Ok(())
     }
-}
-
-pub enum NpcAiError {
-    MovementError(MovementError),
-    NpcNotFound,
 }

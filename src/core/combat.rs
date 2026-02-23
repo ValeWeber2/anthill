@@ -1,5 +1,4 @@
 use crate::{
-    ai::npc_ai::NpcAiError,
     core::{
         entity_logic::{Entity, EntityId},
         game::GameState,
@@ -12,7 +11,35 @@ use crate::{
     },
 };
 
+/// Defines the degrees of success an attack can have.
+enum AttackDegree {
+    /// The attack missed and nothing happens.
+    Miss,
+
+    /// The attack hits and deals the listed damage.
+    Hit(u16),
+
+    /// The attack hits critically and deals the listed damage, which is even more than on a hit.
+    CriticalHit(u16),
+}
+
 impl GameState {
+    /// Handles a player attacking an npc.
+    ///
+    /// # Side Effects
+    /// * `GameState::rng`` is used.
+    /// * Calls `Npc::stats.base.take_damage()`
+    /// * Calls `GameState::player_add_experience()`
+    /// * Calls `Level::despawn()`
+    ///
+    /// # Errors
+    /// * [EngineError::NpcNotFound] if the NPC with the given id could not be found in the current Level.
+    /// * [DataError::MissingItemDefinition] if the player's weapon has no definition.
+    /// * [EngineError::UnregisteredItem] if the player's weapon is not registered.
+    /// * [EngineError::InvalidItem] if the player's item equipped in the weapon slot is not a valid weapon.
+    ///
+    /// # Returns
+    /// * [GameOutcome::Success] if the attack resolution was successful.
     pub fn player_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
         // Fetching values
         let npc = self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
@@ -72,6 +99,23 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
+    /// Handles a player attacking an npc with a ranged weapon. Conducts all checks required to validate the ranged attack and then calls [GameState::player_attack_npc]
+    /// Find side effects and returns [GameState::player_attack_npc].
+    ///
+    /// # Side Effects
+    /// Calls [GameState::player_attack_npc] (with all its side effects)
+    ///
+    /// # Errors
+    /// * [EngineError::NpcNotFound] if the NPC with the given id could not be found in the current Level.
+    /// * [DataError::MissingItemDefinition] if the player's weapon has no definition.
+    /// * [EngineError::UnregisteredItem] if the player's weapon is not registered.
+    /// * [EngineError::InvalidItem] if the player's item equipped in the weapon slot is not a valid weapon and not ranged.
+    ///
+    /// # Returns
+    /// * [GameOutcome::Fail] with [FailReason::InvalidTarget] if the target is invalid for a ranged attack.
+    /// * [GameOutcome::Fail] with [FailReason::EquipmentSlotEmpty] if the player has no weapon equipped.
+    /// * [GameOutcome::Fail] with [FailReason::EquipmentSlotEmpty] if the player has no weapon equipped.
+    /// * [GameOutcome::Fail] with [FailReason::OutOfRange] if the ranged weapon's range is not sufficient for the attack.
     pub fn player_ranged_attack_npc(&mut self, npc_id: EntityId) -> GameResult {
         let Some(npc) = self.current_level().get_npc(npc_id) else {
             return Ok(GameOutcome::Fail(FailReason::InvalidTarget(npc_id))); // Target entity is not an npc
@@ -99,9 +143,17 @@ impl GameState {
         self.player_attack_npc(npc_id)
     }
 
-    pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), NpcAiError> {
+    /// Handles an NPC attacking a player.
+    ///
+    /// # Errors
+    /// * [EngineError::NpcNotFound] if the NPC with the given id could not be found in the current Level.
+    ///
+    /// # Returns
+    /// * [Ok] if the procedure was successful.
+    pub fn npc_attack_player(&mut self, npc_id: EntityId) -> Result<(), GameError> {
         let (npc_name, npc_damage) = {
-            let npc = self.current_level().get_npc(npc_id).ok_or(NpcAiError::NpcNotFound)?;
+            let npc =
+                self.current_level().get_npc(npc_id).ok_or(EngineError::NpcNotFound(npc_id))?;
             (npc.base.name.to_string(), npc.stats.damage)
         };
 
@@ -168,13 +220,25 @@ impl GameState {
         }
     }
 
+    /// Retrieves the player's weapon stats in a tuple.
+    ///
+    /// # Errors
+    /// * [EngineError::UnregisteredItem] if the Player's weapon is not registered.
+    /// * [DataError::MissingItemDefinition] if the Player's weapon has no definition.
+    /// * [EngineError::InvalidItem] if the Player's item equipped as weapon is not a weapon.
+    ///
+    /// # Returns
+    /// A tuple containing the statistics of the weapon
+    /// * 0 - Damage (as [Roll])
+    /// * 1 - Crit Chance (as [u8])
+    /// * 2 - Range of the attack (as [AttackRange])
     fn get_player_weapon_stats(&self) -> Result<(Roll, u8, AttackRange), GameError> {
         if let Some(weapon) = &self.player.character.weapon {
-            let item_id =
+            let item =
                 self.get_item_by_id(weapon.0).ok_or(EngineError::UnregisteredItem(weapon.0))?;
             let item_def = self
-                .get_item_def_by_id(&item_id.def_id)
-                .ok_or(DataError::MissingItemDefinition(item_id.def_id))?;
+                .get_item_def_by_id(&item.def_id)
+                .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
             match item_def.kind {
                 GameItemKindDef::Weapon { damage, crit_chance, range } => {
@@ -187,24 +251,32 @@ impl GameState {
         }
     }
 
-    fn get_player_armor_mitigation(&self) -> Result<u16, &'static str> {
+    /// Retrieves the player's armor's mitigation statistic.
+    ///
+    /// # Errors
+    /// * [EngineError::UnregisteredItem] if the Player's weapon is not registered.
+    /// * [DataError::MissingItemDefinition] if the Player's weapon has no definition.
+    /// * [EngineError::InvalidItem] if the Player's item equipped as weapon is not a weapon.
+    ///
+    /// # Returns
+    /// A tuple containing the statistics of the weapon
+    /// * 0 - Damage (as [Roll])
+    /// * 1 - Crit Chance (as [u8])
+    /// * 2 - Range of the attack (as [AttackRange])
+    fn get_player_armor_mitigation(&self) -> Result<u16, GameError> {
         if let Some(armor) = &self.player.character.armor {
-            let item_id = self.get_item_by_id(armor.0).ok_or("The item is not registered")?;
-            let item_def =
-                self.get_item_def_by_id(&item_id.def_id).ok_or("The item is not defined")?;
+            let item =
+                self.get_item_by_id(armor.0).ok_or(EngineError::UnregisteredItem(armor.0))?;
+            let item_def = self
+                .get_item_def_by_id(&item.def_id)
+                .ok_or(DataError::MissingItemDefinition(item.def_id))?;
 
             match item_def.kind {
                 GameItemKindDef::Armor { mitigation } => Ok(mitigation),
-                _ => Err("The given item is not a weapon"),
+                _ => Err(GameError::from(EngineError::InvalidItem(item_def.kind))),
             }
         } else {
             Ok(0)
         }
     }
-}
-
-enum AttackDegree {
-    Miss,
-    Hit(u16),
-    CriticalHit(u16),
 }

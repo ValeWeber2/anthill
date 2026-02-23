@@ -8,14 +8,21 @@ use crate::world::tiles::Collision;
 // Max iterations the A* algorithm is allowed to run with.
 const MAX_ITERS: usize = 200;
 
+// Node representing one step in the A* algorithm.
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct Node {
+    // Coordinates of the step.
     point: Point,
+
+    // G-statistic of A*. Cost of the path from the starting node to the current node.
     g: usize,
+
+    // H-statistic of A*. Heustistically calculated distance to the goal node.
     h: usize,
 }
 
 impl Node {
+    // F-statistic of A*. Estimated cost of the cheapest path from the start to the goal through the current node.
     fn f(&self) -> usize {
         self.g + self.h
     }
@@ -33,6 +40,10 @@ impl PartialOrd for Node {
     }
 }
 
+/// Heuristic for A*. Uses the squared euclidean distance (a^2 + b^2) to gauge distance.
+///
+/// # Note
+/// Special case, when the distance is = 1. If the distance is = 1, but diagonal, returns 2.
 fn heuristic(a: Point, b: Point) -> usize {
     let distance = a.distance_squared_from(b);
 
@@ -46,6 +57,10 @@ fn heuristic(a: Point, b: Point) -> usize {
 
 impl GameState {
     /// Uses the A* algorithm to find the next direction to move in.
+    ///
+    /// # Returns
+    /// * [None] if no path could be found
+    /// * Some([Direction]) for the next required step
     pub fn next_step_toward(&self, start: Point, goal: Point) -> Option<Direction> {
         let a_star_path: Vec<Point> = a_star(start, goal, |point| {
             if !self.current_world().get_tile(point).tile_type.is_walkable() {
@@ -68,6 +83,12 @@ impl GameState {
 /// A* Algorithm to find the shortest path between two Points on the Map.
 ///
 /// Taken from [idiomatic-rust-snippets.org](https://idiomatic-rust-snippets.org/algorithms/graph/a-star.html) and adapted to our world space.
+/// Modified to use a cost closure instead of a closed list.
+///
+/// # Arguments
+/// * start - Start point of A*.
+/// * goal - Goal point of A*.
+/// * cost - Cost Function that takes in a Point and returns its cost. The cost can either be [usize] (representing cost) or [None] (representing a forbidden Point).
 pub fn a_star<F>(start: Point, goal: Point, mut cost: F) -> Option<Vec<Point>>
 where
     F: FnMut(Point) -> Option<usize>,
