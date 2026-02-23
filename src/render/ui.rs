@@ -260,9 +260,14 @@ fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {
     let lines = [
         format!("Goodbye, {}", game.player.character.name()),
         "You have died in the Anthill".into(),
+        format!("You reached floor {}", game.level_nr),
+        format!(
+            "You were level {} with {} EXP",
+            game.player.character.stats.level, game.player.character.stats.experience
+        ),
         "".into(),
         "Press ENTER to start a new game".into(),
-        "Press Q to quit".into(),
+        "Press SHIFT + q to quit".into(),
     ];
 
     let text = Text::from(lines.iter().map(|l| Line::from(l.as_str())).collect::<Vec<Line>>());
