@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::core::buff_effects::{ActiveBuff, PotionEffectDef, PotionType, PotionUsage};
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
-use crate::core::game::GameState;
+use crate::core::game::{GameRules, GameState};
 use crate::core::game_items::{ArmorItem, GameItemId, WeaponItem};
 use crate::util::text_log::LogData;
 use crate::world::coordinate_system::Point;
@@ -167,6 +167,13 @@ impl GameState {
         if did_level_up {
             self.log.info(LogData::LevelUp { new_level: self.player.character.stats.level });
         }
+    }
+
+    pub fn player_is_alive(&self) -> bool {
+        if self.game_rules.contains(GameRules::GOD_MODE) {
+            return true;
+        }
+        self.player.character.is_alive()
     }
 }
 

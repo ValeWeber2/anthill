@@ -212,7 +212,8 @@ fn render_help(area: Rect, buf: &mut Buffer) {
     const COMMAND_WIDTHS: [Constraint; 2] =
         [Constraint::Percentage(19), Constraint::Percentage(81)];
 
-    let player_commands = [GameCommand::Quit, GameCommand::Help, GameCommand::PlayerInfo];
+    let player_commands =
+        [GameCommand::Quit, GameCommand::Help, GameCommand::PlayerInfo, GameCommand::Legend];
 
     let mut player_command_rows = Vec::with_capacity(player_commands.len() + 2);
     player_command_rows.push(Row::new(vec![""]));
@@ -233,7 +234,7 @@ fn render_help(area: Rect, buf: &mut Buffer) {
         GameCommand::Give { item_def: "".into(), amount: 0 }, // dummy
         GameCommand::RevealAll,
         GameCommand::NoClip,
-        GameCommand::Legend,
+        GameCommand::GodMode,
     ];
 
     let mut dev_command_rows = Vec::with_capacity(dev_commands.len() + 3);

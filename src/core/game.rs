@@ -158,6 +158,7 @@ bitflags! {
     pub struct GameRules: u8 {
         // This disables collision detection for the player, allowing them to walk through walls.
         const NO_CLIP = 0b00000001;
+        const GOD_MODE = 0b00000010;
     }
 }
 

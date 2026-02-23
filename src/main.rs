@@ -57,7 +57,7 @@ impl App {
         execute!(std::io::stdout(), EnableMouseCapture,)?;
 
         while !self.should_quit {
-            if self.state == State::Playing && !self.game.player.character.is_alive() {
+            if self.state == State::Playing && !self.game.player_is_alive() {
                 self.state = State::GameOver;
             }
             terminal.draw(|frame| frame.render_widget(&self, frame.area()))?;
