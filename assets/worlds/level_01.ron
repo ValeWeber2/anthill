@@ -167,7 +167,7 @@ LevelData(
     ],
 
     entry: Point(x: 24, y: 10),
-    exit: Point(x: 79, y: 11),
+    exit: Point(x: 10, y: 10),
 
     spawns: [
         //NPCs
