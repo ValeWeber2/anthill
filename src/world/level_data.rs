@@ -56,6 +56,7 @@ pub enum TileTypeData {
     Door(DoorTypeData),
     StairsDown,
     StairsUp,
+    Sign(char),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -115,9 +116,14 @@ impl World {
                 TileTypeData::Door(DoorTypeData::Archway) => TileType::Door(DoorType::Archway),
                 TileTypeData::Door(DoorTypeData::Open) => TileType::Door(DoorType::Open),
                 TileTypeData::Door(DoorTypeData::Closed) => TileType::Door(DoorType::Closed),
+                TileTypeData::Sign(c) => TileType::Sign(c),
             };
 
-            self.tiles[idx] = Tile::new(tile_type);
+            if matches!(tile_type, TileType::Sign(_)) {
+                self.tiles[idx] = Tile { tile_type, visible: true, explored: true }
+            } else {
+                self.tiles[idx] = Tile::new(tile_type);
+            }
         }
 
         for corridor_point in &data.corridors {

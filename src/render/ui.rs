@@ -105,7 +105,8 @@ impl App {
 
         // AREA: World Space
         // (Space actually occupied by tiles)
-        let block_world = Block::default().title(" World Space ").borders(Borders::ALL);
+        let block_world =
+            Block::default().borders(Borders::ALL).border_style(Style::new().fg(Color::DarkGray));
         let block_world_inner = block_world.inner(area_worldspace);
         block_world.render(area_worldspace, buf);
 

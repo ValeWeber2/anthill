@@ -1,6 +1,35 @@
 #![allow(dead_code)]
 
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
+
+/// A trait for giving something a visual representation in the TUI style.
+pub trait Drawable {
+    /// Returns the unicode `char` to be used in the graphical representation.
+    fn glyph(&self) -> char;
+
+    /// Returns the [ratatui] [Style] to be used in the graphical representation.
+    fn style(&self) -> Style;
+}
+
+/// A trait for defining whether something can be walked through by the player and NPCs or not.
+pub trait Collision {
+    /// Returns a boolean denoting whether something can be walked through or not.
+    fn is_walkable(&self) -> bool;
+}
+
+/// A trait for defining whether an object is opaque or see-through.
+///
+/// This is used in the field-of-view system, determining player vision.
+pub trait Opacity {
+    /// Returns a boolean denoting whether something is opaque (`true`) or see-through (`false`).
+    fn is_opaque(&self) -> bool;
+}
+
+/// A trait for defining if an object is interactable and what game interaction it creates.
+pub trait Interactable {
+    /// Returns a boolean denoting whether something is interactable (`true`) or has no defined interactions (`false`).
+    fn is_interactable(&self) -> bool;
+}
 
 /// Represents the basic building block of the world.
 ///
@@ -67,22 +96,9 @@ pub enum TileType {
 
     /// Stairs that lead back up the dungeon floors
     StairsUp,
-}
 
-impl std::fmt::Display for TileType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TileType::Void => write!(f, "Nothing"),
-            TileType::Floor => write!(f, "Floor"),
-            TileType::Wall => write!(f, "Wall"),
-            TileType::Hallway => write!(f, "Hallway"),
-            TileType::Door(DoorType::Archway) => write!(f, "Archway"),
-            TileType::Door(DoorType::Closed) => write!(f, "Closed Door"),
-            TileType::Door(DoorType::Open) => write!(f, "Open Door"),
-            TileType::StairsDown => write!(f, "Stairs leading further down..."),
-            TileType::StairsUp => write!(f, "Stairs leading back up."),
-        }
-    }
+    /// A sign, allowing you to display a letter in the world.
+    Sign(char),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -97,33 +113,21 @@ pub enum DoorType {
     Archway,
 }
 
-/// A trait for giving something a visual representation in the TUI style.
-pub trait Drawable {
-    /// Returns the unicode `char` to be used in the graphical representation.
-    fn glyph(&self) -> char;
-
-    /// Returns the [ratatui] [Style] to be used in the graphical representation.
-    fn style(&self) -> Style;
-}
-
-/// A trait for defining whether something can be walked through by the player and NPCs or not.
-pub trait Collision {
-    /// Returns a boolean denoting whether something can be walked through or not.
-    fn is_walkable(&self) -> bool;
-}
-
-/// A trait for defining whether an object is opaque or see-through.
-///
-/// This is used in the field-of-view system, determining player vision.
-pub trait Opacity {
-    /// Returns a boolean denoting whether something is opaque (`true`) or see-through (`false`).
-    fn is_opaque(&self) -> bool;
-}
-
-/// A trait for defining if an object is interactable and what game interaction it creates.
-pub trait Interactable {
-    /// Returns a boolean denoting whether something is interactable (`true`) or has no defined interactions (`false`).
-    fn is_interactable(&self) -> bool;
+impl std::fmt::Display for TileType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TileType::Void => write!(f, "Nothing"),
+            TileType::Floor => write!(f, "Floor"),
+            TileType::Wall => write!(f, "Wall"),
+            TileType::Hallway => write!(f, "Hallway"),
+            TileType::Door(DoorType::Archway) => write!(f, "Archway"),
+            TileType::Door(DoorType::Closed) => write!(f, "Closed Door"),
+            TileType::Door(DoorType::Open) => write!(f, "Open Door"),
+            TileType::StairsDown => write!(f, "Stairs leading further down..."),
+            TileType::StairsUp => write!(f, "Stairs leading back up."),
+            TileType::Sign(c) => write!(f, "A sign of the letter {c}"),
+        }
+    }
 }
 
 impl Collision for TileType {
@@ -138,6 +142,7 @@ impl Collision for TileType {
             TileType::Door(DoorType::Archway) => true,
             TileType::StairsDown => true,
             TileType::StairsUp => true,
+            TileType::Sign(_) => false,
         }
     }
 }
@@ -156,6 +161,7 @@ impl Drawable for TileType {
             TileType::Door(DoorType::Closed) => '+',
             TileType::StairsDown => '>',
             TileType::StairsUp => '<',
+            TileType::Sign(c) => *c,
         }
     }
     fn style(&self) -> Style {
@@ -168,6 +174,7 @@ impl Drawable for TileType {
             TileType::Door(_) => Style::default().fg(Color::Yellow),
             TileType::StairsDown => Style::default().fg(Color::White),
             TileType::StairsUp => Style::default().fg(Color::White),
+            TileType::Sign(_) => Style::default().fg(Color::White).add_modifier(Modifier::ITALIC),
         }
     }
 }
@@ -184,6 +191,7 @@ impl Opacity for TileType {
             TileType::Door(DoorType::Archway) => false,
             TileType::StairsDown => false,
             TileType::StairsUp => false,
+            TileType::Sign(_) => false,
         }
     }
 }
@@ -200,6 +208,7 @@ impl Interactable for TileType {
             TileType::Door(DoorType::Archway) => false,
             TileType::StairsDown => true,
             TileType::StairsUp => true,
+            TileType::Sign(_) => false,
         }
     }
 }

@@ -48,11 +48,10 @@ impl WorldDisplay {
                         cell_content.set_char(tile.tile_type.glyph());
                     }
 
+                    cell_content.set_style(tile.tile_type.style());
                     // Invisible explored tiles are styled in a shade of grey, others normally
                     if !tile.visible && tile.explored {
-                        cell_content.set_style(Style::default().fg(Color::DarkGray));
-                    } else {
-                        cell_content.set_style(tile.tile_type.style());
+                        cell_content.set_fg(Color::DarkGray);
                     }
                 }
             }

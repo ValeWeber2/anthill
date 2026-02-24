@@ -40,14 +40,14 @@ impl From<ViewPoint> for Point {
 
 /// The entrypoint to the program. Call this function to compute the field of view from an origin tile.
 fn compute_fov(origin: Point, world: &mut World) {
-    // Make the tile of origin (where player is) visible and explored
-    world.mark_visible(origin);
-    world.mark_explored(origin);
-
     // Make all tiles invisible
     for tile in world.tiles.iter_mut() {
         tile.make_invisible();
     }
+
+    // Make the tile of origin (where player is) visible and explored
+    world.mark_visible(origin);
+    world.mark_explored(origin);
 
     // Determine which tiles to make visible
     for direction in Direction::iter() {

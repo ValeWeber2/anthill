@@ -1,244 +1,279 @@
 LevelData(
-  width: 100,
-  height: 25,
+    width: 100,
+    height: 25,
 
-  rooms: [
-    RoomData(x: 10, y: 5,  width: 14,  height: 9),  // Raum 1
-    RoomData(x: 35, y: 5,  width: 19,  height: 11), // Raum 2
-    RoomData(x: 65, y: 8,  width: 17,  height: 9),  // Raum 3
-    RoomData(x: 12, y: 17, width: 4,   height: 4),  // Raum 4
-    RoomData(x: 51, y: 20, width: 10,  height: 3),  // Raum 5
-    RoomData(x: 61, y: 1,  width: 15,  height: 4),  // Raum 6
-  ],
+    rooms: [
+        RoomData(x: 20, y: 6, width: 8, height: 8), // Spawn Room
+        RoomData(x: 7, y: 7,  width: 6,  height: 6),  // Stair Room
+        RoomData(x: 35, y: 6,  width: 18,  height: 8), // Frog Room
+        RoomData(x: 65, y: 8,  width: 17,  height: 9),  // Armor Room
+        RoomData(x: 51, y: 20, width: 10,  height: 3),  // Potion Room 1
+        RoomData(x: 61, y: 1,  width: 15,  height: 4),  // Potion Room 2
+        RoomData(x: 6, y: 16, width: 11,   height: 6),  // Boss Room
+    ],
 
-  tiles: [ 
-    TileData(x: 25, y: 10, tile_type: Hallway), // Raum 1 -> Raum 2
-    TileData(x: 26, y: 10, tile_type: Hallway),
-    TileData(x: 27, y: 10, tile_type: Hallway),
-    TileData(x: 28, y: 10, tile_type: Hallway),
-    TileData(x: 29, y: 10, tile_type: Hallway),
-    TileData(x: 30, y: 10, tile_type: Hallway),
-    TileData(x: 31, y: 10, tile_type: Hallway),
-    TileData(x: 32, y: 10, tile_type: Hallway),
-    TileData(x: 33, y: 10, tile_type: Hallway),
-    TileData(x: 34, y: 10, tile_type: Hallway),
+    tiles: [ 
+        // Signs
+        TileData(x: 14, y: 4, tile_type: Sign('<')),
+        TileData(x: 15, y: 4, tile_type: Sign('-')),
+        TileData(x: 16, y: 4, tile_type: Sign('-')),
+        TileData(x: 18, y: 4, tile_type: Sign('S')),
+        TileData(x: 19, y: 4, tile_type: Sign('T')),
+        TileData(x: 20, y: 4, tile_type: Sign('A')),
+        TileData(x: 21, y: 4, tile_type: Sign('R')),
+        TileData(x: 22, y: 4, tile_type: Sign('T')),
+        TileData(x: 26, y: 4, tile_type: Sign('T')),
+        TileData(x: 27, y: 4, tile_type: Sign('U')),
+        TileData(x: 28, y: 4, tile_type: Sign('T')),
+        TileData(x: 29, y: 4, tile_type: Sign('O')),
+        TileData(x: 30, y: 4, tile_type: Sign('R')),
+        TileData(x: 31, y: 4, tile_type: Sign('I')),
+        TileData(x: 32, y: 4, tile_type: Sign('A')),
+        TileData(x: 33, y: 4, tile_type: Sign('L')),
+        TileData(x: 35, y: 4, tile_type: Sign('-')),
+        TileData(x: 36, y: 4, tile_type: Sign('-')),
+        TileData(x: 37, y: 4, tile_type: Sign('>')),
 
-    TileData(x: 30, y: 11, tile_type: Hallway), // Hallway 1/2 -> Hallway 2/4
-    TileData(x: 30, y: 12, tile_type: Hallway),
-    TileData(x: 30, y: 13, tile_type: Hallway),
-    TileData(x: 30, y: 14, tile_type: Hallway),
-    TileData(x: 30, y: 15, tile_type: Hallway),
-    TileData(x: 30, y: 16, tile_type: Hallway),
-    TileData(x: 30, y: 17, tile_type: Hallway),
-    TileData(x: 29, y: 17, tile_type: Hallway),
-    TileData(x: 28, y: 17, tile_type: Hallway),
-    TileData(x: 27, y: 17, tile_type: Hallway),
-    TileData(x: 27, y: 18, tile_type: Hallway),
-    TileData(x: 27, y: 19, tile_type: Hallway),
+        // Spawn Room -> Stair Room
+        TileData(x: 13, y: 10, tile_type: Door(Archway)),
+        TileData(x: 14, y: 10, tile_type: Hallway),
+        TileData(x: 15, y: 10, tile_type: Hallway),
+        TileData(x: 16, y: 10, tile_type: Hallway),
+        TileData(x: 17, y: 10, tile_type: Hallway),
+        TileData(x: 18, y: 10, tile_type: Hallway),
+        TileData(x: 19, y: 10, tile_type: Hallway),
+        TileData(x: 20, y: 10, tile_type: Door(Closed)),
 
+        // Spawn Room -> Frog Room
+        TileData(x: 28, y: 10, tile_type: Door(Closed)),
+        TileData(x: 29, y: 10, tile_type: Hallway),
+        TileData(x: 30, y: 10, tile_type: Hallway),
+        TileData(x: 31, y: 10, tile_type: Hallway),
+        TileData(x: 32, y: 10, tile_type: Hallway),
+        TileData(x: 33, y: 10, tile_type: Hallway),
+        TileData(x: 34, y: 10, tile_type: Hallway),
+        TileData(x: 35, y: 10, tile_type: Door(Archway)),
 
-    TileData(x: 39, y: 19, tile_type: Hallway), // Raum 2 -> Raum 4
-    TileData(x: 38, y: 19, tile_type: Hallway),
-    TileData(x: 37, y: 19, tile_type: Hallway),
-    TileData(x: 36, y: 19, tile_type: Hallway),
-    TileData(x: 35, y: 19, tile_type: Hallway),
-    TileData(x: 34, y: 19, tile_type: Hallway),
-    TileData(x: 33, y: 19, tile_type: Hallway),
-    TileData(x: 32, y: 19, tile_type: Hallway),
-    TileData(x: 31, y: 19, tile_type: Hallway),
-    TileData(x: 30, y: 19, tile_type: Hallway),
-    TileData(x: 29, y: 19, tile_type: Hallway),
-    TileData(x: 28, y: 19, tile_type: Hallway),
-    TileData(x: 27, y: 19, tile_type: Hallway),
-    TileData(x: 26, y: 19, tile_type: Hallway),
-    TileData(x: 25, y: 19, tile_type: Hallway),
-    TileData(x: 24, y: 19, tile_type: Hallway),
-    TileData(x: 23, y: 19, tile_type: Hallway),
-    TileData(x: 22, y: 19, tile_type: Hallway),
-    TileData(x: 21, y: 19, tile_type: Hallway),
-    TileData(x: 20, y: 19, tile_type: Hallway),
-    TileData(x: 19, y: 19, tile_type: Hallway),
-    TileData(x: 18, y: 19, tile_type: Hallway),
-    TileData(x: 17, y: 19, tile_type: Hallway),
-    TileData(x: 39, y: 19, tile_type: Hallway),
-    TileData(x: 39, y: 18, tile_type: Hallway),
-    TileData(x: 39, y: 17, tile_type: Hallway),
-
-    TileData(x: 55, y: 13, tile_type: Hallway), // Raum 2 -> Raum 3
-    TileData(x: 56, y: 13, tile_type: Hallway),
-    TileData(x: 57, y: 13, tile_type: Hallway),
-    TileData(x: 58, y: 13, tile_type: Hallway),
-    TileData(x: 59, y: 13, tile_type: Hallway),
-    TileData(x: 60, y: 13, tile_type: Hallway),
-    TileData(x: 61, y: 13, tile_type: Hallway),
-    TileData(x: 62, y: 13, tile_type: Hallway),
-    TileData(x: 63, y: 13, tile_type: Hallway),
-    TileData(x: 64, y: 13, tile_type: Hallway),
-
-    TileData(x: 53, y: 19, tile_type: Hallway),
-    TileData(x: 53, y: 18, tile_type: Hallway),
-    TileData(x: 54, y: 18, tile_type: Hallway),
-    TileData(x: 55, y: 18, tile_type: Hallway),
-    TileData(x: 56, y: 18, tile_type: Hallway),
-    TileData(x: 57, y: 18, tile_type: Hallway),
-    TileData(x: 57, y: 17, tile_type: Hallway),
-    TileData(x: 57, y: 16, tile_type: Hallway),
-    TileData(x: 57, y: 15, tile_type: Hallway),
-    TileData(x: 57, y: 14, tile_type: Hallway),
-
-    TileData(x: 77, y: 7, tile_type: Hallway),
-    TileData(x: 76, y: 7, tile_type: Hallway),
-    TileData(x: 75, y: 7, tile_type: Hallway),
-    TileData(x: 74, y: 7, tile_type: Hallway),
-    TileData(x: 73, y: 7, tile_type: Hallway),
-    TileData(x: 72, y: 7, tile_type: Hallway),
-    TileData(x: 71, y: 7, tile_type: Hallway),
-    TileData(x: 71, y: 6, tile_type: Hallway),
-    TileData(x: 71, y: 6, tile_type: Hallway),
-    TileData(x: 70, y: 6, tile_type: Hallway),
-    TileData(x: 69, y: 6, tile_type: Hallway),
-    TileData(x: 68, y: 6, tile_type: Hallway),
-    TileData(x: 67, y: 6, tile_type: Hallway),
-    TileData(x: 66, y: 6, tile_type: Hallway),
-    TileData(x: 65, y: 6, tile_type: Hallway),
-    TileData(x: 64, y: 6, tile_type: Hallway),
-
-    
-    
-    TileData(x: 79, y: 11, tile_type: StairsDown),
-
-    TileData(x: 24, y: 10, tile_type: Door(Archway)),
-    TileData(x: 35, y: 10, tile_type: Door(Archway)),
-    TileData(x: 39, y: 16, tile_type: Door(Archway)),
-    TileData(x: 16, y: 19, tile_type: Door(Archway)),
-    TileData(x: 54, y: 13, tile_type: Door(Archway)),
-    TileData(x: 65, y: 13, tile_type: Door(Archway)),
-    TileData(x: 53, y: 20, tile_type: Door(Archway)),
-    TileData(x: 64, y: 5,  tile_type: Door(Archway)),
-    TileData(x: 77, y: 8,  tile_type: Door(Archway)),
-  ],
-
-  entry: Point(x: 11, y: 6),
-  exit: Point(x: 79, y: 11),
-
-  spawns: [
-    //NPCs
-
-    SpawnData(
-      x: 50,
-      y: 10,
-      kind: Npc(def_id: "goblin"),
-    ),
-
-    SpawnData(
-      x: 22,
-      y: 12,
-      kind: Npc(def_id: "funny_frog"),
-    ),
-
-    SpawnData(
-      x: 12,
-      y: 13,
-      kind: Npc(def_id: "funny_frog"),
-    ),
-
-    SpawnData(
-      x: 48,
-      y: 15,
-      kind: Npc(def_id: "skeleton"),
-    ),
-
-    SpawnData(
-      x: 51,
-      y: 6,
-      kind: Npc(def_id: "skeleton"),
-    ),
-
-    SpawnData(
-      x: 60,
-      y: 22,
-      kind: Npc(def_id: "funny_frog"),
-    ),
-
-    SpawnData(
-      x: 78,
-      y: 14,
-      kind: Npc(def_id: "giant_rat"),
-    ),
-
-    SpawnData(
-      x: 73,
-      y: 2,
-      kind: Npc(def_id: "giant_rat"),
-    ),
-
-    //Items on ground
-
-    SpawnData(
-      x: 14,
-      y: 19,
-      kind: Item(def_id: "weapon_sword_dull"),
-    ),
-
-    SpawnData(
-      x: 36,
-      y: 8,
-      kind: Item(def_id: "armor_leather"),
-    ),
-
-    SpawnData(
-      x: 42,
-      y: 12,
-      kind: Item(def_id: "food_cake"),
-    ),
-
-    SpawnData(
-      x: 20,
-      y: 13,
-      kind: Item(def_id: "armor_shield"),
-    ),
-
-    SpawnData(
-      x: 52,
-      y: 8,
-      kind: Item(def_id: "food_fish"),
-    ),
-
-    SpawnData(
-      x: 56,
-      y: 21,
-      kind: Item(def_id: "food_meat"),
-    ),
-
-    SpawnData(
-      x: 59,
-      y: 22,
-      kind: Item(def_id: "potion_healing_small"),
-    ),
-
-    SpawnData(
-      x: 69,
-      y: 3,
-      kind: Item(def_id: "potion_strength"),
-    ),
-
-    SpawnData(
-      x: 73,
-      y: 4,
-      kind: Item(def_id: "food_fish"),
-    ),
+        // Hallway (Spawn Room -> Frog Room) -> Hallway (Potion Room 2 -> Boss Room)
+        TileData(x: 30, y: 11, tile_type: Hallway),
+        TileData(x: 30, y: 12, tile_type: Hallway),
+        TileData(x: 30, y: 13, tile_type: Hallway),
+        TileData(x: 30, y: 14, tile_type: Hallway),
+        TileData(x: 30, y: 15, tile_type: Hallway),
+        TileData(x: 30, y: 16, tile_type: Hallway),
+        TileData(x: 30, y: 17, tile_type: Hallway),
+        TileData(x: 29, y: 17, tile_type: Hallway),
+        TileData(x: 28, y: 17, tile_type: Hallway),
+        TileData(x: 27, y: 17, tile_type: Hallway),
+        TileData(x: 27, y: 18, tile_type: Hallway),
+        TileData(x: 27, y: 19, tile_type: Hallway),
 
 
-    SpawnData(
-      x: 69,
-      y: 10,
-      kind: Item(def_id: "food_mushroom"),
-    ),
+        // Potion Room 2 -> Boss Room
+        TileData(x: 39, y: 19, tile_type: Hallway),
+        TileData(x: 38, y: 19, tile_type: Hallway),
+        TileData(x: 37, y: 19, tile_type: Hallway),
+        TileData(x: 36, y: 19, tile_type: Hallway),
+        TileData(x: 35, y: 19, tile_type: Hallway),
+        TileData(x: 34, y: 19, tile_type: Hallway),
+        TileData(x: 33, y: 19, tile_type: Hallway),
+        TileData(x: 32, y: 19, tile_type: Hallway),
+        TileData(x: 31, y: 19, tile_type: Hallway),
+        TileData(x: 30, y: 19, tile_type: Hallway),
+        TileData(x: 29, y: 19, tile_type: Hallway),
+        TileData(x: 28, y: 19, tile_type: Hallway),
+        TileData(x: 27, y: 19, tile_type: Hallway),
+        TileData(x: 26, y: 19, tile_type: Hallway),
+        TileData(x: 25, y: 19, tile_type: Hallway),
+        TileData(x: 24, y: 19, tile_type: Hallway),
+        TileData(x: 23, y: 19, tile_type: Hallway),
+        TileData(x: 22, y: 19, tile_type: Hallway),
+        TileData(x: 21, y: 19, tile_type: Hallway),
+        TileData(x: 20, y: 19, tile_type: Hallway),
+        TileData(x: 19, y: 19, tile_type: Hallway),
+        TileData(x: 18, y: 19, tile_type: Hallway),
+        TileData(x: 17, y: 19, tile_type: Door(Closed)),
+        TileData(x: 39, y: 19, tile_type: Hallway),
+        TileData(x: 39, y: 18, tile_type: Hallway),
+        TileData(x: 40, y: 18, tile_type: Hallway),
+        TileData(x: 41, y: 18, tile_type: Hallway),
+        TileData(x: 42, y: 18, tile_type: Hallway),
+        TileData(x: 43, y: 18, tile_type: Hallway),
+        TileData(x: 44, y: 18, tile_type: Hallway),
+        TileData(x: 45, y: 18, tile_type: Hallway),
+        TileData(x: 46, y: 18, tile_type: Hallway),
+        TileData(x: 47, y: 18, tile_type: Hallway),
+        TileData(x: 48, y: 18, tile_type: Hallway),
+        TileData(x: 49, y: 18, tile_type: Hallway),
+        TileData(x: 50, y: 18, tile_type: Hallway),
+        TileData(x: 51, y: 18, tile_type: Hallway),
+        TileData(x: 52, y: 18, tile_type: Hallway),
+        TileData(x: 53, y: 18, tile_type: Hallway),
+        TileData(x: 53, y: 19, tile_type: Hallway),
+        TileData(x: 53, y: 20, tile_type: Door(Archway)),
 
-  SpawnData(
-      x: 71,
-      y: 11,
-      kind: Item(def_id: "food_mushroom"),
-    ),
-  ],
+        // Frog Room -> Armor Room
+        TileData(x: 53, y: 13, tile_type: Door(Archway)),
+        TileData(x: 54, y: 13, tile_type: Hallway),
+        TileData(x: 55, y: 13, tile_type: Hallway),
+        TileData(x: 56, y: 13, tile_type: Hallway),
+        TileData(x: 57, y: 13, tile_type: Hallway),
+        TileData(x: 58, y: 13, tile_type: Hallway),
+        TileData(x: 59, y: 13, tile_type: Hallway),
+        TileData(x: 60, y: 13, tile_type: Hallway),
+        TileData(x: 61, y: 13, tile_type: Hallway),
+        TileData(x: 62, y: 13, tile_type: Hallway),
+        TileData(x: 63, y: 13, tile_type: Hallway),
+        TileData(x: 64, y: 13, tile_type: Hallway),
+        TileData(x: 65, y: 13, tile_type: Door(Archway)),
+
+        // Hallway (Frog Room -> Armor Room) -> Hallway (Potion Room 2 -> Boss Room)
+        TileData(x: 54, y: 18, tile_type: Hallway),
+        TileData(x: 55, y: 18, tile_type: Hallway),
+        TileData(x: 56, y: 18, tile_type: Hallway),
+        TileData(x: 57, y: 18, tile_type: Hallway),
+        TileData(x: 57, y: 17, tile_type: Hallway),
+        TileData(x: 57, y: 16, tile_type: Hallway),
+        TileData(x: 57, y: 15, tile_type: Hallway),
+        TileData(x: 57, y: 14, tile_type: Hallway),
+
+        // Armor Room -> Potion Room
+        TileData(x: 77, y: 8, tile_type: Door(Archway)),
+        TileData(x: 77, y: 7, tile_type: Hallway),
+        TileData(x: 76, y: 7, tile_type: Hallway),
+        TileData(x: 75, y: 7, tile_type: Hallway),
+        TileData(x: 74, y: 7, tile_type: Hallway),
+        TileData(x: 73, y: 7, tile_type: Hallway),
+        TileData(x: 72, y: 7, tile_type: Hallway),
+        TileData(x: 71, y: 7, tile_type: Hallway),
+        TileData(x: 71, y: 6, tile_type: Hallway),
+        TileData(x: 71, y: 6, tile_type: Hallway),
+        TileData(x: 70, y: 6, tile_type: Hallway),
+        TileData(x: 69, y: 6, tile_type: Hallway),
+        TileData(x: 68, y: 6, tile_type: Hallway),
+        TileData(x: 67, y: 6, tile_type: Hallway),
+        TileData(x: 66, y: 6, tile_type: Hallway),
+        TileData(x: 65, y: 6, tile_type: Hallway),
+        TileData(x: 64, y: 6, tile_type: Hallway),
+        TileData(x: 64, y: 5, tile_type: Door(Archway)),
+
+        // Boss Room -> Stair Room
+        TileData(x: 10, y: 16, tile_type: Door(Archway)),
+        TileData(x: 10, y: 15, tile_type: Hallway),
+        TileData(x: 10, y: 14, tile_type: Hallway),
+        TileData(x: 10, y: 13, tile_type: Door(Archway)),
+
+        TileData(x: 10, y: 10, tile_type: StairsDown),
+    ],
+
+    entry: Point(x: 24, y: 10),
+    exit: Point(x: 79, y: 11),
+
+    spawns: [
+        //NPCs
+        SpawnData(
+            x: 51,
+            y: 9,
+            kind: Npc(def_id: "funny_frog"),
+        ),
+
+        SpawnData(
+            x: 41,
+            y: 13,
+            kind: Npc(def_id: "funny_frog"),
+        ),
+
+        SpawnData(
+            x: 10,
+            y: 19,
+            kind: Npc(def_id: "skeleton"),
+        ),
+
+        SpawnData(
+            x: 60,
+            y: 22,
+            kind: Npc(def_id: "giant_rat"),
+        ),
+
+        SpawnData(
+            x: 79,
+            y: 12,
+            kind: Npc(def_id: "giant_rat"),
+        ),
+
+        SpawnData(
+            x: 73,
+            y: 2,
+            kind: Npc(def_id: "giant_rat"),
+        ),
+
+        //Items on ground
+
+        SpawnData(
+            x: 49,
+            y: 13,
+            kind: Item(def_id: "weapon_sword_dull"),
+        ),
+
+        SpawnData(
+            x: 81,
+            y: 13,
+            kind: Item(def_id: "armor_helmet"),
+        ),
+
+        SpawnData(
+            x: 42,
+            y: 12,
+            kind: Item(def_id: "food_cake"),
+        ),
+
+        SpawnData(
+            x: 52,
+            y: 8,
+            kind: Item(def_id: "food_fish"),
+        ),
+
+        SpawnData(
+            x: 56,
+            y: 21,
+            kind: Item(def_id: "food_meat"),
+        ),
+
+        SpawnData(
+            x: 59,
+            y: 22,
+            kind: Item(def_id: "potion_healing_small"),
+        ),
+
+        SpawnData(
+            x: 69,
+            y: 3,
+            kind: Item(def_id: "potion_strength"),
+        ),
+
+        SpawnData(
+            x: 73,
+            y: 4,
+            kind: Item(def_id: "food_fish"),
+        ),
+
+
+        SpawnData(
+            x: 80,
+            y: 13,
+            kind: Item(def_id: "food_mushroom"),
+        ),
+
+        SpawnData(
+            x: 81,
+            y: 14,
+            kind: Item(def_id: "food_mushroom"),
+        ),
+
+        SpawnData(
+            x: 8,
+            y: 19,
+            kind: Item(def_id: "potion_healing_small"),
+        ),
+    ],
 )
