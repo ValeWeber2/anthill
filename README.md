@@ -11,6 +11,7 @@ Explore an endless amount of rooms full of monsters and loot.
 - Handcrafted dungeon levels for a bit of extra challenge
 - Exploration mechanics like Fog of War and Line of Sight
 - Turn-based action and combat system
+- A dice-based rng engine
 - Modernized UI layout in the Terminal (ratatui)
 - Many different items and enemies to find
 
@@ -31,7 +32,15 @@ cargo run
 cargo run --no-default-features
 ```
 
+The codebase is fully documented. To read up on the documentation, be sure to run:
+```bash
+cargo doc
+```
+
 ## How to Play (Basics)
+> [!TIP]
+> This section only describes the basics. [Find the full guide here.](/extra/GAME_GUIDE.md)
+
 The game revolves around combat and exploration. Move through the dungeon, collect powerful items, and try to survive.
 
 | Key | Control |
@@ -53,5 +62,19 @@ The player interacts with the environment by "bumping" into it. This is done by 
 Press <kbd>i</kbd> to open the inventory in use mode. You can then select an item using the alphabetical index displayed next to your item slots.
 
 Press <kbd>Shift + d</kbd> to open the inventory in drop mode. This way you can drop items you no longer need.
+
+### User Interface
+The central part of the UI is the **World Display**, where you can see the game's world. The `@` Symbol is your player character, which you'll move through rooms and corridors for exploration.
+
+To the right is the **Menu Display**, which conditionally displays additional information about the game. This is where the game's **Log** is by default. In the log, you'll find descriptions of the events in the game. If you open your inventory, it will be displayed in the Menu Display as well.
+
+On the bottom, you find the **Info Display**, which contains information about your character and the game. Keep your eyes on your character's Hit Points (HP).
+
+> [!NOTE]
+> Your terminal window should be big enough to display an area of 150x33 characters. If your terminal window is too small, you will only see a warning.
+> 
+> There are two ways of adjusting your terminal size:
+> - Increase the window size in your operaiting system (e.g. maximizing your terminal)
+> - Decrease the font size of your terminal (usually <kbd>Ctrl + -</kbd>)
 
 ![In-Game Screenshot](/extra/anthill_game.jpg)
