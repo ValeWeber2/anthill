@@ -1,5 +1,6 @@
 pub mod buff_effects;
 pub mod combat;
+pub mod cursor;
 pub mod entity_logic;
 pub mod game;
 pub mod game_items;

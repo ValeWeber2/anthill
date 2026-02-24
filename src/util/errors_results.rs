@@ -149,9 +149,6 @@ pub enum EngineError {
     /// Spawning an entity at the given point failed.
     SpawningError(Point),
 
-    /// No level with the given index exists.
-    LevelNotFound(usize),
-
     /// Tried to access a cursor, but cursor wasn't found.
     CursorNotSet,
 }
@@ -184,9 +181,6 @@ impl fmt::Display for EngineError {
                     "Could not spawn entity, because point (x: {}, y: {}) is not available",
                     point.x, point.y
                 )
-            }
-            EngineError::LevelNotFound(level_nr) => {
-                write!(f, "Could not find a level with id {}", level_nr)
             }
             EngineError::CursorNotSet => {
                 write!(f, "Could not find a cursor instance")

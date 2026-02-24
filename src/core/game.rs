@@ -4,12 +4,11 @@ use std::collections::HashMap;
 
 use bitflags::bitflags;
 
+use crate::core::cursor::CursorState;
 use crate::core::entity_logic::EntityId;
 use crate::core::game_items::{GameItem, GameItemId};
 use crate::core::player::Player;
-use crate::util::errors_results::{EngineError, FailReason, GameError, GameOutcome, GameResult};
 use crate::util::text_log::Log;
-use crate::world::coordinate_system::{Direction, Point};
 use crate::world::level::{Level, LevelEntrance};
 
 // ----------------------------------------------
@@ -180,57 +179,5 @@ bitflags! {
         // This disables collision detection for the player, allowing them to walk through walls.
         const NO_CLIP = 0b00000001;
         const GOD_MODE = 0b00000010;
-    }
-}
-
-// ----------------------------------------------
-//                Cursor System
-// ----------------------------------------------
-
-/// Tracks the cursor mode in the game.
-///
-/// Usually the player controls the player character in the world, but if a Cursor State is set in [GameState], then the player controls the cursor.
-pub struct CursorState {
-    /// Mode of the Cursor. Determins which actions can be taken with the cursor.
-    pub kind: CursorMode,
-
-    /// Coordinates of the Cursor.
-    pub point: Point,
-}
-
-/// Contains all modes for a cursor.
-pub enum CursorMode {
-    /// Look mode is used to get a description of what the cursor is pointing at.
-    Look,
-
-    /// Ranged attack mode allows the player to attack at long range (provided a ranged weapon is equipped)
-    RangedAttack,
-}
-
-impl GameState {
-    /// Moves the cursor's position in the given direction.
-    ///
-    /// # Errors
-    /// * [EngineError::CursorNotSet] if no cursor instance could be found. This happens when [GameState::cursor] == `None`.
-    ///
-    /// # Returns
-    /// * [GameOutcome::Success] if the movement was successful
-    /// * [GameOutcome::Fail] with [FailReason::PointOutOfBounds] if the movement was successful
-    pub fn move_cursor(&mut self, direction: Direction) -> GameResult {
-        let Some(point) = self.cursor.as_ref().map(|cursor_state| cursor_state.point) else {
-            return Err(GameError::from(EngineError::CursorNotSet));
-        };
-
-        let new_point = point + direction;
-
-        if !self.current_world().is_in_bounds(new_point.x as isize, new_point.y as isize) {
-            return Ok(GameOutcome::Fail(FailReason::PointOutOfBounds(new_point)));
-        }
-
-        if let Some(cursor) = self.cursor.as_mut() {
-            cursor.point = new_point;
-        }
-
-        Ok(GameOutcome::Success)
     }
 }

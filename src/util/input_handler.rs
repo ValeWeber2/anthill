@@ -4,15 +4,15 @@ use std::io;
 use crate::{
     App, State,
     core::{
+        cursor::{CursorMode, CursorState},
         entity_logic::Entity,
-        game::{CursorMode, CursorState},
         player_actions::PlayerInput,
     },
     render::{
         menu_display::{InventoryAction, MenuMode},
         modal_display::{ModalInterface, SelectionAction},
     },
-    util::{errors_results::GameOutcome, text_log::LogData},
+    util::errors_results::GameOutcome,
     world::coordinate_system::Direction,
 };
 
@@ -331,13 +331,13 @@ impl App {
                 self.focus_reset();
             }
             KeyCode::Char('W') => {
-                if let Err(e) = self.game.unequip_weapon() {
-                    self.game.log.debug_warn(format!("{}", e));
+                if let Err(error) = self.game.unequip_weapon() {
+                    self.game.log.debug_warn(format!("{}", error));
                 }
             }
             KeyCode::Char('A') => {
-                if let Err(e) = self.game.unequip_armor() {
-                    self.game.log.debug_warn(format!("{}", e));
+                if let Err(error) = self.game.unequip_armor() {
+                    self.game.log.debug_warn(format!("{}", error));
                 }
             }
             KeyCode::Char(c) => {
@@ -364,80 +364,36 @@ impl App {
 
     /// Handling input while there is an instance of the cursor. Allows moving the cursor and performing actions with the cursor.
     fn handle_cursor_key_event(&mut self, key_event: KeyEvent) {
-        if let Some(cursor) = &self.game.cursor {
-            match key_event.code {
-                KeyCode::Char(c) => {
-                    let cursor_move_result = match c {
-                        'w' => self.game.move_cursor(Direction::Up),
-                        's' => self.game.move_cursor(Direction::Down),
-                        'a' => self.game.move_cursor(Direction::Left),
-                        'd' => self.game.move_cursor(Direction::Right),
-                        _ => Ok(GameOutcome::Success),
-                    };
-
-                    if let Err(error) = cursor_move_result {
-                        self.game.log.debug_warn(error.to_string());
-                        self.game.cursor = None;
-                    }
-                }
-
-                // Run cursor action
-                KeyCode::Enter => {
-                    // Non-visible target points can't be interacted with.
-                    if !self.game.current_world().get_tile(cursor.point).visible {
-                        self.game.log.info(LogData::TileNotVisible);
-                        return;
-                    }
-
-                    match cursor.kind {
-                        CursorMode::Look => {
-                            // Unoccupied target points only output tile type.
-                            if !self.game.current_level().is_occupied(cursor.point) {
-                                let tile = self.game.current_world().get_tile(cursor.point);
-                                self.game
-                                    .log
-                                    .info(LogData::LookAt { name: tile.tile_type.to_string() });
-                                return;
-                            }
-
-                            // Otherwise, a target point is occupied, so info about NPCs and/or Item Sprites is displayed.
-                            if let Some(entity_id) =
-                                self.game.current_level().get_npc_at(cursor.point)
-                            {
-                                if let Some(npc) = self.game.current_level().get_npc(entity_id) {
-                                    self.game
-                                        .log
-                                        .info(LogData::LookAt { name: npc.name().to_string() });
-                                }
-                            }
-
-                            if let Some(entity_id) =
-                                self.game.current_level().get_item_sprite_at(cursor.point)
-                            {
-                                if let Some(item_sprite) =
-                                    self.game.current_level().get_item_sprite(entity_id)
-                                {
-                                    self.game.log.info(LogData::LookAt {
-                                        name: item_sprite.name().to_string(),
-                                    });
-                                }
-                            }
-                        }
-                        CursorMode::RangedAttack => {
-                            if let Some(entity_id) =
-                                self.game.current_level().get_npc_at(cursor.point)
-                            {
-                                self.game
-                                    .resolve_player_action(PlayerInput::RangedAttack(entity_id));
-                            }
-                        }
-                    }
-                }
-
-                KeyCode::Esc => self.game.cursor = None,
-                _ => {}
-            };
+        if self.game.cursor.is_none() {
+            return;
         }
+
+        match key_event.code {
+            KeyCode::Char(c) => {
+                let cursor_move_result = match c {
+                    'w' => self.game.move_cursor(Direction::Up),
+                    's' => self.game.move_cursor(Direction::Down),
+                    'a' => self.game.move_cursor(Direction::Left),
+                    'd' => self.game.move_cursor(Direction::Right),
+                    _ => Ok(GameOutcome::Success),
+                };
+
+                if let Err(error) = cursor_move_result {
+                    self.game.log.debug_warn(error.to_string());
+                    self.game.cursor = None;
+                }
+            }
+
+            // Run cursor action
+            KeyCode::Enter => {
+                if let Err(error) = self.game.resolve_cursor_action() {
+                    self.game.log.debug_warn(error.to_string());
+                }
+            }
+
+            KeyCode::Esc => self.game.cursor = None,
+            _ => {}
+        };
     }
 }
 
