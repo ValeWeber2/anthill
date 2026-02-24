@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::{
     core::{
         buff_effects::PotionEffectDef,

@@ -275,17 +275,29 @@ impl App {
             }
 
             GameCommand::PlayerInfo => {
+                self.game
+                    .log
+                    .print(format!("Character \"{}\"", self.game.player.character.base.name,));
                 self.game.log.print(format!(
-                    "Character \"{}\"\n-  HP: {}/{}\n-  Position: x: {}, y: {}\n-  S:{}, D:{}, V:{}, P:{}",
-                    self.game.player.character.base.name,
+                    "-  HP: {}/{}",
                     self.game.player.character.stats.base.hp_current,
                     self.game.player.character.stats.base.hp_max,
-                    self.game.player.character.base.pos.x,
-                    self.game.player.character.base.pos.y,
-                    self.game.player.character.stats.dexterity,
-                    self.game.player.character.stats.perception,
+                ));
+                self.game
+                    .log
+                    .print(format!("-  Position: {}", self.game.player.character.base.pos,));
+                self.game.log.print(format!(
+                    "-  S:{}, D:{}, V:{}, P:{}",
                     self.game.player.character.stats.strength,
+                    self.game.player.character.stats.dexterity,
                     self.game.player.character.stats.vitality,
+                    self.game.player.character.stats.perception,
+                ));
+                self.game.log.print(format!(
+                    "-  Dodge:{}, Dmg:{}/{}",
+                    self.game.player.character.dodge_chance(),
+                    self.game.player.character.attack_damage_bonus_melee(),
+                    self.game.player.character.attack_damage_bonus_ranged(),
                 ));
             }
 

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::{core::game::GameState, util::text_log::LogData};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]

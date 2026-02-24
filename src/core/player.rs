@@ -84,14 +84,16 @@ impl PlayerCharacter {
     }
 
     pub fn dodge_chance(&self) -> u8 {
-        let mut dodge = (self.stats.dexterity / 2).min(50);
+        let mut dodge = (5 + self.stats.dexterity / 2).min(50);
 
         for buff in &self.active_buffs {
             match buff.effect {
                 PotionEffectDef::Dexterity { amount, .. } => {
                     dodge = (dodge + amount).min(100);
                 }
-                PotionEffectDef::Cramp { .. } => dodge /= 2,
+                PotionEffectDef::Cramp { dexterity_penalty, .. } => {
+                    dodge = dodge.saturating_sub(dexterity_penalty);
+                }
                 _ => {}
             }
         }

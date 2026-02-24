@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use rand::RngCore;
 use rand::{SeedableRng, rngs::StdRng};
 use std::collections::HashMap;

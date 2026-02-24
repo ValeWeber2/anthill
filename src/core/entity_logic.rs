@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use ratatui::style::Style;
 
 use crate::ai::npc_ai::NpcAiState;
