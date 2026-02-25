@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
 
 use crate::{
-    ai::pathfinding::a_star,
+    ai::pathfinding::{a_star, pathfinding_naive},
     proc_gen::{bsp_nodes::NodeId, mst::mst_kruskal, proc_gen_world::ProcGenWorld},
     world::coordinate_system::Point,
 };
@@ -43,7 +43,7 @@ impl ProcGenWorld {
             Ok((_, connections)) => connections,
 
             // If not, just connect pairs, ugly, but better than nothing in an emergeynce.
-            Err(_) => self.naive_room_connections(),
+            Err(_) => self.find_room_connections_naive(),
         };
 
         // Extra corridors for Jaquaysing
@@ -61,7 +61,7 @@ impl ProcGenWorld {
     ///
     /// # Note
     /// This is extremely ugly and will only be used as a fallback in cases where no Minimum Spanning Tree could be built.
-    fn naive_room_connections(&self) -> Vec<MapEdge> {
+    fn find_room_connections_naive(&self) -> Vec<MapEdge> {
         let mut connections: Vec<MapEdge> = Vec::new();
         for i in 0..self.rooms.len().saturating_sub(1) {
             connections.push(MapEdge { source: i, destination: i + 1, weight: 1 })
@@ -105,8 +105,11 @@ impl ProcGenWorld {
                 Some(1)
             };
 
-            let path = a_star(room_a_point, room_b_point, cost_function)
-                .expect("A* wasn't able to find a path between the two points.");
+            // Uses a naive pathfinding algorithm in the worst case scenario where A* can't find a path
+            let path = match a_star(room_a_point, room_b_point, cost_function) {
+                Some(a_star_path) => a_star_path,
+                None => pathfinding_naive(room_a_point, room_b_point),
+            };
 
             self.corridors.extend(path);
         }

@@ -97,6 +97,18 @@ pub enum GameCommand {
     /// # GameCommand Syntax
     /// `godmode`
     GodMode,
+
+    /// Teleports the player to the next level
+    ///
+    /// # GameCommand Syntax
+    /// levelnext
+    LevelNext,
+
+    /// Teleports the player to the previous level
+    ///
+    /// # GameCommand Syntax
+    /// levelprevious
+    LevelPrevious,
 }
 
 impl GameCommand {
@@ -118,6 +130,8 @@ impl GameCommand {
             GameCommand::Legend => "Show list of all map symbols",
             GameCommand::NoClip => "Toggle to walk through impassable terrain",
             GameCommand::GodMode => "Toggle invulnerability",
+            GameCommand::LevelNext => "Teleport to the next dungeon floor.",
+            GameCommand::LevelPrevious => "Teleport to the previous dungeon floor.",
         }
     }
 
@@ -137,6 +151,8 @@ impl GameCommand {
             GameCommand::Legend => "legend",
             GameCommand::NoClip => "noclip",
             GameCommand::GodMode => "godmode",
+            GameCommand::LevelNext => "levelnext",
+            GameCommand::LevelPrevious => "levelprevious",
         }
     }
 }
@@ -189,6 +205,8 @@ impl TryFrom<String> for GameCommand {
             "legend" => Ok(GameCommand::Legend),
             "noclip" => Ok(GameCommand::NoClip),
             "godmode" => Ok(GameCommand::GodMode),
+            "levelnext" => Ok(GameCommand::LevelNext),
+            "levelprevious" => Ok(GameCommand::LevelPrevious),
             _ => Err(format!("Unknown Command {}", command)),
         }
     }
@@ -359,6 +377,14 @@ impl App {
             GameCommand::GodMode => {
                 self.game.game_rules.toggle(GameRules::GOD_MODE);
                 self.game.log.print("Toggled God Mode.".to_string());
+            }
+
+            GameCommand::LevelNext => {
+                let _ = self.game.goto_level_next();
+            }
+
+            GameCommand::LevelPrevious => {
+                let _ = self.game.goto_level_previous();
             }
         }
     }

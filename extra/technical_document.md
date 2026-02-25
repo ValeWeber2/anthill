@@ -35,7 +35,7 @@ The world consists of multiple **Levels**.
     - its **non-player-characters**
     - its **item-sprites** which are interactable entities of items lying around to be collected.
         - **Items** are not owned by the level, but by the game state, since they persist between levels (e.g. the player picks them up and keeps them in their inventory)
-- **Tiles** the spaces on the 150x25 grid of terminal characters. Each character represents 1 tile.
+- **Tiles** the spaces on the 100x25 grid of terminal characters. Each character represents 1 tile.
     - Interactions with tiles (e.g. collision, visibility) are tested with Rust traits.
 
 ### LevelData

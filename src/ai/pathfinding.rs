@@ -4,13 +4,18 @@ use std::collections::{BinaryHeap, HashMap};
 use crate::core::game::GameState;
 use crate::world::coordinate_system::{Direction, Point};
 use crate::world::tiles::Collision;
+use crate::world::worldspace::{WORLD_HEIGHT, WORLD_WIDTH};
 
-// Max iterations the A* algorithm is allowed to run with.
-const MAX_ITERS: usize = 200;
+/// Max iterations the A* algorithm is allowed to run with.
+///
+/// # Note
+/// Set equal to the amount of tiles in the world to allow it to check every tile at least once.
+/// If A* ever can't find a path, where it definitely should, we can incrase this value.
+const MAX_ITERS: usize = WORLD_HEIGHT * WORLD_WIDTH;
 
-// Node representing one step in the A* algorithm.
+/// Node representing one step in the A* algorithm.
 #[derive(Clone, Copy, Eq, PartialEq)]
-struct Node {
+struct AStarNode {
     // Coordinates of the step.
     point: Point,
 
@@ -21,20 +26,20 @@ struct Node {
     h: usize,
 }
 
-impl Node {
+impl AStarNode {
     // F-statistic of A*. Estimated cost of the cheapest path from the start to the goal through the current node.
     fn f(&self) -> usize {
         self.g + self.h
     }
 }
 
-impl Ord for Node {
+impl Ord for AStarNode {
     fn cmp(&self, other: &Self) -> Ordering {
         other.f().cmp(&self.f())
     }
 }
 
-impl PartialOrd for Node {
+impl PartialOrd for AStarNode {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
@@ -95,17 +100,17 @@ where
 {
     let mut iterations: usize = 0;
 
-    let mut open_list = BinaryHeap::new();
+    let mut open_list: BinaryHeap<AStarNode> = BinaryHeap::new();
 
     // Best-known cost to reach given tile
-    let mut g_score = HashMap::new();
+    let mut g_score: HashMap<Point, usize> = HashMap::new();
 
     // Reconstructible path
-    let mut came_from = HashMap::new();
+    let mut came_from: HashMap<Point, Point> = HashMap::new();
 
     g_score.insert(start, 0);
 
-    open_list.push(Node { point: start, g: 0, h: heuristic(start, goal) });
+    open_list.push(AStarNode { point: start, g: 0, h: heuristic(start, goal) });
 
     while let Some(current) = open_list.pop() {
         iterations += 1;
@@ -147,7 +152,11 @@ where
                 continue;
             }
 
-            open_list.push(Node { point: neighbor, g: tentative_g, h: heuristic(neighbor, goal) });
+            open_list.push(AStarNode {
+                point: neighbor,
+                g: tentative_g,
+                h: heuristic(neighbor, goal),
+            });
 
             g_score.insert(neighbor, tentative_g);
 
@@ -155,4 +164,46 @@ where
         }
     }
     None
+}
+
+/// Pathfinding algorithm that builds a path by driving the manhattan taxi driver distance.
+///
+/// # Arguments
+/// * start - Start point of A*.
+/// * goal - Goal point of A*.
+pub fn pathfinding_naive(start: Point, goal: Point) -> Vec<Point> {
+    let mut path: Vec<Point> = vec![start];
+    let mut current_point = start;
+
+    // Decide whether to go horizontal first or vertical first. As to not use an rng instance, this was made dependent on the x coordinate of the start.
+    // This results in 50% of the paths starting horizontal and 50% of the paths starting vertical.
+    let horizontal_first = start.x % 2 == 0;
+
+    if horizontal_first {
+        continue_horizontal_path(&mut current_point, goal, &mut path);
+        continue_vertical_path(&mut current_point, goal, &mut path);
+    } else {
+        continue_vertical_path(&mut current_point, goal, &mut path);
+        continue_horizontal_path(&mut current_point, goal, &mut path);
+    }
+
+    path
+}
+
+fn continue_horizontal_path(current_point: &mut Point, goal: Point, path: &mut Vec<Point>) {
+    while current_point.x != goal.x {
+        let direction = if current_point.x < goal.x { Direction::Right } else { Direction::Left };
+        *current_point = *current_point + direction;
+
+        path.push(*current_point);
+    }
+}
+
+fn continue_vertical_path(current_point: &mut Point, goal: Point, path: &mut Vec<Point>) {
+    while current_point.y != goal.y {
+        let direction = if current_point.y < goal.y { Direction::Down } else { Direction::Up };
+        *current_point = *current_point + direction;
+
+        path.push(*current_point);
+    }
 }
