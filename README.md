@@ -6,8 +6,8 @@ This is a student project, created for the module "Practical Course on Software 
 ![Title Screen](/extra/anthill_main.jpg)
 
 ## Features
-Explore an endless amount of rooms full of monsters and loot.
-- Procedurally generated dungeon levels
+Explore an endless amount of rooms full of monsters and loot
+- Procedurally generated dungeon levels with infinite possibilities
 - Handcrafted dungeon levels for a bit of extra challenge
 - Exploration mechanics like Fog of War and Line of Sight
 - Turn-based action and combat system
@@ -78,3 +78,15 @@ On the bottom, you find the **Info Display**, which contains information about y
 > - Decrease the font size of your terminal (usually <kbd>Ctrl + -</kbd>)
 
 ![In-Game Screenshot](/extra/anthill_game.jpg)
+
+## Known Issues
+The *A\* Algorithm* for drawing corridors sometimes cannot find a path in certain situations, leading to the game panicking. This happens very rarely, about once every 50 seeds.
+
+If the game crashes just as you walk down the stairs to a new level, please create an issue and send the game's log file so we can inspect the broken seeds.
+
+> [!NOTE]
+> Where to find the game's log files.
+> 
+> - **Linux** `$XDG_DATA_HOME/Anthill/` or `$HOME/.local/share/Anthill/`
+> - **macOS** `$HOME/Library/Application Support/Anthll`
+> - **Windows** `C:\Users\<YOURUSERNAME>\AppData\Local\Anthill`

@@ -60,7 +60,7 @@ impl ProcGenWorld {
     /// Iterates through all the rooms in windows of two and connects them.
     ///
     /// # Note
-    /// This is extremely ugly and will only be used in cases where no Minimum Spanning Tree could be built.
+    /// This is extremely ugly and will only be used as a fallback in cases where no Minimum Spanning Tree could be built.
     fn naive_room_connections(&self) -> Vec<MapEdge> {
         let mut connections: Vec<MapEdge> = Vec::new();
         for i in 0..self.rooms.len().saturating_sub(1) {
