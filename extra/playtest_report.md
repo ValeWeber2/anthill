@@ -79,49 +79,49 @@ The free-text responses provided deeper insight into specific points and player 
 #### Logging & Feedback
 
 Many Players wished for more detailed log messages for events such as:
-    - Critical hits
-    - Picking up items
-    - Level ups 
-    - Potion effects 
-    - Clear reason for death on Game Over
+- Critical hits
+- Picking up items
+- Level ups 
+- Potion effects 
+- Clear reason for death on Game Over
     
 Several participants expressed that more explicit feedback would increase clarity ans improve the feeling of impact.
 
 #### UI & Visual Communication
 
 Recurring suggestions included:
-    - Red HP bat when below 20% health
-    - Color-coding items by rarity (common, rare, legendary)
-    - Highlighting **STR** and **DEX** values more pominently 
-    - Showing XP progress numerically (e.g., '50 / 100')
-    - Displaying potion effects diectly 
-    - Showing the currently equipped "empty hand" weapon (e.g., 'Fist(1d4)')
-    - Tooltip for window size sttings (e.g., "make text smaller")
+- Red HP bat when below 20% health
+- Color-coding items by rarity (common, rare, legendary)
+- Highlighting **STR** and **DEX** values more pominently 
+- Showing XP progress numerically (e.g., '50 / 100')
+- Displaying potion effects diectly 
+- Showing the currently equipped "empty hand" weapon (e.g., 'Fist(1d4)')
+- Tooltip for window size sttings (e.g., "make text smaller")
     
 Players also requested that the inventory remain open after selecting items to reduce repetitive reopening.
 
 #### Controls and Interactions
 
 Although controls were generally rated positively, several friction points emerged:
-    - Shift-based key combinations were not always obvious
-    - Lack of arrow key movement was mentioned
-    - Some players pressed incorrect keys when performing ranged attacks
+- Shift-based key combinations were not always obvious
+- Lack of arrow key movement was mentioned
+- Some players pressed incorrect keys when performing ranged attacks
 
 These issues highlight the tension between traditional Rouge-like control schemes ans modern player expectations.
 
 #### Combat & Balance
 
 Several balancing concerns were mentioned repeatedly:
-    - Bow was too strong (range and damage)
-    - Enemy aggro range felt too large
-    - Potion overdosing mechanics were too punishing
-    - Diagonal enemy attacks were perceived as unfair
+- Bow was too strong (range and damage)
+- Enemy aggro range felt too large
+- Potion overdosing mechanics were too punishing
+- Diagonal enemy attacks were perceived as unfair
 
 #### Progression & Content
 While exploration was decribes as engaging and rewarding, players also noted:
-    - Late-game content felt limited 
-    - Loot could feel underwhelming 
-    - Desire for additional envirmoental features (e.g., doors)
+- Late-game content felt limited 
+- Loot could feel underwhelming 
+- Desire for additional envirmoental features (e.g., doors)
 
 Overall sentiment toward the gameplay loop was positive, particually regarding ranged combat and dungeon progression.
 
@@ -167,7 +167,7 @@ Based on the playtest results and internal discussion, the following improvement
 
 - Removed NPC's ability to attack diagonally
 - Adjusted the A* pathfinding algorithm to position NPCs orthgonally
-- Fixed A* panics caused by low iteration limits
+- Fixed game crashes due to A* panicking caused by low iteration limits
 - Added fallback pathfinding for worst-case scenarios
 - Fixed dexterity penalty bug in status effects
 
@@ -214,7 +214,7 @@ Based on the playtest results and internal discussion, the following improvement
 
 Due to time and scope limitation, several larger improvements were categorized internally as **"Not in Budget"** and remain potential future work:
 
-- Procedural doors and richer dungeon interaction
+- Inclusion of doors in procedural generation and richer dungeon interaction
 - Expanded late-game content
 - Further balancing improvements
 - Alternative and customizable input schemes
