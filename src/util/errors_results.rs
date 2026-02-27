@@ -62,6 +62,10 @@ pub enum FailReason {
 
     /// The target position is occupied by an NPC or Item.
     TileOccupied(Point),
+
+    /// An item is required for this action and the player does not have it.
+    /// The string argument should note the item type.
+    MissingRequiredItem(GameItemKindDef),
 }
 
 impl FailReason {
@@ -79,6 +83,9 @@ impl FailReason {
             FailReason::NoInteraction => Some(LogData::NoInteraction),
             FailReason::OutOfRange => Some(LogData::OutOfRange),
             FailReason::TileOccupied(_) => Some(LogData::TileOccupied),
+            FailReason::MissingRequiredItem(game_item_kind_def) => {
+                Some(LogData::MissingRequiredItem(game_item_kind_def.clone()))
+            }
         }
     }
 }

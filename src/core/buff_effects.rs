@@ -10,7 +10,7 @@ pub enum PotionType {
     Cramp,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum PotionEffectDef {
     Heal { amount: u16 },
     Strength { amount: u8, duration: u8 },

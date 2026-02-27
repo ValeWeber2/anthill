@@ -2,7 +2,7 @@ use crate::{
     core::{
         entity_logic::{Entity, EntityId, Movable},
         game::{GameRules, GameState},
-        game_items::GameItemId,
+        game_items::{GameItemId, GameItemKindDef},
     },
     util::{
         errors_results::{DataError, EngineError, FailReason, GameError, GameOutcome, GameResult},
@@ -241,12 +241,28 @@ impl GameState {
     ///
     /// Does nothing if the target tile has no defined interactions.
     fn tile_interaction(&mut self, point: Point) -> GameResult {
-        let tile = self.current_world_mut().get_tile_mut(point);
+        let tile_type = self.current_world().get_tile(point).tile_type;
 
-        match tile.tile_type {
+        match tile_type {
             TileType::Door(DoorType::Closed) => {
+                let tile = self.current_world_mut().get_tile_mut(point);
                 tile.tile_type = TileType::Door(DoorType::Open);
                 self.log.print("You open the door".to_string());
+                Ok(GameOutcome::Success)
+            }
+
+            TileType::Door(DoorType::Locked) => {
+                let Some(key_id) = self.find_item_kind_in_inventory(GameItemKindDef::Key) else {
+                    return Ok(GameOutcome::Fail(FailReason::MissingRequiredItem(
+                        GameItemKindDef::Key,
+                    )));
+                };
+
+                self.remove_item_from_inv(key_id)?;
+                self.deregister_item(key_id)?;
+                let tile = self.current_world_mut().get_tile_mut(point);
+                tile.tile_type = TileType::Door(DoorType::Open);
+                self.log.print("You use your key to open the door".to_string());
                 Ok(GameOutcome::Success)
             }
 

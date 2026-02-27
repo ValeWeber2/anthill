@@ -52,6 +52,19 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
+    pub fn find_item_kind_in_inventory(&self, item_kind: GameItemKindDef) -> Option<GameItemId> {
+        self.player.character.inventory.iter().copied().find(|item_id| {
+            let Some(item) = self.get_item_by_id(*item_id) else {
+                return false;
+            };
+            let Some(item_def) = self.get_item_def_by_id(&item.def_id) else {
+                return false;
+            };
+
+            item_def.kind == item_kind
+        })
+    }
+
     /// Uses an item from the player's inventory.
     ///
     /// Checks whether the item is present, resolves its definition, and
@@ -73,6 +86,7 @@ impl GameState {
                 GameItemKindDef::Weapon { .. } => self.use_weapon(item_id),
                 GameItemKindDef::Food { nutrition } => self.use_food(item_id, nutrition),
                 GameItemKindDef::Potion { effect } => self.use_potion(&item_id, effect),
+                GameItemKindDef::Key => Ok(GameOutcome::Fail(FailReason::NoInteraction)),
             }
         } else {
             let error = GameError::from(EngineError::ItemNotInInventory(item_id));

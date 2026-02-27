@@ -10,6 +10,8 @@ use ratatui::{
     text::{Line, Span},
 };
 
+use crate::core::game_items::GameItemKindDef;
+
 /// The game's text log. The events of the game are desribed for the user in the log.
 /// This is not a typical console log, but part of the game that describes what's happening.
 pub struct Log {
@@ -172,6 +174,7 @@ pub enum LogData {
     TileNotVisible,
     OutOfRange,
     TileOccupied,
+    MissingRequiredItem(GameItemKindDef),
 }
 
 impl fmt::Display for LogData {
@@ -294,6 +297,10 @@ impl LogData {
             LogData::TileNotVisible => Line::from("You cannot see this tile."),
             LogData::OutOfRange => Line::from("Target not in range."),
             LogData::TileOccupied => Line::from("Position is occupied."),
+            LogData::MissingRequiredItem(game_item_kind_def) => Line::from(vec![
+                Span::raw("Not possible, you need: "),
+                Span::styled(game_item_kind_def.to_string(), STYLE_ITEM),
+            ]),
         }
     }
 }

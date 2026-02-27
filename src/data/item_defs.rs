@@ -353,6 +353,15 @@ pub fn item_defs() -> &'static HashMap<GameItemDefId, GameItemDef> {
                 },
             },
         );
+        m.insert(
+            "master_key".to_string(),
+            GameItemDef {
+                name: "Master Key",
+                glyph: 'k',
+                style: Style::default().fg(Color::Gray),
+                kind: GameItemKindDef::Key,
+            },
+        );
         m
     })
 }

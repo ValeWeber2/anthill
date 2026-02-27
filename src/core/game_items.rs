@@ -18,12 +18,25 @@ use crate::{
 // Static Item Definitions
 // Layer 1. This is where items and their kinds and details are defined.
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum GameItemKindDef {
     Weapon { damage: Roll, crit_chance: u8, range: AttackRange },
     Armor { mitigation: u16 },
     Food { nutrition: u16 },
     Potion { effect: PotionEffectDef },
+    Key,
+}
+
+impl fmt::Display for GameItemKindDef {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            GameItemKindDef::Weapon { .. } => write!(f, "Weapon"),
+            GameItemKindDef::Armor { .. } => write!(f, "Armor"),
+            GameItemKindDef::Food { .. } => write!(f, "Food"),
+            GameItemKindDef::Potion { .. } => write!(f, "Potion"),
+            GameItemKindDef::Key => write!(f, "Key"),
+        }
+    }
 }
 
 // Type to denote the range of an attack (weapon).

@@ -177,6 +177,7 @@ pub fn format_item_inventory(def: &GameItemDef) -> Line<'static> {
             spans.push(Span::raw(">"));
         }
         GameItemKindDef::Potion { .. } => {}
+        GameItemKindDef::Key => {}
     }
     Line::from(spans)
 }

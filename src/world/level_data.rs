@@ -64,6 +64,7 @@ pub enum DoorTypeData {
     Open,
     Closed,
     Archway,
+    Locked,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,6 +117,7 @@ impl World {
                 TileTypeData::Door(DoorTypeData::Archway) => TileType::Door(DoorType::Archway),
                 TileTypeData::Door(DoorTypeData::Open) => TileType::Door(DoorType::Open),
                 TileTypeData::Door(DoorTypeData::Closed) => TileType::Door(DoorType::Closed),
+                TileTypeData::Door(DoorTypeData::Locked) => TileType::Door(DoorType::Locked),
                 TileTypeData::Sign(c) => TileType::Sign(c),
             };
 

@@ -7,7 +7,7 @@ use rand::Rng;
 use crate::{core::game::GameState, world::coordinate_system::Direction};
 
 /// DieSize represents the size of a die, meaning how many sides the die has.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DieSize {
     D4 = 4,
     D6 = 6,
@@ -60,7 +60,7 @@ impl fmt::Display for DieSize {
 ///     .add_modifier(penalty)
 ///     .roll(&mut rng);
 /// ```
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Roll {
     /// Number of dice to be rolled.
     dice_amount: u8,

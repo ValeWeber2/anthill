@@ -111,6 +111,9 @@ pub enum DoorType {
 
     /// No door is present. Basically just a hole in the wall.
     Archway,
+
+    /// The door is locked and can't be opened without a key.
+    Locked,
 }
 
 impl std::fmt::Display for TileType {
@@ -123,6 +126,7 @@ impl std::fmt::Display for TileType {
             TileType::Door(DoorType::Archway) => write!(f, "Archway"),
             TileType::Door(DoorType::Closed) => write!(f, "Closed Door"),
             TileType::Door(DoorType::Open) => write!(f, "Open Door"),
+            TileType::Door(DoorType::Locked) => write!(f, "Closed Door"),
             TileType::StairsDown => write!(f, "Stairs leading further down..."),
             TileType::StairsUp => write!(f, "Stairs leading back up."),
             TileType::Sign(c) => write!(f, "A sign of the letter {c}"),
@@ -140,6 +144,7 @@ impl Collision for TileType {
             TileType::Door(DoorType::Open) => true,
             TileType::Door(DoorType::Closed) => false,
             TileType::Door(DoorType::Archway) => true,
+            TileType::Door(DoorType::Locked) => false,
             TileType::StairsDown => true,
             TileType::StairsUp => true,
             TileType::Sign(_) => false,
@@ -162,6 +167,7 @@ impl Drawable for TileType {
             TileType::StairsDown => '>',
             TileType::StairsUp => '<',
             TileType::Sign(c) => *c,
+            TileType::Door(DoorType::Locked) => '+',
         }
     }
     fn style(&self) -> Style {
@@ -189,6 +195,7 @@ impl Opacity for TileType {
             TileType::Door(DoorType::Open) => false,
             TileType::Door(DoorType::Closed) => true,
             TileType::Door(DoorType::Archway) => false,
+            TileType::Door(DoorType::Locked) => true,
             TileType::StairsDown => false,
             TileType::StairsUp => false,
             TileType::Sign(_) => false,
@@ -206,6 +213,7 @@ impl Interactable for TileType {
             TileType::Door(DoorType::Open) => false,
             TileType::Door(DoorType::Closed) => true,
             TileType::Door(DoorType::Archway) => false,
+            TileType::Door(DoorType::Locked) => true,
             TileType::StairsDown => true,
             TileType::StairsUp => true,
             TileType::Sign(_) => false,

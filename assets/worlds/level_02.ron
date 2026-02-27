@@ -332,7 +332,7 @@ LevelData(
     TileData(x: 31, y: 12, tile_type: Door(Open)),
     TileData(x: 33, y: 12, tile_type: Door(Open)),
     TileData(x: 33, y: 5, tile_type: Door(Archway)),
-    TileData(x: 27, y: 5, tile_type: Door(Closed)),
+    TileData(x: 27, y: 5, tile_type: Door(Locked)),
     TileData(x: 36, y: 22, tile_type: Door(Archway)),
     TileData(x: 55, y: 21, tile_type: Door(Archway)),
     TileData(x: 59, y: 16, tile_type: Door(Archway)),
