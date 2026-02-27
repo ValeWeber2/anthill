@@ -52,6 +52,14 @@ impl GameState {
         Ok(GameOutcome::Success)
     }
 
+    /// Tries to find an item of the given kind in the player's inventory.
+    ///
+    /// # Returns
+    /// * `None` if no item of the given [GameItemKindDef] could be found in the inventory.
+    /// * `Some(item_id)` for the first result of the search.
+    ///
+    /// # Note
+    /// This function uses [Iterator::find()], so it short circuits the same way [Iterator::find()] does.
     pub fn find_item_kind_in_inventory(&self, item_kind: GameItemKindDef) -> Option<GameItemId> {
         self.player.character.inventory.iter().copied().find(|item_id| {
             let Some(item) = self.get_item_by_id(*item_id) else {
