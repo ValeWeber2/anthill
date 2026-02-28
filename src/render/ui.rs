@@ -259,7 +259,7 @@ fn render_game_over(area: Rect, buf: &mut Buffer, game: &GameState) {
         .render(left_vertical[1], buf);
 
     let lines = [
-        format!("Goodbye, {}", game.player.character.name()),
+        format!("Goodbye, {} the {}", game.player.character.name(), game.player.character.class),
         "You have died in the Anthill".into(),
         format!("You reached floor {}", game.level_nr),
         format!(
