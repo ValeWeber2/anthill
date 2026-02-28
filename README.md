@@ -80,6 +80,9 @@ On the bottom, you find the **Info Display**, which contains information about y
 ![In-Game Screenshot](/extra/anthill_game.jpg)
 
 ## Known Issues
+> [!TIP]
+> We were able to fix this bug by increasing the iteration limit we put on the A* algorithm. This bug should now be incredibly rare, but it could technically still happen in exceedingly rare circumstances. Please let us know if you happen to come across it.
+
 The *A\* Algorithm* for drawing corridors sometimes cannot find a path in certain situations, leading to the game panicking. This happens very rarely, about once every 50 seeds.
 
 If the game crashes just as you walk down the stairs to a new level, please create an issue and send the game's log file so we can inspect the broken seeds.
