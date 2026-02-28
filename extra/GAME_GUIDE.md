@@ -155,6 +155,9 @@ Improves detection, vision and environmental awareness.
 Your life total.
 When HP reaches **0**, the run ends.
 
+### Classes
+There are multiple playable classes. They determine the stats your character begins the game with. If you're a new player, we recommend starting with the Knight class, since it provides the most hit points at the start. If you are looking for a bit of extra challenge, play the wretch, who has the lowest value in every stat.
+
 ---
 
 # 6. Exploration

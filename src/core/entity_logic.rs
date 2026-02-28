@@ -106,6 +106,24 @@ pub struct BaseStats {
     pub hp_current: u16,
 }
 
+impl BaseStats {
+    pub fn take_damage(&mut self, amount: u16) {
+        if amount >= self.hp_current {
+            self.hp_current = 0;
+        } else {
+            self.hp_current -= amount;
+        }
+    }
+
+    pub fn heal(&mut self, amount: u16) {
+        self.hp_current = (self.hp_current + amount).min(self.hp_max);
+    }
+
+    pub fn is_alive(&self) -> bool {
+        self.hp_current > 0
+    }
+}
+
 // NPC
 #[derive(Clone)]
 pub struct Npc {

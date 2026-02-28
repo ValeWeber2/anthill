@@ -310,6 +310,7 @@ fn render_help(area: Rect, buf: &mut Buffer) {
 
 pub enum SelectionAction {
     Debug,
+    ChooseClass,
 }
 
 /// Renders a prompt that allows the user to select from a collection of items.
@@ -321,6 +322,7 @@ fn render_select_prompt(
 ) {
     let instruction = match selection_action {
         SelectionAction::Debug => "Choose a message to be displayed".to_string(),
+        SelectionAction::ChooseClass => "Choose a Class for your Character.".to_string(),
     };
 
     let modal_area_width = instruction.len() as u16 + 4;

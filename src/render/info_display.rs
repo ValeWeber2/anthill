@@ -58,13 +58,13 @@ impl InfoDisplay {
             Row::new(vec![
                 Cell::from(Line::from(vec![
                     Span::styled("STR: ", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(format!("{}, ", game.player.character.stats.strength)),
+                    Span::raw(format!("{}, ", game.player.character.stats.abilities.strength)),
                     Span::styled("DEX: ", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(format!("{}, ", game.player.character.stats.dexterity)),
+                    Span::raw(format!("{}, ", game.player.character.stats.abilities.dexterity)),
                     Span::styled("VIT: ", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(format!("{}, ", game.player.character.stats.vitality)),
+                    Span::raw(format!("{}, ", game.player.character.stats.abilities.vitality)),
                     Span::styled("PER: ", Style::default().add_modifier(Modifier::BOLD)),
-                    Span::raw(format!("{}", game.player.character.stats.perception)),
+                    Span::raw(format!("{}", game.player.character.stats.abilities.perception)),
                 ])),
                 Cell::from(format!("Armor: {}", armor)),
                 Cell::from(format!("Level: {}", game.player.character.stats.level)),

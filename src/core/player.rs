@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::core::buff_effects::{ActiveBuff, PotionEffectDef, PotionType, PotionUsage};
 use crate::core::entity_logic::{BaseStats, Entity, EntityBase, EntityId, Movable};
@@ -31,6 +32,7 @@ pub struct PlayerCharacter {
     pub base: EntityBase,
     pub stats: PcStats,
     pub inventory: Vec<GameItemId>,
+    pub class: CharacterClass,
     pub armor: Option<ArmorItem>,
     pub weapon: Option<WeaponItem>,
     pub active_buffs: Vec<ActiveBuff>,
@@ -49,6 +51,7 @@ impl PlayerCharacter {
             },
             stats: PcStats::new(),
             inventory: Vec::new(),
+            class: CharacterClass::default(),
             armor: None,
             weapon: None,
             active_buffs: Vec::new(),
@@ -56,7 +59,7 @@ impl PlayerCharacter {
         }
     }
     pub fn attack_damage_bonus_melee(&self) -> i16 {
-        let mut bonus: i16 = self.stats.strength as i16;
+        let mut bonus: i16 = self.stats.abilities.strength as i16;
 
         for buff in &self.active_buffs {
             match buff.effect {
@@ -73,7 +76,7 @@ impl PlayerCharacter {
     }
 
     pub fn attack_damage_bonus_ranged(&self) -> i16 {
-        let mut bonus: i16 = self.stats.perception as i16;
+        let mut bonus: i16 = self.stats.abilities.perception as i16;
 
         for buff in &self.active_buffs {
             if let PotionEffectDef::Fatigue { strength_penalty, .. } = buff.effect {
@@ -84,7 +87,7 @@ impl PlayerCharacter {
     }
 
     pub fn dodge_chance(&self) -> u8 {
-        let mut dodge = (5 + self.stats.dexterity / 2).min(50);
+        let mut dodge = (5 + self.stats.abilities.dexterity / 2).min(50);
 
         for buff in &self.active_buffs {
             match buff.effect {
@@ -133,10 +136,10 @@ impl PlayerCharacter {
 
     fn level_up(&mut self) {
         self.stats.level += 1;
-        self.stats.strength += 1;
-        self.stats.dexterity += 1;
-        self.stats.vitality += 1;
-        self.stats.perception += 1;
+        self.stats.abilities.strength += 1;
+        self.stats.abilities.dexterity += 1;
+        self.stats.abilities.vitality += 1;
+        self.stats.abilities.perception += 1;
 
         self.stats.base.hp_max += 10;
         self.stats.base.hp_current = self.stats.base.hp_max;
@@ -181,10 +184,7 @@ impl GameState {
 
 pub struct PcStats {
     pub base: BaseStats,
-    pub strength: u8,
-    pub dexterity: u8,
-    pub vitality: u8,
-    pub perception: u8,
+    pub abilities: AbilityScores,
     pub level: u8,
     pub experience: u32,
 }
@@ -192,35 +192,43 @@ pub struct PcStats {
 impl PcStats {
     pub fn new() -> Self {
         let vitality = 1;
-        let hp_max = 20 + vitality as u16 * 10;
+        let hp_max = 10 + vitality as u16 * 10;
 
         Self {
             base: BaseStats { hp_max, hp_current: hp_max },
-            strength: 1,
-            dexterity: 1,
-            vitality,
-            perception: 1,
+            abilities: AbilityScores::default(),
             level: 1,
             experience: 0,
         }
     }
 }
 
-impl BaseStats {
-    pub fn take_damage(&mut self, amount: u16) {
-        if amount >= self.hp_current {
-            self.hp_current = 0;
-        } else {
-            self.hp_current -= amount;
-        }
-    }
+impl From<AbilityScores> for PcStats {
+    fn from(value: AbilityScores) -> Self {
+        let abilities = value;
 
-    pub fn heal(&mut self, amount: u16) {
-        self.hp_current = (self.hp_current + amount).min(self.hp_max);
-    }
+        let hp_max = 10 + abilities.vitality as u16 * 10;
 
-    pub fn is_alive(&self) -> bool {
-        self.hp_current > 0
+        Self { base: BaseStats { hp_max, hp_current: hp_max }, abilities, level: 1, experience: 0 }
+    }
+}
+
+pub struct AbilityScores {
+    pub strength: u8,
+    pub dexterity: u8,
+    pub vitality: u8,
+    pub perception: u8,
+}
+
+impl AbilityScores {
+    pub fn new(strength: u8, dexterity: u8, vitality: u8, perception: u8) -> Self {
+        Self { strength, dexterity, vitality, perception }
+    }
+}
+
+impl Default for AbilityScores {
+    fn default() -> Self {
+        Self { strength: 1, dexterity: 1, vitality: 1, perception: 1 }
     }
 }
 
@@ -241,5 +249,57 @@ impl Movable for PlayerCharacter {
     fn move_to(&mut self, point: Point) {
         self.base.pos.x = point.x;
         self.base.pos.y = point.y;
+    }
+}
+
+/// Possible playable classes in the game. Determine the stats the player character starts out with.
+#[derive(Default, Clone, Copy)]
+pub enum CharacterClass {
+    #[default]
+    Wretch,
+    Barbarian,
+    Knight,
+    Ranger,
+}
+
+impl fmt::Display for CharacterClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CharacterClass::Wretch => write!(f, "Wretch"),
+            CharacterClass::Barbarian => write!(f, "Barbarian"),
+            CharacterClass::Knight => write!(f, "Knight"),
+            CharacterClass::Ranger => write!(f, "Ranger"),
+        }
+    }
+}
+
+impl From<&str> for CharacterClass {
+    fn from(value: &str) -> Self {
+        match value {
+            "Barbarian" => CharacterClass::Barbarian,
+            "Knight" => CharacterClass::Knight,
+            "Ranger" => CharacterClass::Ranger,
+            _ => CharacterClass::Wretch,
+        }
+    }
+}
+
+impl From<CharacterClass> for AbilityScores {
+    fn from(value: CharacterClass) -> Self {
+        match value {
+            CharacterClass::Wretch => AbilityScores::new(1, 1, 1, 1),
+            CharacterClass::Barbarian => AbilityScores::new(3, 2, 1, 1),
+            CharacterClass::Knight => AbilityScores::new(2, 1, 3, 1),
+            CharacterClass::Ranger => AbilityScores::new(1, 1, 2, 3),
+        }
+    }
+}
+
+impl PlayerCharacter {
+    /// Applies the chosen class's ability scores to the player character, calculating derived stats (like hit points).
+    pub fn apply_class(&mut self, class: CharacterClass) {
+        let abilities = AbilityScores::from(class);
+        self.stats = PcStats::from(abilities);
+        self.class = class;
     }
 }

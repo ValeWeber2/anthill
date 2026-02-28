@@ -3,7 +3,7 @@ use strum_macros::EnumIter;
 
 use crate::{
     App,
-    core::game::GameRules,
+    core::{game::GameRules, player::AbilityScores},
     data::{item_defs::item_defs, npc_defs::npc_defs},
     util::{
         errors_results::GameOutcome,
@@ -261,10 +261,7 @@ impl App {
             }
             GameCommand::MaxStats => {
                 self.game.player.character.stats.level = 100;
-                self.game.player.character.stats.dexterity = 100;
-                self.game.player.character.stats.perception = 100;
-                self.game.player.character.stats.strength = 100;
-                self.game.player.character.stats.vitality = 100;
+                self.game.player.character.stats.abilities = AbilityScores::new(100, 100, 100, 100);
                 self.game.player.character.stats.base.hp_max = 500;
                 self.game.player.character.stats.base.hp_current = 500;
                 self.game.log.print("Advanced Player to Level 100.".to_string());
@@ -293,9 +290,10 @@ impl App {
             }
 
             GameCommand::PlayerInfo => {
-                self.game
-                    .log
-                    .print(format!("Character \"{}\"", self.game.player.character.base.name,));
+                self.game.log.print(format!(
+                    "Character \"{}\", the {}",
+                    self.game.player.character.base.name, self.game.player.character.class
+                ));
                 self.game.log.print(format!(
                     "-  HP: {}/{}",
                     self.game.player.character.stats.base.hp_current,
@@ -303,13 +301,13 @@ impl App {
                 ));
                 self.game
                     .log
-                    .print(format!("-  Position: {}", self.game.player.character.base.pos,));
+                    .print(format!("-  Position: {}", self.game.player.character.base.pos));
                 self.game.log.print(format!(
                     "-  S:{}, D:{}, V:{}, P:{}",
-                    self.game.player.character.stats.strength,
-                    self.game.player.character.stats.dexterity,
-                    self.game.player.character.stats.vitality,
-                    self.game.player.character.stats.perception,
+                    self.game.player.character.stats.abilities.strength,
+                    self.game.player.character.stats.abilities.dexterity,
+                    self.game.player.character.stats.abilities.vitality,
+                    self.game.player.character.stats.abilities.perception,
                 ));
                 self.game.log.print(format!(
                     "-  Dodge:{}, Dmg:{}/{}",

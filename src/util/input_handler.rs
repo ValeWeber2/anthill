@@ -6,6 +6,7 @@ use crate::{
     core::{
         cursor::{CursorMode, CursorState},
         entity_logic::Entity,
+        player::CharacterClass,
         player_actions::PlayerInput,
     },
     render::{
@@ -104,6 +105,17 @@ impl App {
     /// Handling input in the starting screen.
     fn handle_start_screen_input(&mut self, key_event: KeyEvent) {
         if key_event.code == KeyCode::Enter {
+            // When starting a game, immediately open the class selection modal.
+            self.ui.modal = Some(ModalInterface::SelectPrompt {
+                selection_action: SelectionAction::ChooseClass,
+                options: vec![
+                    "Wretch".into(),
+                    "Barbarian".into(),
+                    "Knight".into(),
+                    "Ranger".into(),
+                ],
+            });
+
             self.state = State::Playing
         }
     }
@@ -205,22 +217,6 @@ impl App {
                     self.game.log.debug_info(format!("Item ID: {} DEF: {}", item_id, item.def_id))
                 }
             }
-            // Debug: Open Test Modal
-            KeyCode::Char('9') => {
-                self.ui.modal = Some(ModalInterface::TextDisplay {
-                    title: "Test Display".to_string(),
-                    paragraphs: vec![
-                        "Das ist ein Test".to_string(),
-                        "Hier ein weiterer Paragraph".to_string(),
-                    ],
-                })
-            }
-            KeyCode::Char('8') => {
-                self.ui.modal = Some(ModalInterface::SelectPrompt {
-                    selection_action: SelectionAction::Debug,
-                    options: vec!["Message 1".into(), "Message 2".into(), "Message 3".into()],
-                })
-            }
             _ => {}
         }
     }
@@ -299,12 +295,22 @@ impl App {
                                     // Appying the selection action to the selected option
                                     match selection_action {
                                         SelectionAction::Debug => {
-                                            self.game.log.debug_info(option.to_string())
+                                            self.game.log.debug_info(option.to_string());
+                                        }
+                                        SelectionAction::ChooseClass => {
+                                            let chosen_class =
+                                                CharacterClass::from(option.as_str());
+                                            self.game.player.character.apply_class(chosen_class);
                                         }
                                     }
+
+                                    ModalAction::CloseModal
+                                } else {
+                                    ModalAction::Idle
                                 }
+                            } else {
+                                ModalAction::Idle
                             }
-                            ModalAction::Idle
                         }
                         _ => ModalAction::Idle,
                     }
