@@ -275,11 +275,6 @@ impl App {
                     KeyCode::Enter => ModalAction::RunCommand(buffer.to_string()),
                     _ => ModalAction::Idle,
                 },
-                ModalInterface::TextDisplay { .. } => match key_event.code {
-                    KeyCode::Esc => ModalAction::CloseModal,
-                    KeyCode::Enter => ModalAction::CloseModal,
-                    _ => ModalAction::Idle,
-                },
                 ModalInterface::HelpDisplay => match key_event.code {
                     KeyCode::Esc => ModalAction::CloseModal,
                     KeyCode::Enter => ModalAction::CloseModal,

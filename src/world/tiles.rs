@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use ratatui::style::{Color, Modifier, Style};
 
 /// A trait for giving something a visual representation in the TUI style.

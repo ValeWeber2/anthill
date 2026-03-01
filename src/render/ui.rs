@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Padding, Paragraph, Wrap},

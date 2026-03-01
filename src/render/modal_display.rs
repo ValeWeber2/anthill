@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use ratatui::{
     prelude::*,
     symbols::border,
@@ -18,7 +16,6 @@ pub enum ModalInterface {
     ConfirmUseItem { item_id: GameItemId },
     ConfirmDropItem { item_id: GameItemId },
     CommandInput { buffer: String },
-    TextDisplay { title: String, paragraphs: Vec<String> },
     HelpDisplay,
     SelectPrompt { selection_action: SelectionAction, options: Vec<String> },
 }
@@ -37,27 +34,12 @@ impl ModalInterface {
                 render_confirm_drop_item(rect, buf, game, *item_id);
             }
             ModalInterface::CommandInput { buffer } => render_command_input(buffer, rect, buf),
-            ModalInterface::TextDisplay { title, paragraphs } => {
-                render_text_display(title, paragraphs, rect, buf)
-            }
             ModalInterface::HelpDisplay => render_help(rect, buf),
             ModalInterface::SelectPrompt { selection_action, options } => {
                 render_select_prompt(rect, buf, selection_action, options)
             }
         }
     }
-}
-
-/// Displays a large modal window that can contain multiple text paragraphs.
-pub fn render_text_display(title: &str, paragraphs: &[String], rect: Rect, buf: &mut Buffer) {
-    // Making the Window
-    let modal_area = render_modal_window(150, 33, title.to_string(), rect, buf);
-
-    let page_text = Text::from(
-        paragraphs.iter().map(|paragraph| Line::from(paragraph.as_str())).collect::<Vec<Line>>(),
-    );
-
-    Paragraph::new(page_text).render(modal_area, buf);
 }
 
 /// Displays the dialog where the user has to confirm that they want to quit the game.
@@ -309,6 +291,7 @@ fn render_help(area: Rect, buf: &mut Buffer) {
 }
 
 pub enum SelectionAction {
+    #[allow(dead_code)]
     Debug,
     ChooseClass,
 }

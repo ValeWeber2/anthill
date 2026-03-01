@@ -1,4 +1,3 @@
-#![warn(dead_code)]
 /// Tranlated from a python algorithm from https://www.albertford.com/shadowcasting/.
 use num_rational::*;
 use strum::IntoEnumIterator;
