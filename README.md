@@ -5,6 +5,13 @@ This is a student project, created for the module "Practical Course on Software 
 
 ![Title Screen](/extra/anthill_main.jpg)
 
+> [!IMPORTANT]
+> See the provided documents in [extra](/extra/) for our full documentation:
+> - [technical_document](/extra/technical_document.md) contains our technical documentation of the project.
+> - [playtest_report](/extra/playtest_report.md) contains a written report of our testing method.
+> - [declaration_of_academic_integrity](/extra/declaration_of_academic_integrity.md) contains our statement for AI use in accordance with the institute's rules.
+> - [game_guide.md](/extra/playtest) contains a written guide with tips and tricks on how to play the game.
+
 ## Features
 Explore an endless amount of rooms full of monsters and loot
 - Procedurally generated dungeon levels with infinite possibilities

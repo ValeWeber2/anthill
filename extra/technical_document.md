@@ -140,5 +140,5 @@ cargo doc
 - Cargo Fmt and Cargo Clippy were used as server-side quality gates.
 - Larger new features were all developed in separate branches.
 - Release versions were all developed in separate branches.
-- Branches were reviewed and merged in weekly meetings.
+- In weekly meetings, Code Reviews of active feature branches were conducted and merges were completed together.
 - No unsafe rust code was necessary.
