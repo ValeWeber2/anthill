@@ -16,14 +16,18 @@ use crate::{
     },
 };
 
+/// Represents a weighted connection between two rooms: an edge on a graph.
 #[derive(Clone)]
 pub struct MapEdge {
     pub source: NodeId,
     pub destination: NodeId,
+
+    /// The distance between the rooms acts as the weight.
     pub weight: usize,
 }
 
 impl ProcGenWorld {
+    /// Creates a [MapEdge] for all connections in a graph of all the rooms and returns a vector of all possible two-room-connections.
     pub fn all_edges(&self) -> Vec<MapEdge> {
         let mut edges: Vec<MapEdge> = Vec::new();
 
@@ -43,6 +47,10 @@ impl ProcGenWorld {
         edges
     }
 
+    /// Takes a complete graph of all rooms and selects a few of them, which will later be turned into corridors.
+    /// Uses the Minimum Spanning Tree algorithm by Kruskal and a naive algorithm as a fallback.
+    ///
+    /// Currently creates the MST and a few random extra connections.
     pub fn find_room_connections<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<MapEdge> {
         let edges = self.all_edges();
 
@@ -77,6 +85,10 @@ impl ProcGenWorld {
         connections
     }
 
+    /// Calculates connections between rooms and generates corridors between them using the A* pathfinding algorithm.
+    /// Also randomly assigns door types to tiles where the a wall was intersected by a corridor.
+    ///
+    /// Specifically ignores corners of rooms and weighs walls and floor tiles higher.
     pub fn a_star_corridors(&mut self, corridor_seed: u64) -> ProcGenCorridorMap {
         let mut rng = StdRng::seed_from_u64(corridor_seed);
 
@@ -160,9 +172,12 @@ impl ProcGenWorld {
     }
 }
 
+/// Contains all the coordinates of tiles that are corridors or doors.
 #[derive(Default)]
 pub struct ProcGenCorridorMap {
+    /// Contains all coordinates, where there are corridors.
     pub corridors: Vec<Point>,
+    /// Contains tuples of coordinates and door types for all doors in the game (even DoorType::Archway).
     pub doors: Vec<(Point, DoorTypeData)>,
 }
 
