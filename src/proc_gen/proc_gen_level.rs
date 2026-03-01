@@ -95,19 +95,27 @@ impl From<ProcGenLevel> for LevelData {
     fn from(value: ProcGenLevel) -> Self {
         let room_data: Vec<RoomData> = value.world.rooms.into_iter().map(RoomData::from).collect();
 
-        let tiles: Vec<TileData> = vec![
+        let mut tiles: Vec<TileData> = vec![
             // Entry
             TileData { x: value.entry.x, y: value.entry.y, tile_type: TileTypeData::StairsUp },
             // Exit
             TileData { x: value.exit.x, y: value.exit.y, tile_type: TileTypeData::StairsDown },
         ];
 
+        for (point, door_type) in value.world.corridor_map.doors {
+            tiles.push(TileData {
+                x: point.x,
+                y: point.y,
+                tile_type: TileTypeData::Door(door_type),
+            });
+        }
+
         LevelData {
             width: WORLD_WIDTH,
             height: WORLD_HEIGHT,
             tiles,
             rooms: room_data,
-            corridors: value.world.corridors,
+            corridors: value.world.corridor_map.corridors,
             entry: value.entry,
             exit: value.exit,
             spawns: value.spawns,

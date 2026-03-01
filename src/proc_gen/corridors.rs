@@ -1,11 +1,19 @@
 use std::collections::HashSet;
 
-use rand::{Rng, SeedableRng, rngs::StdRng, seq::IndexedRandom};
+use rand::{
+    Rng, SeedableRng,
+    distr::{Distribution, StandardUniform},
+    rngs::StdRng,
+    seq::IndexedRandom,
+};
 
 use crate::{
     ai::pathfinding::{a_star, pathfinding_naive},
     proc_gen::{bsp_nodes::NodeId, mst::mst_kruskal, proc_gen_world::ProcGenWorld},
-    world::coordinate_system::Point,
+    world::{
+        coordinate_system::{Direction, Point},
+        level_data::DoorTypeData,
+    },
 };
 
 #[derive(Clone)]
@@ -69,7 +77,7 @@ impl ProcGenWorld {
         connections
     }
 
-    pub fn a_star_corridors(&mut self, corridor_seed: u64) {
+    pub fn a_star_corridors(&mut self, corridor_seed: u64) -> ProcGenCorridorMap {
         let mut rng = StdRng::seed_from_u64(corridor_seed);
 
         let connections = self.find_room_connections(&mut rng);
@@ -83,6 +91,7 @@ impl ProcGenWorld {
             room_floor.extend(node.floor_points());
         }
 
+        let mut path_points: HashSet<Point> = HashSet::new();
         for connection in connections {
             let room_a = &self.rooms[connection.source];
             let room_b = &self.rooms[connection.destination];
@@ -93,16 +102,33 @@ impl ProcGenWorld {
                 room_b.floor_points().choose(&mut rng).copied().unwrap_or(room_b.center());
 
             let cost_function = |p| {
+                // Avoids wall openings being next to each other
+                let neighbors_already_door = path_points.contains(&(p + Direction::Up))
+                    || path_points.contains(&(p + Direction::Right))
+                    || path_points.contains(&(p + Direction::Down))
+                    || path_points.contains(&(p + Direction::Left));
+                if room_walls.contains(&p) && neighbors_already_door {
+                    return None;
+                }
+
+                // Corners are forbidden.
                 if room_corners.contains(&p) {
                     return None;
                 }
-                if room_walls.contains(&p) {
-                    return Some(20);
+                // Prefer already existing corridors slightly
+                if path_points.contains(&p) {
+                    return Some(1);
                 }
+                // Only break through walls if you reach your target directly.
+                if room_walls.contains(&p) {
+                    return Some(8);
+                }
+                // Avoid floor of rooms, so a corridor doesn't needlessly carve through a room.
                 if room_floor.contains(&p) {
                     return Some(10);
                 }
-                Some(1)
+
+                Some(4)
             };
 
             // Uses a naive pathfinding algorithm in the worst case scenario where A* can't find a path
@@ -111,7 +137,41 @@ impl ProcGenWorld {
                 None => pathfinding_naive(room_a_point, room_b_point),
             };
 
-            self.corridors.extend(path);
+            path_points.extend(path);
+        }
+
+        let corridor_points: Vec<Point> = path_points
+            .iter()
+            .filter(|point| !room_floor.contains(point) && !room_walls.contains(point))
+            .copied()
+            .collect();
+        let mut door_points: Vec<Point> = path_points.intersection(&room_walls).copied().collect();
+        door_points.sort();
+
+        let door_data = door_points
+            .iter()
+            .map(|&point| {
+                let door_type: DoorTypeData = rng.random();
+                (point, door_type)
+            })
+            .collect();
+
+        ProcGenCorridorMap { corridors: corridor_points, doors: door_data }
+    }
+}
+
+#[derive(Default)]
+pub struct ProcGenCorridorMap {
+    pub corridors: Vec<Point>,
+    pub doors: Vec<(Point, DoorTypeData)>,
+}
+
+impl Distribution<DoorTypeData> for StandardUniform {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> DoorTypeData {
+        match rng.random_range(0..100) {
+            0..=19 => DoorTypeData::Closed,
+            20..=24 => DoorTypeData::Open,
+            _ => DoorTypeData::Archway,
         }
     }
 }

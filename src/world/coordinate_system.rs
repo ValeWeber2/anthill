@@ -11,7 +11,9 @@ use strum_macros::EnumIter;
 /// Forms a whole number vector space together with [PointVector], which allows basic algebraic operations:
 /// - Addition: ([Add]): `(Point, PointVector) -> Point`
 /// - Subtraction: ([Sub]): `(Point, Point) -> PointVector`
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
 pub struct Point {
     pub x: usize,
     pub y: usize,

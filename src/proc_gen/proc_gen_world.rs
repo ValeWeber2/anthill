@@ -1,17 +1,14 @@
 use rand::{SeedableRng, rngs::StdRng};
 
-use crate::{
-    proc_gen::{bsp::MapBSPTree, proc_gen_room::ProcGenRoom},
-    world::coordinate_system::Point,
-};
+use crate::proc_gen::{bsp::MapBSPTree, corridors::ProcGenCorridorMap, proc_gen_room::ProcGenRoom};
 
 /// Data Structure that contains the procedurally generated world.
 pub struct ProcGenWorld {
     /// Rooms of the map
     pub rooms: Vec<ProcGenRoom>,
 
-    /// Vector of all the tiles that will become hallways on the map.
-    pub corridors: Vec<Point>,
+    /// Data containing corridor tiles and door data.
+    pub corridor_map: ProcGenCorridorMap,
 }
 
 impl ProcGenWorld {
@@ -25,10 +22,10 @@ impl ProcGenWorld {
     ) -> Self {
         let rooms = bsp.collect_leaves().into_iter().map(ProcGenRoom::from).collect();
 
-        let mut world = Self { rooms, corridors: Vec::new() };
+        let mut world = Self { rooms, corridor_map: ProcGenCorridorMap::default() };
 
         world.shrink_rooms(room_shrinking_seed);
-        world.a_star_corridors(corridor_seed);
+        world.corridor_map = world.a_star_corridors(corridor_seed);
 
         world
     }
